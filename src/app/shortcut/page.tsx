@@ -3,43 +3,8 @@
 export default function ShortcutPage() {
   const PIPELINE_URL = "https://cash-production-680c.up.railway.app/quick-upload";
 
-  // Generate the shortcut install URL using Apple's shortcuts:// URL scheme
-  // This opens Shortcuts app with a pre-built shortcut
-  const shortcutData = {
-    WFWorkflowName: "FlowArtsPro",
-    WFWorkflowActions: [
-      {
-        WFWorkflowActionIdentifier: "is.workflow.actions.ask",
-        WFWorkflowActionParameters: {
-          WFAskActionPrompt: "@instagram handle",
-          WFAskActionDefaultAnswer: "@",
-        },
-      },
-      {
-        WFWorkflowActionIdentifier: "is.workflow.actions.setvariable",
-        WFWorkflowActionParameters: {
-          WFVariableName: "handle",
-        },
-      },
-      {
-        WFWorkflowActionIdentifier: "is.workflow.actions.downloadurl",
-        WFWorkflowActionParameters: {
-          WFHTTPMethod: "POST",
-          WFURL: `${PIPELINE_URL}?handle=`,
-          WFHTTPBodyType: "File",
-        },
-      },
-      {
-        WFWorkflowActionIdentifier: "is.workflow.actions.notification",
-        WFWorkflowActionParameters: {
-          WFNotificationActionTitle: "Reel Submitted! 🔥",
-          WFNotificationActionBody: "Your video is being processed and will be posted to YouTube Shorts.",
-        },
-      },
-    ],
-    WFWorkflowInputContentItemClasses: ["WFVideoContentItem"],
-    WFWorkflowTypes: ["ActionExtension"],
-  };
+  // shortcuts://import-shortcut URL scheme with our hosted shortcut
+  const importUrl = `shortcuts://import-shortcut?url=${encodeURIComponent("https://flowarts.pro/api/shortcut")}&name=FlowArtsPro`;
 
   return (
     <div style={{
@@ -72,9 +37,9 @@ export default function ShortcutPage() {
           Share flow arts videos <strong style={{ color: "#00FF00" }}>directly from your iPhone</strong> camera roll to our YouTube Shorts channel. One tap. No browser needed.
         </p>
 
-        {/* Download Button */}
+        {/* Install Button - uses shortcuts:// URL scheme */}
         <a
-          href="/api/shortcut"
+          href={importUrl}
           style={{
             display: "inline-block",
             width: "100%",
@@ -94,15 +59,18 @@ export default function ShortcutPage() {
             marginBottom: 12,
           }}
         >
-          Download FlowArtsPro
+          Add Shortcut
         </a>
-        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginBottom: 28 }}>
-          Opens in iPhone Shortcuts app. Tap &quot;Add Shortcut&quot; to install.
+        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginBottom: 8 }}>
+          Opens Shortcuts app automatically. Tap &quot;Add Shortcut&quot; to install.
+        </p>
+        <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginBottom: 28 }}>
+          If the button above doesn&apos;t work, follow the manual setup below.
         </p>
 
         <style>{`@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}`}</style>
 
-        {/* Setup Instructions */}
+        {/* Manual Setup Instructions */}
         <div style={{
           background: "rgba(0,255,0,0.04)", border: "1px solid rgba(0,255,0,0.3)",
           borderRadius: 20, padding: "28px 20px", marginBottom: 20, textAlign: "left",
@@ -111,7 +79,7 @@ export default function ShortcutPage() {
             color: "#00FF00", fontSize: 16, fontWeight: 700, marginBottom: 16,
             textShadow: "0 0 8px rgba(0,255,0,0.4)",
           }}>
-            Setup (2 min)
+            Manual Setup (2 min)
           </h2>
 
           {[
