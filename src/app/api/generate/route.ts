@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const VALID_TYPES = ["sponsor", "booking", "epk"] as const;
 type GenerationType = (typeof VALID_TYPES)[number];
