@@ -34,7 +34,7 @@ export async function retryQueuedSubmissions(): Promise<void> {
     .eq("status", "queued")
     .select("id")
     .order("created_at", { ascending: true })
-    .limit(6); // Only retry up to daily quota limit
+    .limit(2); // Retry 2 at a time to stay under quota
 
   if (error) {
     console.error("Retry queued error:", error.message);
