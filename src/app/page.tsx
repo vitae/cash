@@ -848,11 +848,12 @@ function StatCard({ value, label, color }: { value: string; label: string; color
 function UploadZone() {
   const [hovered, setHovered] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [instagram, setInstagram] = useState("");
   const [email, setEmail] = useState("");
   const [description, setDescription] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<Record<number, "pending" | "uploading" | "done" | "failed">>({});
   const [uploadStatus, setUploadStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -860,84 +861,113 @@ function UploadZone() {
   const ACCEPTED = ".mp4,.mov,.hevc,.webm";
   const ACCEPTED_TYPES = ["video/mp4", "video/quicktime", "video/hevc", "video/webm"];
 
-  const handleFile = (f: File) => {
-    if (!ACCEPTED_TYPES.includes(f.type) && !f.name.match(/\.(mp4|mov|hevc|webm)$/i)) {
-      setErrorMsg("Please upload MP4, MOV, HEVC, or WebM files only.");
+  const handleFiles = (newFiles: FileList | File[]) => {
+    const valid: File[] = [];
+    for (let i = 0; i < newFiles.length; i++) {
+      const f = newFiles[i];
+      if (!ACCEPTED_TYPES.includes(f.type) && !f.name.match(/\.(mp4|mov|hevc|webm)$/i)) continue;
+      if (f.size > 500 * 1024 * 1024) continue;
+      valid.push(f);
+    }
+    if (valid.length === 0) {
+      setErrorMsg("Please upload MP4, MOV, HEVC, or WebM files only (max 500 MB each).");
       return;
     }
-    if (f.size > 500 * 1024 * 1024) {
-      setErrorMsg("File too large. Maximum 500 MB.");
+    const remaining = 3 - files.length;
+    if (remaining <= 0) {
+      setErrorMsg("MAX UPLOADS: 3");
       return;
     }
+    if (valid.length > remaining) valid.splice(remaining);
     setErrorMsg("");
-    setFile(f);
+    setFiles(prev => [...prev, ...valid]);
     setUploadStatus("idle");
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragging(false);
-    const f = e.dataTransfer.files[0];
-    if (f) handleFile(f);
+    if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
   };
 
   const handleSubmit = async () => {
-    if (!file || !instagram.trim()) {
+    if (files.length === 0 || !instagram.trim()) {
       setErrorMsg("@instagram (required)");
       return;
     }
     setUploading(true);
     setErrorMsg("");
-    try {
-      // Upload directly to Supabase Storage from browser (bypasses Vercel 4.5MB limit)
-      const ext = file.name.split(".").pop() || "mp4";
-      const slug = instagram.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
-      const filename = `${slug}-${Date.now()}.${ext}`;
 
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const slug = instagram.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
-      const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/reels/${filename}`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${supabaseKey}`,
-          "apikey": supabaseKey,
-          "Content-Type": file.type,
-        },
-        body: file,
-      });
+    let allSuccess = true;
+    const progress: Record<number, "pending" | "uploading" | "done" | "failed"> = {};
+    files.forEach((_, i) => { progress[i] = "pending"; });
+    setUploadProgress({ ...progress });
 
-      if (!uploadRes.ok) {
-        throw new Error("Storage upload failed");
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      progress[i] = "uploading";
+      setUploadProgress({ ...progress });
+
+      try {
+        const ext = file.name.split(".").pop() || "mp4";
+        const filename = `${slug}-${Date.now()}-${i}.${ext}`;
+
+        const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/reels/${filename}`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${supabaseKey}`,
+            "apikey": supabaseKey,
+            "Content-Type": file.type,
+          },
+          body: file,
+        });
+
+        if (!uploadRes.ok) throw new Error("Storage upload failed");
+
+        const videoUrl = `${supabaseUrl}/storage/v1/object/public/reels/${filename}`;
+
+        const res = await fetch("/api/submit-reel", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            artistName: instagram.trim(),
+            email: email.trim() || undefined,
+            videoUrl,
+            description: description.trim() || undefined,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          progress[i] = "done";
+        } else {
+          progress[i] = "failed";
+          allSuccess = false;
+        }
+      } catch {
+        progress[i] = "failed";
+        allSuccess = false;
       }
+      setUploadProgress({ ...progress });
+    }
 
-      const videoUrl = `${supabaseUrl}/storage/v1/object/public/reels/${filename}`;
-
-      // Save metadata via submit-reel API
-      const res = await fetch("/api/submit-reel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          artistName: instagram.trim(),
-          email: email.trim() || undefined,
-          videoUrl,
-          description: description.trim() || undefined,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setUploadStatus("success");
-        setFile(null);
-        setInstagram("");
-        setEmail("");
-        setDescription("");
-      } else {
-        setUploadStatus("error");
-        setErrorMsg(data.error || "Upload failed.");
-      }
-    } catch {
+    if (allSuccess) {
+      setUploadStatus("success");
+      setFiles([]);
+      setInstagram("");
+      setEmail("");
+      setDescription("");
+    } else {
       setUploadStatus("error");
-      setErrorMsg("Upload failed. Please try again.");
+      setErrorMsg("Some uploads failed. Tap Submit again to retry.");
+      setFiles(prev => prev.filter((_, i) => progress[i] === "failed"));
     }
     setUploading(false);
   };
@@ -958,7 +988,7 @@ function UploadZone() {
           Submitted!
         </div>
         <div style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", fontWeight: 300, lineHeight: 1.6 }}>
-          Your reel has been uploaded. We&apos;ll tag you when it goes live.
+          Your {files.length > 1 ? "reels have" : "reel has"} been uploaded. We&apos;ll tag you when they go live.
         </div>
         <button onClick={() => setUploadStatus("idle")} style={{
           marginTop: 16, padding: "12px 28px", fontSize: 13, fontWeight: 700,
@@ -969,7 +999,7 @@ function UploadZone() {
           boxShadow: "0 0 15px rgba(255,0,255,0.15)",
           transition: "all 0.2s ease",
         }}>
-          Upload Another
+          Upload More
         </button>
       </div>
     );
@@ -984,8 +1014,8 @@ function UploadZone() {
 
   return (
     <div style={{ maxWidth: 400, margin: "0 auto" }}>
-      <input ref={fileInputRef} type="file" accept={ACCEPTED} style={{ display: "none" }}
-        onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+      <input ref={fileInputRef} type="file" accept={ACCEPTED} multiple style={{ display: "none" }}
+        onChange={e => { if (e.target.files && e.target.files.length > 0) handleFiles(e.target.files); e.target.value = ""; }}
       />
       <div
         onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
@@ -1008,16 +1038,16 @@ function UploadZone() {
               : "none",
         }}
       >
-        {file ? (
+        {files.length > 0 ? (
           <>
             <div style={{
               fontSize: 14, color: "#00FF00", fontWeight: 600,
               textShadow: "0 0 10px rgba(0,255,0,0.4)",
             }}>
-              {file.name}
+              {files.length} video{files.length > 1 ? "s" : ""} selected
             </div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 4 }}>
-              {(file.size / (1024 * 1024)).toFixed(1)} MB &bull; Tap to change
+              {(files.reduce((sum, f) => sum + f.size, 0) / (1024 * 1024)).toFixed(1)} MB total &bull; Tap to add more
             </div>
           </>
         ) : (
@@ -1026,24 +1056,45 @@ function UploadZone() {
               fontSize: "clamp(14px, 3.5vw, 17px)", color: "#00FF00", fontWeight: 600,
               textShadow: "0 0 10px #00FF00, 0 0 30px rgba(0,255,0,0.4)",
             }}>
-              {dragging ? "Drop Your Video Here" : "Tap To Select Video"}
+              {dragging ? "Drop Your Videos Here" : "Tap To Select Videos"}
             </div>
             <div style={{ fontSize: "clamp(11px, 2.8vw, 13px)", color: "rgba(255,255,255,0.5)", fontWeight: 300, marginTop: 6 }}>
-              MP4, MOV, HEVC, or WebM &bull; Up To 500 MB
+              MP4, MOV, HEVC, or WebM &bull; Up To 500 MB &bull; MAX UPLOADS: 3
             </div>
           </>
         )}
       </div>
-      {file && (
-        <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+      {files.length > 0 && (
+        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+          {files.map((f, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
+              <span style={{
+                color: uploadProgress[i] === "done" ? "#00FF00" : uploadProgress[i] === "failed" ? "#ff5050" : uploadProgress[i] === "uploading" ? "#FF00FF" : "rgba(255,255,255,0.5)",
+                fontWeight: 600, minWidth: 14, textAlign: "center",
+              }}>
+                {uploadProgress[i] === "done" ? "\u2713" : uploadProgress[i] === "failed" ? "\u2717" : uploadProgress[i] === "uploading" ? "\u25CF" : "\u25CB"}
+              </span>
+              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+              <span style={{ color: "rgba(255,255,255,0.4)" }}>{(f.size / (1024 * 1024)).toFixed(1)}MB</span>
+              {!uploading && (
+                <button onClick={(e) => { e.stopPropagation(); removeFile(i); }} style={{
+                  background: "none", border: "none", color: "rgba(255,80,80,0.7)", cursor: "pointer", fontSize: 14, padding: "0 2px",
+                }}>&times;</button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {files.length > 0 && (
+        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
           <input
-            type="text" placeholder="@instagram" value={instagram}
+            type="text" placeholder="@instagram (required)" value={instagram}
             onChange={e => setInstagram(e.target.value)} style={inputStyle}
             onFocus={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.5)"; e.currentTarget.style.boxShadow = "0 0 15px rgba(0,255,0,0.15)"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.2)"; e.currentTarget.style.boxShadow = "none"; }}
           />
           <input
-            type="email" placeholder="Your Email" value={email}
+            type="email" placeholder="Your Email (optional)" value={email}
             onChange={e => setEmail(e.target.value)} style={inputStyle}
             onFocus={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.5)"; e.currentTarget.style.boxShadow = "0 0 15px rgba(0,255,0,0.15)"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.2)"; e.currentTarget.style.boxShadow = "none"; }}
@@ -1071,7 +1122,7 @@ function UploadZone() {
             boxShadow: uploading ? "none" : "0 0 20px rgba(0,255,0,0.15)",
             transition: "all 0.2s ease",
           }}>
-            {uploading ? "Uploading..." : "Submit Reel"}
+            {uploading ? `Uploading ${Object.values(uploadProgress).filter(s => s === "done").length}/${files.length}...` : files.length > 1 ? `Submit ${files.length} Reels` : "Submit Reel"}
           </button>
         </div>
       )}
