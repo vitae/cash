@@ -1,20 +1,83 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
+  variable: "--font-montserrat",
+});
+
+const siteUrl = "https://cash-gwdf.vercel.app";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#000000",
+};
+
 export const metadata: Metadata = {
-  title: "Flow Arts Professional — By Glow Wit Da Flow",
-  description: "AI-powered tools that write your sponsor pitches, build your booking sheets, and assemble your press kit.",
+  title: {
+    default: "Flow Arts Professional — By Glow Wit Da Flow",
+    template: "%s | Flow Arts Professional",
+  },
+  description:
+    "AI-powered tools that write your sponsor pitches, build your booking sheets, and assemble your press kit. Built for flow artists, by flow artists.",
+  keywords: [
+    "flow arts",
+    "fire spinning",
+    "poi",
+    "LED performance",
+    "sponsor pitch",
+    "booking sheet",
+    "press kit",
+    "AI tools",
+    "glow wit da flow",
+    "flow artist",
+    "performance art",
+  ],
+  authors: [{ name: "Glow Wit Da Flow" }],
+  creator: "Glow Wit Da Flow",
+  metadataBase: new URL(siteUrl),
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: siteUrl,
+    siteName: "Flow Arts Professional",
+    title: "Flow Arts Professional — By Glow Wit Da Flow",
+    description:
+      "AI-powered tools that write your sponsor pitches, build your booking sheets, and assemble your press kit.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Flow Arts Professional",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Flow Arts Professional — By Glow Wit Da Flow",
+    description:
+      "AI-powered tools that write your sponsor pitches, build your booking sheets, and assemble your press kit.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <head>
-        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-      </head>
-      <body style={{ background: "#000", margin: 0, fontFamily: "'Montserrat', sans-serif" }}>
-        {children}
-      </body>
+    <html lang="en" className={montserrat.variable}>
+      <body className={montserrat.className}>{children}</body>
     </html>
   );
 }
