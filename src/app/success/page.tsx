@@ -342,6 +342,28 @@ function SuccessPageInner() {
       box-shadow: 0 0 8px rgba(0,255,0,0.4), 0 0 24px rgba(0,255,0,0.2), 0 0 0 3px rgba(0,255,0,0.1);
     }
     .field-input::placeholder { color: rgba(255,255,255,0.3); }
+    select.field-input {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300FF00' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      padding-right: 40px;
+    }
+    select.field-input option {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: 'Montserrat', sans-serif;
+      padding: 12px;
+    }
+    select.field-input option:checked {
+      background: rgba(0,255,0,0.2);
+      color: #00FF00;
+    }
+    select.field-input-m {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23FF00FF' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    }
     .field-input-m { border-color: rgba(255,0,255,0.25); }
     .field-input-m:focus {
       border-color: #FF00FF;
