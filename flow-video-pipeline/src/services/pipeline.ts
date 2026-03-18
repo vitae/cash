@@ -141,13 +141,29 @@ export async function processSubmission(submissionId: string): Promise<void> {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     console.error(`Pipeline failed for ${submissionId}:`, errorMessage);
 
-    await supabase
-      .from("reel_submissions")
-      .update({
-        status: "failed",
-        error_message: errorMessage,
-      })
-      .eq("id", submissionId);
+    // YouTube quota exceeded — queue for retry instead of failing
+    const isQuotaError = errorMessage.includes("exceeded the number of videos")
+      || errorMessage.includes("quotaExceeded")
+      || errorMessage.includes("uploadLimitExceeded");
+
+    if (isQuotaError) {
+      console.log(`Quota exceeded — marking ${submissionId} as queued for retry`);
+      await supabase
+        .from("reel_submissions")
+        .update({
+          status: "queued",
+          error_message: "YouTube daily quota reached — will retry automatically",
+        })
+        .eq("id", submissionId);
+    } else {
+      await supabase
+        .from("reel_submissions")
+        .update({
+          status: "failed",
+          error_message: errorMessage,
+        })
+        .eq("id", submissionId);
+    }
   } finally {
     await cleanup(inputPath, outputPath);
   }
