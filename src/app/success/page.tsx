@@ -68,6 +68,8 @@ const flows: Record<FlowType, { title: string; color: string; accent: string; st
   ]},
 };
 
+const VALID_FLOWS: FlowType[] = ["sponsor", "booking", "epk", "festival"];
+
 const PROGRESS_MESSAGES = [
   "Analyzing your flow profile...",
   "Crafting personalized content...",
@@ -108,6 +110,14 @@ function SuccessPageInner() {
   const [progressIdx, setProgressIdx] = useState(0);
   const [fadeClass, setFadeClass] = useState("fi");
   const mainRef = useRef<HTMLElement>(null);
+
+  // Auto-select generator from URL param
+  useEffect(() => {
+    const gen = searchParams.get("gen");
+    if (gen && VALID_FLOWS.includes(gen as FlowType)) {
+      setCurrentFlow(gen as FlowType);
+    }
+  }, [searchParams]);
 
   // Verify payment on mount
   useEffect(() => {
