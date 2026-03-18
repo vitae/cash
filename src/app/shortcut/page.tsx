@@ -3,9 +3,6 @@
 export default function ShortcutPage() {
   const PIPELINE_URL = "https://cash-production-680c.up.railway.app/quick-upload";
 
-  // shortcuts://import-shortcut URL scheme with our hosted shortcut
-  const importUrl = `shortcuts://import-shortcut?url=${encodeURIComponent("https://flowarts.pro/api/shortcut")}&name=FlowArtsPro`;
-
   return (
     <div style={{
       minHeight: "100vh",
@@ -19,7 +16,7 @@ export default function ShortcutPage() {
           color: "#FF00FF", fontSize: 11, letterSpacing: 4, textTransform: "uppercase",
           textShadow: "0 0 10px #FF00FF", marginBottom: 24,
         }}>
-          Glow Wit Da Flow
+          iPhone Shortcut
         </div>
 
         <h1 style={{
@@ -34,43 +31,10 @@ export default function ShortcutPage() {
           color: "rgba(255,255,255,0.7)", fontSize: 14, lineHeight: 1.7,
           marginBottom: 32,
         }}>
-          Share flow arts videos <strong style={{ color: "#00FF00" }}>directly from your iPhone</strong> camera roll to our YouTube Shorts channel. One tap. No browser needed.
+          Share flow videos <strong style={{ color: "#00FF00" }}>from your camera roll</strong> straight to our YouTube Shorts. No browser needed.
         </p>
 
-        {/* Install Button - uses shortcuts:// URL scheme */}
-        <a
-          href={importUrl}
-          style={{
-            display: "inline-block",
-            width: "100%",
-            maxWidth: 340,
-            padding: "18px 32px",
-            background: "linear-gradient(135deg, #00FF00 0%, #00DD00 30%, #FF00FF 70%, #00FF00 100%)",
-            backgroundSize: "300% 300%",
-            animation: "gradientShift 3s ease infinite",
-            color: "#000",
-            fontSize: 18,
-            fontWeight: 900,
-            letterSpacing: 3,
-            textTransform: "uppercase" as const,
-            textDecoration: "none",
-            borderRadius: 16,
-            boxShadow: "0 0 30px rgba(0,255,0,0.5), 0 0 80px rgba(0,255,0,0.2)",
-            marginBottom: 12,
-          }}
-        >
-          Add Shortcut
-        </a>
-        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginBottom: 8 }}>
-          Opens Shortcuts app automatically. Tap &quot;Add Shortcut&quot; to install.
-        </p>
-        <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginBottom: 28 }}>
-          If the button above doesn&apos;t work, follow the manual setup below.
-        </p>
-
-        <style>{`@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}`}</style>
-
-        {/* Manual Setup Instructions */}
+        {/* Setup Instructions */}
         <div style={{
           background: "rgba(0,255,0,0.04)", border: "1px solid rgba(0,255,0,0.3)",
           borderRadius: 20, padding: "28px 20px", marginBottom: 20, textAlign: "left",
@@ -79,20 +43,19 @@ export default function ShortcutPage() {
             color: "#00FF00", fontSize: 16, fontWeight: 700, marginBottom: 16,
             textShadow: "0 0 8px rgba(0,255,0,0.4)",
           }}>
-            Manual Setup (2 min)
+            Setup (2 min)
           </h2>
 
           {[
-            { text: 'Open Shortcuts app → tap + → name it "FlowArtsPro"' },
-            { text: 'Tap (i) → enable "Show in Share Sheet" → select Videos only' },
-            { text: 'Add: Ask for Input → Text → "@instagram handle"' },
-            {
-              text: "Add: URL →",
-              code: `${PIPELINE_URL}?handle=`,
-              extra: 'Tap URL, add "Provided Input" variable at the end',
-            },
-            { text: 'Add: Get Contents of URL → Method: POST → Body: File → Shortcut Input' },
-            { text: 'Add: Show Notification → "Reel Submitted!"' },
+            { text: 'Open the <strong>Shortcuts</strong> app on your iPhone' },
+            { text: 'Tap <strong>+</strong> in the top right to create a new shortcut' },
+            { text: 'Name it <strong>FlowArtsPro</strong>' },
+            { text: 'Tap the <strong>(i)</strong> at the bottom → enable <strong>Show in Share Sheet</strong> → select <strong>Videos</strong> only' },
+            { text: 'Add action: <strong>Ask for Input</strong> → Type: Text → Prompt: <strong>@instagram handle</strong>' },
+            { text: 'Add action: <strong>URL</strong> → paste the URL below:', code: `${PIPELINE_URL}?handle=` , extra: 'Then tap the URL text and add the "Provided Input" variable at the end' },
+            { text: 'Add action: <strong>Get Contents of URL</strong> → Method: <strong>POST</strong> → Request Body: <strong>File</strong> → choose <strong>Shortcut Input</strong>' },
+            { text: 'Add action: <strong>Show Notification</strong> → Title: <strong>Reel Submitted!</strong>' },
+            { text: 'Tap <strong>Done</strong> — you\'re all set!' },
           ].map((step, i) => (
             <div key={i} style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "flex-start" }}>
               <div style={{
@@ -104,7 +67,7 @@ export default function ShortcutPage() {
               </div>
               <div>
                 <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 13, lineHeight: 1.6 }}
-                   dangerouslySetInnerHTML={{ __html: step.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}
+                   dangerouslySetInnerHTML={{ __html: step.text }}
                 />
                 {step.code && (
                   <code style={{
@@ -137,10 +100,10 @@ export default function ShortcutPage() {
           </h2>
 
           {[
-            "Open Photos, select your flow video",
+            "Open Photos → select your flow video",
             'Tap Share → "FlowArtsPro"',
-            "Type your @instagram handle",
-            "Video uploads → gets EDM music → posts to YouTube Shorts",
+            "Enter your @instagram handle",
+            "Done! Video gets EDM music + posts to YouTube Shorts",
           ].map((text, i) => (
             <div key={i} style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "flex-start" }}>
               <div style={{
