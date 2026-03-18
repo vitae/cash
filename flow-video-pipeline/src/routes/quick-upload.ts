@@ -4,15 +4,12 @@ import { enqueue, processQueue } from "../services/queue";
 
 const router = Router();
 
-// Simple endpoint for iPhone Shortcuts — accepts video file + handle in one request
+// Simple endpoint for iPhone Shortcuts — accepts video file + optional handle
+// POST /quick-upload
 // POST /quick-upload?handle=@username
 // Body: raw video file (Content-Type: video/mp4)
 router.post("/quick-upload", async (req: Request, res: Response) => {
-  const handle = (req.query.handle as string || "").trim();
-  if (!handle) {
-    res.status(400).json({ error: "Missing ?handle= parameter" });
-    return;
-  }
+  const handle = (req.query.handle as string || "").trim() || "anonymous";
 
   // Collect raw body chunks
   const chunks: Buffer[] = [];

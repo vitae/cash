@@ -75,12 +75,11 @@ export default function ShortcutPage() {
           {[
             { text: 'Open <strong>Shortcuts</strong> app → tap <strong>+</strong> → name it <strong>"FlowArtsPro"</strong>' },
             { text: 'Tap <strong>(i)</strong> at the bottom → enable <strong>Show in Share Sheet</strong> → select <strong>Videos</strong> only' },
-            { text: 'Add these 4 actions in order:', actions: [
-              { label: 'Ask for Input', detail: 'Type: Text, Prompt: "@instagram handle"' },
-              { label: 'URL', detail: 'Paste the URL below, then tap it and add the "Provided Input" variable at the end' },
+            { text: 'Add these 3 actions in order:', actions: [
+              { label: 'URL', detail: 'Paste the URL below' },
               { label: 'Get Contents of URL', detail: 'Method: POST, Body: File, File: Shortcut Input' },
               { label: 'Show Notification', detail: 'Title: "Reel Submitted!"' },
-            ], code: `${PIPELINE_URL}?handle=` },
+            ], code: PIPELINE_URL },
             { text: 'Tap <strong>Done</strong> — you\'re all set!' },
           ].map((step, i) => (
             <div key={i} style={{ display: "flex", gap: 12, marginBottom: 18, alignItems: "flex-start" }}>
@@ -144,7 +143,6 @@ export default function ShortcutPage() {
           {[
             "Open Photos → select your flow video",
             'Tap Share → scroll down → tap "FlowArtsPro"',
-            "Enter your @instagram handle when prompted",
             "Your video uploads, gets EDM music, and posts to YouTube Shorts",
           ].map((text, i) => (
             <div key={i} style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "flex-start" }}>
