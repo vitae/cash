@@ -889,12 +889,41 @@ function UploadZone() {
     setUploading(true);
     setErrorMsg("");
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("artistName", instagram.trim());
-      fd.append("email", email.trim());
-      if (description.trim()) fd.append("description", description.trim());
-      const res = await fetch("/api/upload-reel", { method: "POST", body: fd });
+      // Upload directly to Supabase Storage from browser (bypasses Vercel 4.5MB limit)
+      const ext = file.name.split(".").pop() || "mp4";
+      const slug = instagram.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const filename = `${slug}-${Date.now()}.${ext}`;
+
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+      const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/reels/${filename}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${supabaseKey}`,
+          "apikey": supabaseKey,
+          "Content-Type": file.type,
+        },
+        body: file,
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error("Storage upload failed");
+      }
+
+      const videoUrl = `${supabaseUrl}/storage/v1/object/public/reels/${filename}`;
+
+      // Save metadata via submit-reel API
+      const res = await fetch("/api/submit-reel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          artistName: instagram.trim(),
+          email: email.trim(),
+          videoUrl,
+          description: description.trim() || undefined,
+        }),
+      });
       const data = await res.json();
       if (res.ok && data.success) {
         setUploadStatus("success");
