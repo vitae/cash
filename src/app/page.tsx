@@ -579,8 +579,8 @@ export default function Home() {
         <RevealSection delay={0.05}>
           <div style={{ textAlign: "center", paddingTop: 24, paddingBottom: 16 }}>
             <p style={{
-              fontSize: "clamp(11px, 2.5vw, 13px)", letterSpacing: 6, textTransform: "uppercase",
-              color: "#FF00FF", margin: "0 0 10px",
+              fontSize: "clamp(11px, 2.5vw, 13px)", letterSpacing: "clamp(2px, 1vw, 6px)", textTransform: "uppercase",
+              color: "#FF00FF", margin: "0 0 10px", whiteSpace: "nowrap",
               textShadow: "0 0 10px #FF00FF, 0 0 40px #FF00FF, 0 0 80px rgba(255,0,255,0.5)",
             }}>
               Your Vibe Attracts Your Tribe.
