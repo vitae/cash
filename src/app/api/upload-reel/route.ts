@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File | null;
     const artistName = formData.get("artistName") as string | null;
     const email = formData.get("email") as string | null;
+    const description = formData.get("description") as string | null;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided." }, { status: 400 });
@@ -76,6 +77,7 @@ export async function POST(request: NextRequest) {
         email: email.trim().toLowerCase(),
         video_url: urlData.publicUrl,
         status: "pending",
+        description: description?.trim() || null,
       });
 
     if (dbError) {

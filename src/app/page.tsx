@@ -851,6 +851,7 @@ function UploadZone() {
   const [file, setFile] = useState<File | null>(null);
   const [instagram, setInstagram] = useState("");
   const [email, setEmail] = useState("");
+  const [description, setDescription] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -892,6 +893,7 @@ function UploadZone() {
       fd.append("file", file);
       fd.append("artistName", instagram.trim());
       fd.append("email", email.trim());
+      if (description.trim()) fd.append("description", description.trim());
       const res = await fetch("/api/upload-reel", { method: "POST", body: fd });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -899,6 +901,7 @@ function UploadZone() {
         setFile(null);
         setInstagram("");
         setEmail("");
+        setDescription("");
       } else {
         setUploadStatus("error");
         setErrorMsg(data.error || "Upload failed.");
@@ -1013,6 +1016,19 @@ function UploadZone() {
           <input
             type="email" placeholder="Your Email" value={email}
             onChange={e => setEmail(e.target.value)} style={inputStyle}
+            onFocus={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.5)"; e.currentTarget.style.boxShadow = "0 0 15px rgba(0,255,0,0.15)"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.2)"; e.currentTarget.style.boxShadow = "none"; }}
+          />
+          <textarea
+            placeholder="Caption / Description (optional — used for YouTube Shorts)"
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            rows={3}
+            style={{
+              ...inputStyle,
+              resize: "vertical" as const,
+              minHeight: 60,
+            }}
             onFocus={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.5)"; e.currentTarget.style.boxShadow = "0 0 15px rgba(0,255,0,0.15)"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.2)"; e.currentTarget.style.boxShadow = "none"; }}
           />

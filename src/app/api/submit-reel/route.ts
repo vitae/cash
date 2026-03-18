@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { artistName, email, videoUrl } = body;
+    const { artistName, email, videoUrl, description } = body;
 
     if (!artistName || typeof artistName !== "string" || artistName.trim().length === 0) {
       return NextResponse.json(
@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
         email: email.trim().toLowerCase(),
         video_url: videoUrl.trim(),
         status: "pending",
+        description: typeof description === "string" ? description.trim() || null : null,
       })
       .select("id")
       .single();
