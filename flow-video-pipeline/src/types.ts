@@ -30,7 +30,7 @@ export const webhookPayloadSchema = z.object({
   record: z.object({
     id: z.string().uuid(),
     artist_name: z.string(),
-    email: z.string(),
+    email: z.string().nullable(),
     video_url: z.string().url(),
     description: z.string().nullable(),
     status: z.string(),
