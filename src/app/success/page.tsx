@@ -579,8 +579,8 @@ function SuccessPageInner() {
               <div className="glow-green" style={{ fontSize: 16, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Sponsor Pitch</div>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Personalized pitch for brand companies</p>
             </div>
-            <div className="gen-card gen-card-m" onClick={() => setCurrentFlow("booking")}>
-              <div className="glow-magenta" style={{ fontSize: 16, fontWeight: 600, color: "#FF00FF", marginBottom: 4 }}>Booking Sheet</div>
+            <div className="gen-card" onClick={() => setCurrentFlow("booking")}>
+              <div className="glow-green" style={{ fontSize: 16, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Booking Sheet</div>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Tech rider, rates & availability</p>
             </div>
             <div className="gen-card" onClick={() => setCurrentFlow("epk")}>
@@ -593,8 +593,8 @@ function SuccessPageInner() {
               <div className="glow-magenta" style={{ fontSize: 16, fontWeight: 600, color: "#FF00FF", marginBottom: 4 }}>How To Go Pro</div>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>The complete playbook for your career</p>
             </a>
-            <a href="/guides/traveling-for-gigs" className="gen-card" style={{ textDecoration: "none" }}>
-              <div className="glow-green" style={{ fontSize: 16, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Traveling for Gigs</div>
+            <a href="/guides/traveling-for-gigs" className="gen-card gen-card-m" style={{ textDecoration: "none" }}>
+              <div className="glow-magenta" style={{ fontSize: 16, fontWeight: 600, color: "#FF00FF", marginBottom: 4 }}>Traveling for Gigs</div>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Build a touring circuit that pays</p>
             </a>
             <a href="/guides/contact-50-brands" className="gen-card gen-card-m" style={{ textDecoration: "none" }}>
