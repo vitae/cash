@@ -528,7 +528,8 @@ function SuccessPageInner() {
 
     @media (min-width: 640px) {
       .page-wrap { max-width: 800px !important; padding: 48px 40px !important; }
-      .gen-grid { display: grid !important; grid-template-columns: 1fr 1fr 1fr !important; gap: 16px !important; }
+      .gen-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
+      .gen-grid-label { grid-column: 1 / -1; }
       .result-block { padding: 32px; font-size: 14px; }
     }
   `;
@@ -572,21 +573,33 @@ function SuccessPageInner() {
           <p style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", fontWeight: 300, textAlign: "center", marginBottom: 24 }}>Choose A Generator Below To Get Started.</p>
 
           <div className="gen-grid" style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
+            <div className="gen-grid-label" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: "#00FF00", textShadow: "0 0 8px rgba(0,255,0,0.4)", marginBottom: -4 }}>AI Generators</div>
             <div className="gen-card" onClick={() => setCurrentFlow("sponsor")}>
-              <div className="glow-green" style={{ fontSize: 18, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Custom Sponsor Pitch</div>
-              <div style={{ width: "100%", maxWidth: 240, height: 1.5, background: "#FF00FF", boxShadow: "0 0 6px #FF00FF", margin: "0 auto 10px", borderRadius: 1 }} />
-              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", fontWeight: 300, margin: 0 }}>Personalized pitch for 50 of the best brand companies.</p>
+              <div className="glow-green" style={{ fontSize: 16, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Sponsor Pitch</div>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Personalized pitch for brand companies</p>
             </div>
             <div className="gen-card gen-card-m" onClick={() => setCurrentFlow("booking")}>
-              <div className="glow-magenta" style={{ fontSize: 18, fontWeight: 600, color: "#FF00FF", marginBottom: 4 }}>Event Booking Sheet</div>
-              <div style={{ width: "100%", maxWidth: 220, height: 1.5, background: "#00FF00", boxShadow: "0 0 6px #00FF00", margin: "0 auto 10px", borderRadius: 1 }} />
-              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", fontWeight: 300, margin: 0 }}>Tech rider, rates, and availability for event producers.</p>
+              <div className="glow-magenta" style={{ fontSize: 16, fontWeight: 600, color: "#FF00FF", marginBottom: 4 }}>Booking Sheet</div>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Tech rider, rates & availability</p>
             </div>
             <div className="gen-card" onClick={() => setCurrentFlow("epk")}>
-              <div className="glow-green" style={{ fontSize: 18, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Artist Press Kit</div>
-              <div style={{ width: "100%", maxWidth: 170, height: 1.5, background: "#FF00FF", boxShadow: "0 0 6px #FF00FF", margin: "0 auto 10px", borderRadius: 1 }} />
-              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", fontWeight: 300, margin: 0 }}>Full EPK with bio, reels, testimonials, and socials.</p>
+              <div className="glow-green" style={{ fontSize: 16, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Artist Press Kit</div>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Full EPK with bio, reels & socials</p>
             </div>
+
+            <div className="gen-grid-label" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: "#FF00FF", textShadow: "0 0 8px rgba(255,0,255,0.4)", marginTop: 4, marginBottom: -4 }}>Guides</div>
+            <a href="/guides/how-to-be-a-pro" className="gen-card gen-card-m" style={{ textDecoration: "none" }}>
+              <div className="glow-magenta" style={{ fontSize: 16, fontWeight: 600, color: "#FF00FF", marginBottom: 4 }}>How To Go Pro</div>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>The complete playbook for your career</p>
+            </a>
+            <a href="/guides/traveling-for-gigs" className="gen-card" style={{ textDecoration: "none" }}>
+              <div className="glow-green" style={{ fontSize: 16, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Traveling for Gigs</div>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Build a touring circuit that pays</p>
+            </a>
+            <a href="/guides/contact-50-brands" className="gen-card gen-card-m" style={{ textDecoration: "none" }}>
+              <div className="glow-magenta" style={{ fontSize: 16, fontWeight: 600, color: "#FF00FF", marginBottom: 4 }}>Contact 50 Brands</div>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Top companies to pitch for sponsorship</p>
+            </a>
           </div>
 
           <div style={{ textAlign: "center", paddingTop: 16 }}>
