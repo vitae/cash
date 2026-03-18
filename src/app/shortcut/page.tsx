@@ -72,6 +72,36 @@ export default function ShortcutPage() {
           Share flow arts videos <strong style={{ color: "#00FF00" }}>directly from your iPhone</strong> camera roll to our YouTube Shorts channel. One tap. No browser needed.
         </p>
 
+        {/* Download Button */}
+        <a
+          href="/api/shortcut"
+          style={{
+            display: "inline-block",
+            width: "100%",
+            maxWidth: 340,
+            padding: "18px 32px",
+            background: "linear-gradient(135deg, #00FF00 0%, #00DD00 30%, #FF00FF 70%, #00FF00 100%)",
+            backgroundSize: "300% 300%",
+            animation: "gradientShift 3s ease infinite",
+            color: "#000",
+            fontSize: 18,
+            fontWeight: 900,
+            letterSpacing: 3,
+            textTransform: "uppercase" as const,
+            textDecoration: "none",
+            borderRadius: 16,
+            boxShadow: "0 0 30px rgba(0,255,0,0.5), 0 0 80px rgba(0,255,0,0.2)",
+            marginBottom: 12,
+          }}
+        >
+          Download FlowArtsPro
+        </a>
+        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginBottom: 28 }}>
+          Opens in iPhone Shortcuts app. Tap &quot;Add Shortcut&quot; to install.
+        </p>
+
+        <style>{`@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}`}</style>
+
         {/* Setup Instructions */}
         <div style={{
           background: "rgba(0,255,0,0.04)", border: "1px solid rgba(0,255,0,0.3)",
