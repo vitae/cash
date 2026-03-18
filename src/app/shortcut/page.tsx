@@ -34,7 +34,7 @@ export default function ShortcutPage() {
           Share flow videos <strong style={{ color: "#00FF00" }}>from your camera roll</strong> straight to our YouTube Shorts. No browser needed.
         </p>
 
-        {/* Setup Instructions */}
+        {/* Setup */}
         <div style={{
           background: "rgba(0,255,0,0.04)", border: "1px solid rgba(0,255,0,0.3)",
           borderRadius: 20, padding: "28px 20px", marginBottom: 20, textAlign: "left",
@@ -43,21 +43,21 @@ export default function ShortcutPage() {
             color: "#00FF00", fontSize: 16, fontWeight: 700, marginBottom: 16,
             textShadow: "0 0 8px rgba(0,255,0,0.4)",
           }}>
-            Setup (2 min)
+            Setup (1 min)
           </h2>
 
           {[
-            { text: 'Open the <strong>Shortcuts</strong> app on your iPhone' },
-            { text: 'Tap <strong>+</strong> in the top right to create a new shortcut' },
-            { text: 'Name it <strong>FlowArtsPro</strong>' },
-            { text: 'Tap the <strong>(i)</strong> at the bottom → enable <strong>Show in Share Sheet</strong> → select <strong>Videos</strong> only' },
-            { text: 'Add action: <strong>Ask for Input</strong> → Type: Text → Prompt: <strong>@instagram handle</strong>' },
-            { text: 'Add action: <strong>URL</strong> → paste the URL below:', code: `${PIPELINE_URL}?handle=` , extra: 'Then tap the URL text and add the "Provided Input" variable at the end' },
-            { text: 'Add action: <strong>Get Contents of URL</strong> → Method: <strong>POST</strong> → Request Body: <strong>File</strong> → choose <strong>Shortcut Input</strong>' },
-            { text: 'Add action: <strong>Show Notification</strong> → Title: <strong>Reel Submitted!</strong>' },
+            { text: 'Open <strong>Shortcuts</strong> app → tap <strong>+</strong> → name it <strong>"FlowArtsPro"</strong>' },
+            { text: 'Tap <strong>(i)</strong> at the bottom → enable <strong>Show in Share Sheet</strong> → select <strong>Videos</strong> only' },
+            { text: 'Add these 4 actions in order:', actions: [
+              { label: 'Ask for Input', detail: 'Type: Text, Prompt: "@instagram handle"' },
+              { label: 'URL', detail: 'Paste the URL below, then tap it and add the "Provided Input" variable at the end' },
+              { label: 'Get Contents of URL', detail: 'Method: POST, Body: File, File: Shortcut Input' },
+              { label: 'Show Notification', detail: 'Title: "Reel Submitted!"' },
+            ], code: `${PIPELINE_URL}?handle=` },
             { text: 'Tap <strong>Done</strong> — you\'re all set!' },
           ].map((step, i) => (
-            <div key={i} style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "flex-start" }}>
+            <div key={i} style={{ display: "flex", gap: 12, marginBottom: 18, alignItems: "flex-start" }}>
               <div style={{
                 background: "#00FF00", color: "#000", width: 24, height: 24,
                 borderRadius: "50%", display: "flex", alignItems: "center",
@@ -65,22 +65,33 @@ export default function ShortcutPage() {
               }}>
                 {i + 1}
               </div>
-              <div>
+              <div style={{ flex: 1 }}>
                 <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 13, lineHeight: 1.6 }}
                    dangerouslySetInnerHTML={{ __html: step.text }}
                 />
+                {step.actions && (
+                  <div style={{ marginTop: 8 }}>
+                    {step.actions.map((action, j) => (
+                      <div key={j} style={{
+                        padding: "6px 10px", marginBottom: 4,
+                        background: "rgba(0,0,0,0.4)", borderRadius: 8,
+                        borderLeft: "2px solid #00FF00",
+                      }}>
+                        <span style={{ color: "#FF00FF", fontWeight: 600, fontSize: 12 }}>{action.label}</span>
+                        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}> — {action.detail}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {step.code && (
                   <code style={{
-                    display: "block", marginTop: 6, padding: "8px 12px",
+                    display: "block", marginTop: 8, padding: "8px 12px",
                     background: "rgba(0,0,0,0.6)", border: "1px solid rgba(0,255,0,0.2)",
                     borderRadius: 8, fontSize: 11, color: "#00FF00",
                     wordBreak: "break-all", fontFamily: "monospace",
                   }}>
                     {step.code}
                   </code>
-                )}
-                {step.extra && (
-                  <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, marginTop: 4 }}>{step.extra}</p>
                 )}
               </div>
             </div>
@@ -101,9 +112,9 @@ export default function ShortcutPage() {
 
           {[
             "Open Photos → select your flow video",
-            'Tap Share → "FlowArtsPro"',
-            "Enter your @instagram handle",
-            "Done! Video gets EDM music + posts to YouTube Shorts",
+            'Tap Share → scroll down → tap "FlowArtsPro"',
+            "Enter your @instagram handle when prompted",
+            "Your video uploads, gets EDM music, and posts to YouTube Shorts",
           ].map((text, i) => (
             <div key={i} style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "flex-start" }}>
               <div style={{

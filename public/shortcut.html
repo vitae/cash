@@ -32,43 +32,43 @@ h1{color:#00FF00;font-size:28px;font-weight:900;letter-spacing:3px;text-transfor
   </p>
 
   <div class="card">
-    <h2>Create the Shortcut</h2>
+    <h2>Create the Shortcut (1 min)</h2>
 
     <div class="step">
       <div class="num">1</div>
-      <p>Open the <strong>Shortcuts</strong> app on your iPhone. Tap <strong>+</strong> to create a new shortcut. Name it <strong>"Submit Reel"</strong></p>
+      <p>Open <strong>Shortcuts</strong> app &rarr; tap <strong>+</strong> &rarr; name it <strong>"FlowArtsPro"</strong></p>
     </div>
 
     <div class="step">
       <div class="num">2</div>
-      <p>Tap the <strong>info (i)</strong> button at the top. Turn on <strong>"Show in Share Sheet"</strong>. Under "Types", select only <strong>Videos</strong></p>
+      <p>Tap <strong>(i)</strong> at the bottom &rarr; enable <strong>Show in Share Sheet</strong> &rarr; select <strong>Videos</strong> only</p>
     </div>
 
     <div class="step">
       <div class="num">3</div>
-      <p>Add action: <span class="label">Ask for Input</span><br>Type: Text<br>Prompt: <strong>"@instagram handle"</strong></p>
+      <div>
+        <p>Add these 4 actions in order:</p>
+        <div style="margin-top:8px">
+          <div style="padding:6px 10px;margin-bottom:4px;background:rgba(0,0,0,0.4);border-radius:8px;border-left:2px solid #00FF00">
+            <span class="label">Ask for Input</span><span style="color:rgba(255,255,255,0.6);font-size:11px"> &mdash; Type: Text, Prompt: "@instagram handle"</span>
+          </div>
+          <div style="padding:6px 10px;margin-bottom:4px;background:rgba(0,0,0,0.4);border-radius:8px;border-left:2px solid #00FF00">
+            <span class="label">URL</span><span style="color:rgba(255,255,255,0.6);font-size:11px"> &mdash; Paste URL below, then add "Provided Input" variable at the end</span>
+          </div>
+          <div style="padding:6px 10px;margin-bottom:4px;background:rgba(0,0,0,0.4);border-radius:8px;border-left:2px solid #00FF00">
+            <span class="label">Get Contents of URL</span><span style="color:rgba(255,255,255,0.6);font-size:11px"> &mdash; Method: POST, Body: File, File: Shortcut Input</span>
+          </div>
+          <div style="padding:6px 10px;margin-bottom:4px;background:rgba(0,0,0,0.4);border-radius:8px;border-left:2px solid #00FF00">
+            <span class="label">Show Notification</span><span style="color:rgba(255,255,255,0.6);font-size:11px"> &mdash; Title: "Reel Submitted!"</span>
+          </div>
+        </div>
+        <code>https://cash-production-680c.up.railway.app/quick-upload?handle=</code>
+      </div>
     </div>
 
     <div class="step">
       <div class="num">4</div>
-      <p>Add action: <span class="label">URL</span>
-      <code>https://cash-production-680c.up.railway.app/quick-upload?handle=</code>
-      Then tap the URL and add the <strong>"Provided Input"</strong> variable (from step 3) at the end</p>
-    </div>
-
-    <div class="step">
-      <div class="num">5</div>
-      <p>Add action: <span class="label">Get Contents of URL</span><br>
-      URL: <strong>URL from step 4</strong><br>
-      Method: <strong>POST</strong><br>
-      Request Body: <strong>File</strong><br>
-      File: <strong>Shortcut Input</strong> (the video from share sheet)</p>
-    </div>
-
-    <div class="step">
-      <div class="num">6</div>
-      <p>Add action: <span class="label">Show Notification</span><br>
-      Title: <strong>"Reel Submitted!"</strong></p>
+      <p>Tap <strong>Done</strong> &mdash; you're all set!</p>
     </div>
   </div>
 
@@ -76,19 +76,19 @@ h1{color:#00FF00;font-size:28px;font-weight:900;letter-spacing:3px;text-transfor
     <h2 style="color:#FF00FF">How to Use</h2>
     <div class="step">
       <div class="num" style="background:#FF00FF">1</div>
-      <p>Open <strong>Photos</strong>, select your flow video(s)</p>
+      <p>Open <strong>Photos</strong> &rarr; select your flow video</p>
     </div>
     <div class="step">
       <div class="num" style="background:#FF00FF">2</div>
-      <p>Tap <strong>Share</strong> &rarr; scroll down &rarr; tap <strong>"Submit Reel"</strong></p>
+      <p>Tap <strong>Share</strong> &rarr; scroll down &rarr; tap <strong>"FlowArtsPro"</strong></p>
     </div>
     <div class="step">
       <div class="num" style="background:#FF00FF">3</div>
-      <p>Type your <strong>@instagram handle</strong></p>
+      <p>Enter your <strong>@instagram handle</strong> when prompted</p>
     </div>
     <div class="step">
       <div class="num" style="background:#FF00FF">4</div>
-      <p>Your reel uploads automatically, gets EDM music added, and posts to <strong>YouTube Shorts</strong></p>
+      <p>Your video uploads, gets EDM music, and posts to <strong>YouTube Shorts</strong></p>
     </div>
   </div>
 
