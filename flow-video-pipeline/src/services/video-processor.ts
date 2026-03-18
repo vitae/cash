@@ -113,16 +113,13 @@ export async function transcodeForShorts(
   const videoDuration = Math.min(probe.duration, 60);
 
   if (musicPath) {
-    // Transcode video + mix in music track
-    // -shortest ensures output stops when the shorter input ends
+    // Copy video stream (no re-encode = low memory), only encode audio
     const args: string[] = [
       "-i", inputPath,
       "-i", musicPath,
-      "-c:v", "libx264",
-      "-preset", "medium",
-      "-crf", "23",
-      "-map", "0:v:0",        // Use video from first input
-      "-map", "1:a:0",        // Use audio from second input (music)
+      "-c:v", "copy",          // Copy video as-is (no re-encode, saves RAM)
+      "-map", "0:v:0",         // Use video from first input
+      "-map", "1:a:0",         // Use audio from second input (music)
       "-c:a", "aac",
       "-b:a", "128k",
       "-movflags", "+faststart",
@@ -143,10 +140,10 @@ export async function transcodeForShorts(
 
     args.push("-y", outputPath);
 
-    console.log("Transcoding video with music...");
+    console.log("Mixing music into video (video copy, audio encode)...");
     try {
       await execFileAsync("ffmpeg", args, { timeout: 300_000 });
-      console.log("Transcode with music complete");
+      console.log("Music mix complete");
       await cleanup(musicPath);
       return outputPath;
     } catch (err) {
@@ -155,12 +152,10 @@ export async function transcodeForShorts(
     }
   }
 
-  // Fallback: transcode without audio
+  // Fallback: copy video without audio (no re-encode)
   const args: string[] = [
     "-i", inputPath,
-    "-c:v", "libx264",
-    "-preset", "medium",
-    "-crf", "23",
+    "-c:v", "copy",            // Copy video as-is
     "-an",
     "-movflags", "+faststart",
   ];
@@ -171,9 +166,9 @@ export async function transcodeForShorts(
 
   args.push("-y", outputPath);
 
-  console.log("Transcoding video (no audio)...");
+  console.log("Copying video (no audio)...");
   await execFileAsync("ffmpeg", args, { timeout: 300_000 });
-  console.log("Transcode complete");
+  console.log("Copy complete");
 
   return outputPath;
 }
