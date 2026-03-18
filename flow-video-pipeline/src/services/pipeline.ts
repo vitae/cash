@@ -111,7 +111,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
       submission.description || "",
       "",
       `Featured artist: @${handle}`,
-      "Submit your reel: flowarts.pro",
+      "Submit your reel: https://flowarts.pro",
       "",
       hashtags,
     ].join("\n").trim();
