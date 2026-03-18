@@ -68,25 +68,12 @@ export async function transcodeForShorts(
   outputPath: string,
   probe: ProbeResult
 ): Promise<string> {
-  // Check if already compliant (H.264 + AAC + ≤60s)
-  const isCompliant =
-    probe.videoCodec === "h264" &&
-    probe.audioCodec === "aac" &&
-    probe.duration <= 60;
-
-  if (isCompliant) {
-    console.log("Video already compliant, copying as-is");
-    await fs.copyFile(inputPath, outputPath);
-    return outputPath;
-  }
-
   const args: string[] = [
     "-i", inputPath,
     "-c:v", "libx264",
     "-preset", "medium",
     "-crf", "23",
-    "-c:a", "aac",
-    "-b:a", "128k",
+    "-an",  // Strip audio — trending audio added in YouTube Studio
     "-movflags", "+faststart",
   ];
 
