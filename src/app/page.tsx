@@ -53,6 +53,33 @@ function useReveal(): [React.RefObject<HTMLDivElement | null>, boolean] {
 export default function Home() {
   const [loading, setLoading] = useState(false);
   const [showStickyHeader, setShowStickyHeader] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [checkingAccess, setCheckingAccess] = useState(true);
+
+  // Check if user already has access (returning customer)
+  useEffect(() => {
+    const stored = localStorage.getItem("fa_session_id");
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSession = urlParams.get("session_id");
+    const sid = urlSession || stored;
+
+    if (!sid) { setCheckingAccess(false); return; }
+
+    fetch(`/api/verify?session_id=${encodeURIComponent(sid)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.verified) {
+          setHasAccess(true);
+          setSessionId(sid);
+          localStorage.setItem("fa_session_id", sid);
+        } else {
+          localStorage.removeItem("fa_session_id");
+        }
+      })
+      .catch(() => { localStorage.removeItem("fa_session_id"); })
+      .finally(() => setCheckingAccess(false));
+  }, []);
 
   const handleBuyNow = async () => {
     setLoading(true);
@@ -66,6 +93,12 @@ export default function Home() {
       if (data.url) window.location.href = data.url;
       else setLoading(false);
     } catch { setLoading(false); }
+  };
+
+  const goToGenerators = () => {
+    if (sessionId) {
+      window.location.href = `/success?session_id=${encodeURIComponent(sessionId)}`;
+    }
   };
 
   // Sticky header on scroll
@@ -114,7 +147,7 @@ export default function Home() {
           </span>
         </div>
         <button
-          onClick={handleBuyNow}
+          onClick={hasAccess ? goToGenerators : handleBuyNow}
           disabled={loading}
           style={{
             padding: "8px 20px", background: "#00FF00", color: "#000",
@@ -129,7 +162,7 @@ export default function Home() {
           onMouseDown={e => { e.currentTarget.style.transform = "scale(0.95)"; }}
           onMouseUp={e => { e.currentTarget.style.transform = "scale(1.05)"; }}
         >
-          {loading ? "..." : "$5"}
+          {loading ? "..." : hasAccess ? "GENERATORS" : "$5"}
         </button>
       </div>
 
@@ -369,7 +402,7 @@ export default function Home() {
               letterSpacing: "clamp(2px, 0.8vw, 5px)", textTransform: "uppercase", marginBottom: 8,
               textShadow: "0 0 30px rgba(0,255,0,0.4), 0 0 60px rgba(0,255,0,0.15)",
             }}>
-              Unlock Everything For $5
+              {hasAccess ? "Your Generators Are Ready" : "Unlock Everything For $5"}
             </div>
             <div style={{
               width: "100%", maxWidth: 400, height: 2,
@@ -380,10 +413,10 @@ export default function Home() {
               fontSize: "clamp(11px, 2.8vw, 13px)", color: "rgba(255,255,255,0.35)",
               fontWeight: 300, marginBottom: 24,
             }}>
-              One-Time Payment. Lifetime Access. Unlimited Uses.
+              {hasAccess ? "You have lifetime access. Open your generators anytime." : "One-Time Payment. Lifetime Access. Unlimited Uses."}
             </div>
             <button
-              onClick={handleBuyNow}
+              onClick={hasAccess ? goToGenerators : handleBuyNow}
               disabled={loading}
               style={{
                 width: "100%", maxWidth: 340,
@@ -409,7 +442,7 @@ export default function Home() {
               onMouseDown={e => { e.currentTarget.style.transform = "scale(0.96)"; }}
               onMouseUp={e => { e.currentTarget.style.transform = "scale(1.04)"; }}
             >
-              {loading ? "Redirecting..." : "BUY NOW!"}
+              {loading ? "Redirecting..." : hasAccess ? "OPEN GENERATORS" : "BUY NOW!"}
             </button>
           </div>
         </RevealSection>
@@ -692,37 +725,154 @@ function StatCard({ value, label, color }: { value: string; label: string; color
   );
 }
 
-// ── Upload zone ──
+// ── Upload zone with real file upload ──
 function UploadZone() {
   const [hovered, setHovered] = useState(false);
-  return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        border: `1.5px dashed ${hovered ? "rgba(255,0,255,0.4)" : "rgba(255,0,255,0.2)"}`,
-        borderRadius: 20,
+  const [dragging, setDragging] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [artistName, setArtistName] = useState("");
+  const [email, setEmail] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const ACCEPTED = ".mp4,.mov,.hevc,.webm";
+  const ACCEPTED_TYPES = ["video/mp4", "video/quicktime", "video/hevc", "video/webm"];
+
+  const handleFile = (f: File) => {
+    if (!ACCEPTED_TYPES.includes(f.type) && !f.name.match(/\.(mp4|mov|hevc|webm)$/i)) {
+      setErrorMsg("Please upload MP4, MOV, HEVC, or WebM files only.");
+      return;
+    }
+    if (f.size > 500 * 1024 * 1024) {
+      setErrorMsg("File too large. Maximum 500 MB.");
+      return;
+    }
+    setErrorMsg("");
+    setFile(f);
+    setUploadStatus("idle");
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const f = e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  };
+
+  const handleSubmit = async () => {
+    if (!file || !artistName.trim() || !email.includes("@")) {
+      setErrorMsg("Please fill in your name, email, and select a video.");
+      return;
+    }
+    setUploading(true);
+    setErrorMsg("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("artistName", artistName.trim());
+      fd.append("email", email.trim());
+      const res = await fetch("/api/upload-reel", { method: "POST", body: fd });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setUploadStatus("success");
+        setFile(null);
+        setArtistName("");
+        setEmail("");
+      } else {
+        setUploadStatus("error");
+        setErrorMsg(data.error || "Upload failed.");
+      }
+    } catch {
+      setUploadStatus("error");
+      setErrorMsg("Upload failed. Please try again.");
+    }
+    setUploading(false);
+  };
+
+  if (uploadStatus === "success") {
+    return (
+      <div style={{
+        border: "1.5px solid rgba(0,255,0,0.3)", borderRadius: 20,
         padding: "clamp(24px, 6vw, 36px) clamp(16px, 4vw, 24px)",
-        background: hovered ? "rgba(255,0,255,0.04)" : "rgba(255,0,255,0.015)",
-        transition: "all 0.3s ease",
-        cursor: "pointer",
-        boxShadow: hovered ? "0 0 30px rgba(255,0,255,0.06)" : "none",
-        maxWidth: 400, marginLeft: "auto", marginRight: "auto",
-      }}
-    >
-      <div style={{
-        fontSize: "clamp(13px, 3.2vw, 15px)", color: "rgba(0,255,0,0.65)", fontWeight: 500,
-        textShadow: hovered ? "0 0 12px rgba(0,255,0,0.2)" : "none",
-        transition: "text-shadow 0.3s ease",
+        background: "rgba(0,255,0,0.04)", maxWidth: 400, margin: "0 auto", textAlign: "center",
       }}>
-        Tap To Upload Video
+        <div style={{ fontSize: 20, color: "#00FF00", marginBottom: 8 }}>Submitted!</div>
+        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", fontWeight: 300, lineHeight: 1.6 }}>
+          Your reel has been uploaded. We&apos;ll tag you when it goes live.
+        </div>
+        <button onClick={() => setUploadStatus("idle")} style={{
+          marginTop: 16, padding: "10px 24px", fontSize: 12, fontWeight: 600,
+          letterSpacing: 1, textTransform: "uppercase", background: "rgba(255,0,255,0.1)",
+          border: "1px solid rgba(255,0,255,0.25)", borderRadius: 12, color: "#FF00FF",
+          fontFamily: "Montserrat, sans-serif", cursor: "pointer",
+        }}>
+          Upload Another
+        </button>
       </div>
-      <div style={{
-        fontSize: "clamp(10px, 2.5vw, 12px)", color: "rgba(255,255,255,0.25)",
-        fontWeight: 300, marginTop: 6,
-      }}>
-        MP4, MOV, or WebM &bull; Up To 500 MB
+    );
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%", padding: "12px 16px", background: "rgba(255,255,255,0.04)",
+    border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#fff",
+    fontFamily: "Montserrat, sans-serif", fontSize: 13, fontWeight: 300, outline: "none",
+  };
+
+  return (
+    <div style={{ maxWidth: 400, margin: "0 auto" }}>
+      <input ref={fileInputRef} type="file" accept={ACCEPTED} style={{ display: "none" }}
+        onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+      />
+      <div
+        onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+        onDragOver={e => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)} onDrop={handleDrop}
+        onClick={() => fileInputRef.current?.click()}
+        style={{
+          border: `1.5px dashed ${dragging ? "rgba(0,255,0,0.5)" : hovered ? "rgba(255,0,255,0.4)" : "rgba(255,0,255,0.2)"}`,
+          borderRadius: 20, padding: "clamp(20px, 5vw, 32px) clamp(16px, 4vw, 24px)",
+          background: dragging ? "rgba(0,255,0,0.06)" : hovered ? "rgba(255,0,255,0.04)" : "rgba(255,0,255,0.015)",
+          transition: "all 0.3s ease", cursor: "pointer",
+          boxShadow: dragging ? "0 0 30px rgba(0,255,0,0.1)" : hovered ? "0 0 30px rgba(255,0,255,0.06)" : "none",
+        }}
+      >
+        {file ? (
+          <>
+            <div style={{ fontSize: 13, color: "#00FF00", fontWeight: 500 }}>{file.name}</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 4 }}>
+              {(file.size / (1024 * 1024)).toFixed(1)} MB &bull; Tap to change
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "rgba(0,255,0,0.65)", fontWeight: 500 }}>
+              {dragging ? "Drop Your Video Here" : "Tap To Select Video"}
+            </div>
+            <div style={{ fontSize: "clamp(10px, 2.5vw, 12px)", color: "rgba(255,255,255,0.25)", fontWeight: 300, marginTop: 6 }}>
+              MP4, MOV, HEVC, or WebM &bull; Up To 500 MB
+            </div>
+          </>
+        )}
       </div>
+      {file && (
+        <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+          <input type="text" placeholder="Your Artist Name" value={artistName} onChange={e => setArtistName(e.target.value)} style={inputStyle} />
+          <input type="email" placeholder="Your Email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
+          <button onClick={handleSubmit} disabled={uploading} style={{
+            padding: "14px 24px", fontSize: 13, fontWeight: 700, letterSpacing: 1.5,
+            textTransform: "uppercase", background: uploading ? "rgba(0,255,0,0.08)" : "rgba(0,255,0,0.15)",
+            border: "1px solid rgba(0,255,0,0.3)", borderRadius: 14, color: "#00FF00",
+            fontFamily: "Montserrat, sans-serif", cursor: uploading ? "wait" : "pointer",
+          }}>
+            {uploading ? "Uploading..." : "Submit Reel"}
+          </button>
+        </div>
+      )}
+      {errorMsg && (
+        <div style={{ marginTop: 10, fontSize: 12, color: "rgba(255,80,80,0.8)", textAlign: "center" }}>{errorMsg}</div>
+      )}
     </div>
   );
 }

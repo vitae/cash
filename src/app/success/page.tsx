@@ -121,6 +121,7 @@ function SuccessPageInner() {
         if (data.verified) {
           setVerified(true);
           setUserEmail(data.email || null);
+          localStorage.setItem("fa_session_id", sid);
         } else {
           router.replace("/");
         }
