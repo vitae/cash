@@ -9,62 +9,42 @@ type Field = { id: string; label: string; type: string; placeholder?: string; op
 const flows: Record<FlowType, { title: string; color: string; accent: string; steps: Step[] }> = {
   sponsor: { title: "Custom Sponsor Pitch", color: "#00FF00", accent: "#FF00FF", steps: [
     { title: "About You", fields: [
-      { id: "name", label: "Stage Name Or Artist Name", type: "text", placeholder: "e.g. FlowMaster Kai" },
-      { id: "location", label: "Where Are You Based?", type: "text", placeholder: "e.g. Oahu, Hawaii" },
-      { id: "years", label: "Years Of Flow Experience", type: "number", placeholder: "e.g. 5" },
-      { id: "props", label: "What Props Do You Flow With?", type: "text", placeholder: "e.g. Poi, hoops, staff" },
-      { id: "style", label: "Describe Your Flow Style.", type: "textarea", placeholder: "e.g. I blend liquid poi with LED visuals." },
+      { id: "name", label: "Stage Name", type: "text", placeholder: "e.g. FlowMaster Kai" },
+      { id: "ig_handle", label: "@Instagram", type: "text", placeholder: "@yourhandle" },
+      { id: "props", label: "Props You Flow With", type: "text", placeholder: "e.g. Poi, hoops, staff, fans" },
+      { id: "ig_followers", label: "Followers (Approx)", type: "number", placeholder: "e.g. 2500" },
     ]},
-    { title: "Your Reach", fields: [
-      { id: "ig_handle", label: "Instagram Handle", type: "text", placeholder: "@yourhandle" },
-      { id: "ig_followers", label: "Instagram Followers", type: "number", placeholder: "e.g. 2500" },
-      { id: "tiktok_handle", label: "TikTok Handle (Optional)", type: "text", placeholder: "@yourhandle" },
-      { id: "events", label: "Notable Events Or Festivals", type: "textarea", placeholder: "e.g. Electric Forest, Burning Man." },
-    ]},
-    { title: "Target Brands", fields: [
-      { id: "brands", label: "Which Brands Do You Want To Pitch?", type: "multiselect", options: ["Flowtoys","UltraPoi","Moodhoops","SpinFX","Pyroterra","Flow DNA","Dark Monk","Emazing Lights","GloFX","Futuristic Lights","Other"] },
-      { id: "ask", label: "What Are You Asking For?", type: "multiselect", options: ["Free Product To Review","Ambassador Program","Paid Sponsorship","Content Collab","Discount Code","Event Sponsorship"] },
-      { id: "unique", label: "What Makes You Valuable To These Brands?", type: "textarea", placeholder: "e.g. I teach weekly workshops with 20+ students." },
+    { title: "Your Pitch", fields: [
+      { id: "brands", label: "Brands To Pitch", type: "multiselect", options: ["Flowtoys","UltraPoi","Moodhoops","SpinFX","Pyroterra","Flow DNA","Dark Monk","Emazing Lights","GloFX","Futuristic Lights","Other"] },
+      { id: "ask", label: "What You Want", type: "multiselect", options: ["Free Product","Ambassador Program","Paid Sponsorship","Content Collab","Discount Code","Event Sponsorship"] },
+      { id: "unique", label: "Why You? (Optional)", type: "textarea", placeholder: "e.g. I teach workshops, 50k video views" },
     ]},
   ]},
   booking: { title: "Event Booking Sheet", color: "#FF00FF", accent: "#00FF00", steps: [
     { title: "Artist Info", fields: [
-      { id: "name", label: "Stage Name Or Artist Name", type: "text", placeholder: "e.g. FlowMaster Kai" },
-      { id: "location", label: "Where Are You Based?", type: "text", placeholder: "e.g. Oahu, Hawaii" },
-      { id: "travel", label: "Willing To Travel?", type: "select", options: ["Local Only","Regional","National","International"] },
+      { id: "name", label: "Stage Name", type: "text", placeholder: "e.g. FlowMaster Kai" },
+      { id: "location", label: "Based In", type: "text", placeholder: "e.g. Oahu, Hawaii" },
       { id: "props", label: "Performance Props", type: "text", placeholder: "e.g. LED poi, fire staff" },
-      { id: "act_types", label: "Types Of Performance", type: "multiselect", options: ["LED / Glow","Fire","UV / Blacklight","Ambient Roaming","Stage Show","Interactive","Workshop","Other"] },
+      { id: "act_types", label: "Performance Types", type: "multiselect", options: ["LED / Glow","Fire","UV / Blacklight","Stage Show","Ambient Roaming","Interactive","Workshop"] },
     ]},
-    { title: "Tech Rider", fields: [
-      { id: "set_length", label: "Standard Set Length (Minutes)", type: "number", placeholder: "e.g. 20" },
-      { id: "space", label: "Minimum Performance Space", type: "text", placeholder: "e.g. 10 ft. x 10 ft." },
-      { id: "fire_needs", label: "Fire Requirements (If Applicable)", type: "textarea", placeholder: "e.g. Safety officer, extinguisher." },
-      { id: "music", label: "Music Requirements", type: "select", options: ["I Bring My Own","Need PA / Aux Input","Work With DJ","No Music Needed"] },
-    ]},
-    { title: "Rates And Availability", fields: [
-      { id: "rate_solo", label: "Solo Rate (Per Hour)", type: "text", placeholder: "e.g. $150-$250" },
-      { id: "rate_group", label: "Group Rate (Optional)", type: "text", placeholder: "e.g. $400-$600" },
-      { id: "availability", label: "General Availability", type: "multiselect", options: ["Weekday Evenings","Weekend Nights","Daytime Events","Festivals","Corporate","Private Parties","Weddings"] },
+    { title: "Rates & Details", fields: [
+      { id: "rate_solo", label: "Your Rate", type: "text", placeholder: "e.g. $150-$250/hr" },
+      { id: "set_length", label: "Set Length (Minutes)", type: "number", placeholder: "e.g. 20" },
+      { id: "travel", label: "Travel Range", type: "select", options: ["Local Only","Regional","National","International"] },
+      { id: "availability", label: "Availability", type: "multiselect", options: ["Weekday Evenings","Weekend Nights","Festivals","Corporate","Private Parties","Weddings"] },
     ]},
   ]},
   epk: { title: "Artist Press Kit", color: "#00FF00", accent: "#FF00FF", steps: [
     { title: "Your Story", fields: [
-      { id: "name", label: "Artist Or Stage Name", type: "text", placeholder: "e.g. FlowMaster Kai" },
-      { id: "location", label: "Where Are You From?", type: "text", placeholder: "e.g. Born in Portland, based in Oahu." },
-      { id: "years", label: "Years In Flow Arts", type: "number", placeholder: "e.g. 7" },
-      { id: "origin", label: "How Did You Get Into Flow Arts?", type: "textarea", placeholder: "e.g. Saw a fire spinner at a bonfire." },
-      { id: "fav_toy", label: "Favorite Flow Toy And Why.", type: "textarea", placeholder: "e.g. Flowtoys podpoi." },
+      { id: "name", label: "Stage Name", type: "text", placeholder: "e.g. FlowMaster Kai" },
+      { id: "ig", label: "@Instagram", type: "text", placeholder: "@yourhandle" },
+      { id: "props", label: "Flow Props", type: "text", placeholder: "e.g. Poi, hoops, fire staff" },
+      { id: "origin", label: "Your Flow Story", type: "textarea", placeholder: "How did you get into flow arts?" },
     ]},
-    { title: "Social Proof", fields: [
-      { id: "testimonial1", label: "Testimonial #1", type: "textarea", placeholder: "\"Best fire show ever.\" — Producer" },
-      { id: "notable", label: "Notable Achievements", type: "textarea", placeholder: "e.g. Featured in Honolulu Magazine." },
-    ]},
-    { title: "Socials And Contact", fields: [
-      { id: "ig", label: "Instagram", type: "text", placeholder: "@yourhandle" },
-      { id: "tiktok", label: "TikTok", type: "text", placeholder: "@yourhandle" },
-      { id: "youtube", label: "YouTube", type: "text", placeholder: "youtube.com/@channel" },
+    { title: "Proof & Contact", fields: [
+      { id: "notable", label: "Achievements / Events", type: "textarea", placeholder: "e.g. Electric Forest, 100k views" },
       { id: "email", label: "Booking Email", type: "text", placeholder: "bookings@yoursite.com" },
-      { id: "website", label: "Website", type: "text", placeholder: "https://yoursite.com" },
+      { id: "website", label: "Website (Optional)", type: "text", placeholder: "https://yoursite.com" },
     ]},
   ]},
 };
