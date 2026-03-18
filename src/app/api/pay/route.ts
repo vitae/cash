@@ -27,15 +27,7 @@ export async function POST(request: NextRequest) {
       payment_method_types: ["card"],
       line_items: [
         {
-          price_data: {
-            currency: "usd",
-            unit_amount: 500,
-            product_data: {
-              name: "Flow Arts Professional — All 3 Generators",
-              description:
-                "Custom Sponsor Pitch + Event Booking Sheet + Artist Press Kit. One-time payment, lifetime access, unlimited uses.",
-            },
-          },
+          price: "price_1TC9DpQQiXDm8D55crP980w8",
           quantity: 1,
         },
       ],
