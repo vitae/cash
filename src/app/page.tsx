@@ -197,7 +197,7 @@ export default function Home() {
             backgroundSize: "200% 200%",
             animation: "gradientShift 3s ease infinite",
             color: "#000",
-            fontFamily: "Montserrat, sans-serif", fontSize: 11, fontWeight: 900,
+            fontFamily: "Inter, sans-serif", fontSize: 11, fontWeight: 900,
             letterSpacing: 2, textTransform: "uppercase", border: "none",
             borderRadius: 8, cursor: loading ? "wait" : "pointer",
             boxShadow: "0 0 15px rgba(0,255,0,0.4), 0 0 30px rgba(255,0,255,0.2)",
@@ -208,7 +208,7 @@ export default function Home() {
           onMouseDown={e => { e.currentTarget.style.transform = "scale(0.95)"; }}
           onMouseUp={e => { e.currentTarget.style.transform = "scale(1.08)"; }}
         >
-          {loading ? "..." : hasAccess ? "GENERATORS" : "$5"}
+          {loading ? "..." : hasAccess ? "GENERATORS" : "ONLY $5"}
         </button>
       </div>
 
@@ -287,7 +287,7 @@ export default function Home() {
                   backgroundSize: "300% 300%",
                   animation: "gradientShift 3s ease infinite, buyPulse 2.5s ease-in-out infinite",
                   color: "#000",
-                  fontFamily: "Montserrat, sans-serif",
+                  fontFamily: "Inter, sans-serif",
                   fontSize: "clamp(18px, 4.5vw, 26px)",
                   fontWeight: 900,
                   letterSpacing: "clamp(3px, 1vw, 7px)",
@@ -505,7 +505,7 @@ export default function Home() {
               filter: "drop-shadow(0 0 20px rgba(0,255,0,0.4))",
               position: "relative" as const,
             }}>
-              {hasAccess ? "Your Generators Are Ready" : "Unlock Everything For $5"}
+              {hasAccess ? "Your Generators Are Ready" : "Unlock Everything For Only $5"}
             </div>
             <div style={{
               width: "100%", maxWidth: 400, height: 2,
@@ -529,7 +529,7 @@ export default function Home() {
                 backgroundSize: "300% 300%",
                 animation: loading ? "none" : "gradientShift 3s ease infinite, buyPulse 2.5s ease-in-out infinite",
                 color: "#000",
-                fontFamily: "Montserrat, sans-serif",
+                fontFamily: "Inter, sans-serif",
                 fontSize: "clamp(20px, 5vw, 28px)",
                 fontWeight: 900,
                 letterSpacing: "clamp(4px, 1.2vw, 8px)",
@@ -994,7 +994,7 @@ function UploadZone() {
           marginTop: 16, padding: "12px 28px", fontSize: 13, fontWeight: 700,
           letterSpacing: 2, textTransform: "uppercase", background: "rgba(255,0,255,0.15)",
           border: "1px solid rgba(255,0,255,0.4)", borderRadius: 12, color: "#FF00FF",
-          fontFamily: "Montserrat, sans-serif", cursor: "pointer",
+          fontFamily: "Inter, sans-serif", cursor: "pointer",
           textShadow: "0 0 10px rgba(255,0,255,0.3)",
           boxShadow: "0 0 15px rgba(255,0,255,0.15)",
           transition: "all 0.2s ease",
@@ -1008,7 +1008,7 @@ function UploadZone() {
   const inputStyle: React.CSSProperties = {
     width: "100%", padding: "14px 18px", background: "rgba(0,0,0,0.5)",
     border: "1px solid rgba(0,255,0,0.2)", borderRadius: 12, color: "#fff",
-    fontFamily: "Montserrat, sans-serif", fontSize: 14, fontWeight: 300, outline: "none",
+    fontFamily: "Inter, sans-serif", fontSize: 14, fontWeight: 300, outline: "none",
     transition: "border-color 0.2s ease, box-shadow 0.2s ease",
   };
 
@@ -1117,7 +1117,7 @@ function UploadZone() {
             textTransform: "uppercase",
             background: uploading ? "rgba(0,255,0,0.08)" : "rgba(0,255,0,0.2)",
             border: "1px solid rgba(0,255,0,0.4)", borderRadius: 14, color: "#00FF00",
-            fontFamily: "Montserrat, sans-serif", cursor: uploading ? "wait" : "pointer",
+            fontFamily: "Inter, sans-serif", cursor: uploading ? "wait" : "pointer",
             textShadow: "0 0 10px rgba(0,255,0,0.3)",
             boxShadow: uploading ? "none" : "0 0 20px rgba(0,255,0,0.15)",
             transition: "all 0.2s ease",

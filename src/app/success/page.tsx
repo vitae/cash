@@ -11,8 +11,12 @@ const flows: Record<FlowType, { title: string; color: string; accent: string; st
     { title: "About You", fields: [
       { id: "name", label: "Stage Name", type: "text", placeholder: "e.g. FlowMaster Kai" },
       { id: "ig_handle", label: "@Instagram", type: "text", placeholder: "@yourhandle" },
-      { id: "props", label: "Props You Flow With", type: "text", placeholder: "e.g. Poi, hoops, staff, fans" },
-      { id: "ig_followers", label: "Followers (Approx)", type: "number", placeholder: "e.g. 2500" },
+      { id: "location", label: "Location", type: "text", placeholder: "e.g. Oahu, Hawaii" },
+      { id: "years", label: "Years Flowing", type: "number", placeholder: "e.g. 5" },
+      { id: "props", label: "Props", type: "text", placeholder: "e.g. Poi, hoops, staff" },
+      { id: "style", label: "Your Style", type: "text", placeholder: "e.g. Liquid poi + LED visuals" },
+      { id: "ig_followers", label: "Followers", type: "number", placeholder: "e.g. 2500" },
+      { id: "events", label: "Events / Festivals", type: "text", placeholder: "e.g. Electric Forest, Burning Man" },
     ]},
     { title: "Your Pitch", fields: [
       { id: "brands", label: "Brands To Pitch", type: "multiselect", options: ["Flowtoys","UltraPoi","Moodhoops","SpinFX","Pyroterra","Flow DNA","Dark Monk","Emazing Lights","GloFX","Futuristic Lights","Other"] },
@@ -218,13 +222,13 @@ function SuccessPageInner() {
 
   // ─── Styles ───────────────────────────────────────────────────────────
   const css = `
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
     * { box-sizing: border-box; }
 
     body {
       background: #000;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Inter', sans-serif;
       margin: 0;
       -webkit-font-smoothing: antialiased;
     }
@@ -310,7 +314,7 @@ function SuccessPageInner() {
       border-radius: 14px;
       color: #fff;
       padding: 15px 18px;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Inter', sans-serif;
       font-size: 14px;
       font-weight: 300;
       outline: none;
@@ -334,7 +338,7 @@ function SuccessPageInner() {
     select.field-input option {
       background: #0a0a0a;
       color: #fff;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Inter', sans-serif;
       padding: 12px;
     }
     select.field-input option:checked {
@@ -354,7 +358,7 @@ function SuccessPageInner() {
       padding: 9px 16px;
       font-size: 12px;
       font-weight: 500;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Inter', sans-serif;
       cursor: pointer;
       border-radius: 100px;
       border: 1px solid rgba(255,255,255,0.15);
@@ -394,7 +398,7 @@ function SuccessPageInner() {
       border: 1px solid #00FF00;
       border-radius: 16px;
       color: #00FF00;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Inter', sans-serif;
       cursor: pointer;
       -webkit-appearance: none;
       transition: all 0.25s ease;
@@ -417,7 +421,7 @@ function SuccessPageInner() {
       border: 1px solid #FF00FF;
       border-radius: 14px;
       color: #FF00FF;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Inter', sans-serif;
       cursor: pointer;
       -webkit-appearance: none;
       transition: all 0.25s ease;
@@ -439,7 +443,7 @@ function SuccessPageInner() {
       font-weight: 500;
       border: none;
       background: none;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Inter', sans-serif;
       padding: 8px 0;
       transition: all 0.2s;
       text-shadow: 0 0 8px rgba(255,0,255,0.4);
@@ -488,7 +492,7 @@ function SuccessPageInner() {
       border: 1px solid #00FF00;
       border-radius: 100px;
       color: #00FF00;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Inter', sans-serif;
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       z-index: 1000;
