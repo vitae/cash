@@ -28,7 +28,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
     }
 
     const submission = lockData as ReelSubmission;
-    const handle = submission.artist_name;
+    const handle = submission.artist_name.replace(/^@+/, "");
 
     // Download
     console.log(`Downloading video from ${submission.video_url}`);
