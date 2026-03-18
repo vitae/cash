@@ -249,52 +249,84 @@ function SuccessPageInner() {
       -webkit-font-smoothing: antialiased;
     }
 
+    /* ── Noise texture overlay ── */
+    .page-wrap::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 180px 180px;
+    }
+
     @keyframes pulse { 0%,100%{width:20%} 50%{width:90%} }
     @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
-    @keyframes dotPulse { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+    @keyframes dotPulse { 0%,80%,100%{opacity:.15;transform:scale(0.7)} 40%{opacity:1;transform:scale(1.3)} }
     @keyframes fadeInUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes glowPulse { 0%,100%{text-shadow:0 0 10px rgba(0,255,0,0.4)} 50%{text-shadow:0 0 25px rgba(0,255,0,0.7),0 0 50px rgba(0,255,0,0.3)} }
+    @keyframes glowPulse { 0%,100%{text-shadow:0 0 10px #00FF00, 0 0 40px #00FF00, 0 0 80px rgba(0,255,0,0.5)} 50%{text-shadow:0 0 20px #00FF00, 0 0 60px #00FF00, 0 0 120px rgba(0,255,0,0.6)} }
     @keyframes spin { to{transform:rotate(360deg)} }
     @keyframes toastIn { from{opacity:0;transform:translate(-50%,12px)} to{opacity:1;transform:translate(-50%,0)} }
     @keyframes toastOut { from{opacity:1;transform:translate(-50%,0)} to{opacity:0;transform:translate(-50%,12px)} }
+    @keyframes borderGlow {
+      0%,100% { box-shadow: 0 0 8px rgba(0,255,0,0.3), 0 0 24px rgba(0,255,0,0.15), inset 0 0 8px rgba(0,255,0,0.05); }
+      50% { box-shadow: 0 0 16px rgba(0,255,0,0.5), 0 0 48px rgba(0,255,0,0.25), inset 0 0 16px rgba(0,255,0,0.08); }
+    }
+    @keyframes borderGlowM {
+      0%,100% { box-shadow: 0 0 8px rgba(255,0,255,0.3), 0 0 24px rgba(255,0,255,0.15), inset 0 0 8px rgba(255,0,255,0.05); }
+      50% { box-shadow: 0 0 16px rgba(255,0,255,0.5), 0 0 48px rgba(255,0,255,0.25), inset 0 0 16px rgba(255,0,255,0.08); }
+    }
+    @keyframes neonSpinner {
+      0% { border-top-color: #00FF00; filter: drop-shadow(0 0 6px #00FF00); }
+      50% { border-top-color: #FF00FF; filter: drop-shadow(0 0 6px #FF00FF); }
+      100% { border-top-color: #00FF00; filter: drop-shadow(0 0 6px #00FF00); }
+    }
+    @keyframes progressGlow {
+      0%,100% { box-shadow: 0 0 8px #00FF00, 0 0 20px rgba(0,255,0,0.4); }
+      50% { box-shadow: 0 0 14px #00FF00, 0 0 36px rgba(0,255,0,0.6); }
+    }
 
     .fi { animation: fadeInUp 0.45s ease-out both; }
 
-    .glow-green { text-shadow: 0 0 12px rgba(0,255,0,0.5), 0 0 30px rgba(0,255,0,0.2); }
-    .glow-magenta { text-shadow: 0 0 12px rgba(255,0,255,0.5), 0 0 30px rgba(255,0,255,0.2); }
+    .glow-green { color: #00FF00; text-shadow: 0 0 10px #00FF00, 0 0 40px #00FF00, 0 0 80px rgba(0,255,0,0.5); }
+    .glow-magenta { color: #FF00FF; text-shadow: 0 0 10px #FF00FF, 0 0 40px #FF00FF, 0 0 80px rgba(255,0,255,0.5); }
     .glow-green-anim { animation: glowPulse 3s ease-in-out infinite; }
 
     .gen-card {
-      background: rgba(0,255,0,0.03);
+      background: rgba(0,255,0,0.04);
       backdrop-filter: blur(40px);
       -webkit-backdrop-filter: blur(40px);
-      border: 1px solid rgba(0,255,0,0.12);
+      border: 1px solid rgba(0,255,0,0.3);
       border-radius: 20px;
       padding: 28px 22px;
       text-align: center;
       cursor: pointer;
       transition: all 0.3s ease;
+      animation: borderGlow 3s ease-in-out infinite;
     }
     .gen-card:hover {
-      border-color: rgba(0,255,0,0.35);
-      background: rgba(0,255,0,0.06);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(0,255,0,0.08);
+      border-color: #00FF00;
+      background: rgba(0,255,0,0.1);
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 0 20px rgba(0,255,0,0.4), 0 0 60px rgba(0,255,0,0.2), 0 8px 32px rgba(0,255,0,0.15);
     }
     .gen-card-m {
-      background: rgba(255,0,255,0.03);
-      border: 1px solid rgba(255,0,255,0.12);
+      background: rgba(255,0,255,0.04);
+      border: 1px solid rgba(255,0,255,0.3);
+      animation: borderGlowM 3s ease-in-out infinite;
     }
     .gen-card-m:hover {
-      border-color: rgba(255,0,255,0.35);
-      background: rgba(255,0,255,0.06);
-      box-shadow: 0 8px 32px rgba(255,0,255,0.08);
+      border-color: #FF00FF;
+      background: rgba(255,0,255,0.1);
+      box-shadow: 0 0 20px rgba(255,0,255,0.4), 0 0 60px rgba(255,0,255,0.2), 0 8px 32px rgba(255,0,255,0.15);
     }
 
     .field-input {
       width: 100%;
       background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(0,255,0,0.25);
       border-radius: 14px;
       color: #fff;
       padding: 15px 18px;
@@ -306,13 +338,14 @@ function SuccessPageInner() {
       transition: border-color 0.25s, box-shadow 0.25s;
     }
     .field-input:focus {
-      border-color: rgba(0,255,0,0.4);
-      box-shadow: 0 0 0 3px rgba(0,255,0,0.08), 0 0 20px rgba(0,255,0,0.06);
+      border-color: #00FF00;
+      box-shadow: 0 0 8px rgba(0,255,0,0.4), 0 0 24px rgba(0,255,0,0.2), 0 0 0 3px rgba(0,255,0,0.1);
     }
-    .field-input::placeholder { color: rgba(255,255,255,0.25); }
+    .field-input::placeholder { color: rgba(255,255,255,0.3); }
+    .field-input-m { border-color: rgba(255,0,255,0.25); }
     .field-input-m:focus {
-      border-color: rgba(255,0,255,0.4);
-      box-shadow: 0 0 0 3px rgba(255,0,255,0.08), 0 0 20px rgba(255,0,255,0.06);
+      border-color: #FF00FF;
+      box-shadow: 0 0 8px rgba(255,0,255,0.4), 0 0 24px rgba(255,0,255,0.2), 0 0 0 3px rgba(255,0,255,0.1);
     }
 
     .multi-btn {
@@ -322,27 +355,30 @@ function SuccessPageInner() {
       font-family: 'Montserrat', sans-serif;
       cursor: pointer;
       border-radius: 100px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.03);
-      color: rgba(255,255,255,0.4);
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.5);
       transition: all 0.2s ease;
       -webkit-appearance: none;
     }
     .multi-btn:hover {
-      border-color: rgba(0,255,0,0.25);
-      color: rgba(0,255,0,0.6);
+      border-color: rgba(0,255,0,0.5);
+      color: #00FF00;
+      box-shadow: 0 0 12px rgba(0,255,0,0.15);
     }
     .multi-btn-active {
-      border-color: rgba(0,255,0,0.4) !important;
-      background: rgba(0,255,0,0.1) !important;
+      border-color: #00FF00 !important;
+      background: rgba(0,255,0,0.15) !important;
       color: #00FF00 !important;
-      box-shadow: 0 0 12px rgba(0,255,0,0.1);
+      box-shadow: 0 0 12px rgba(0,255,0,0.3), 0 0 24px rgba(0,255,0,0.15);
+      text-shadow: 0 0 8px rgba(0,255,0,0.5);
     }
     .multi-btn-active-m {
-      border-color: rgba(255,0,255,0.4) !important;
-      background: rgba(255,0,255,0.1) !important;
+      border-color: #FF00FF !important;
+      background: rgba(255,0,255,0.15) !important;
       color: #FF00FF !important;
-      box-shadow: 0 0 12px rgba(255,0,255,0.1);
+      box-shadow: 0 0 12px rgba(255,0,255,0.3), 0 0 24px rgba(255,0,255,0.15);
+      text-shadow: 0 0 8px rgba(255,0,255,0.5);
     }
 
     .btn-primary {
@@ -353,19 +389,20 @@ function SuccessPageInner() {
       text-transform: uppercase;
       width: 100%;
       background: rgba(0,255,0,0.12);
-      border: 1px solid rgba(0,255,0,0.3);
+      border: 1px solid #00FF00;
       border-radius: 16px;
       color: #00FF00;
       font-family: 'Montserrat', sans-serif;
       cursor: pointer;
       -webkit-appearance: none;
       transition: all 0.25s ease;
+      text-shadow: 0 0 10px #00FF00, 0 0 30px rgba(0,255,0,0.4);
+      box-shadow: 0 0 12px rgba(0,255,0,0.2), 0 0 30px rgba(0,255,0,0.1);
     }
     .btn-primary:hover {
-      background: rgba(0,255,0,0.18);
-      border-color: rgba(0,255,0,0.5);
-      box-shadow: 0 0 24px rgba(0,255,0,0.12);
-      transform: translateY(-1px);
+      background: rgba(0,255,0,0.22);
+      box-shadow: 0 0 20px rgba(0,255,0,0.4), 0 0 50px rgba(0,255,0,0.2);
+      transform: translateY(-2px);
     }
 
     .btn-secondary {
@@ -374,23 +411,26 @@ function SuccessPageInner() {
       font-weight: 600;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,0,255,0.15);
+      background: rgba(255,0,255,0.1);
+      border: 1px solid #FF00FF;
       border-radius: 14px;
-      color: rgba(255,0,255,0.5);
+      color: #FF00FF;
       font-family: 'Montserrat', sans-serif;
       cursor: pointer;
       -webkit-appearance: none;
       transition: all 0.25s ease;
+      text-shadow: 0 0 10px #FF00FF, 0 0 30px rgba(255,0,255,0.4);
+      box-shadow: 0 0 10px rgba(255,0,255,0.15);
     }
     .btn-secondary:hover {
-      background: rgba(255,0,255,0.08);
-      border-color: rgba(255,0,255,0.3);
+      background: rgba(255,0,255,0.18);
+      box-shadow: 0 0 18px rgba(255,0,255,0.35), 0 0 40px rgba(255,0,255,0.15);
+      transform: translateY(-1px);
     }
 
     .btn-back {
       font-size: 12px;
-      color: rgba(255,0,255,0.6);
+      color: #FF00FF;
       cursor: pointer;
       letter-spacing: 1px;
       text-transform: uppercase;
@@ -399,32 +439,38 @@ function SuccessPageInner() {
       background: none;
       font-family: 'Montserrat', sans-serif;
       padding: 8px 0;
-      transition: color 0.2s;
+      transition: all 0.2s;
+      text-shadow: 0 0 8px rgba(255,0,255,0.4);
     }
-    .btn-back:hover { color: #FF00FF; }
+    .btn-back:hover { color: #FF00FF; text-shadow: 0 0 12px #FF00FF, 0 0 30px rgba(255,0,255,0.5); }
 
     .progress-bar { width: 100%; height: 5px; border-radius: 3px; transition: all 0.5s ease; }
-    .progress-bar-done { background: linear-gradient(90deg, rgba(255,0,255,0.6), rgba(255,0,255,0.4)); }
-    .progress-bar-active {
-      background: linear-gradient(90deg, rgba(0,255,0,0.7), rgba(0,255,0,0.4));
-      box-shadow: 0 0 8px rgba(0,255,0,0.3);
+    .progress-bar-done {
+      background: linear-gradient(90deg, #FF00FF, rgba(255,0,255,0.7));
+      box-shadow: 0 0 8px rgba(255,0,255,0.5);
     }
-    .progress-bar-pending { background: rgba(255,255,255,0.06); }
+    .progress-bar-active {
+      background: linear-gradient(90deg, #00FF00, rgba(0,255,0,0.7));
+      box-shadow: 0 0 10px rgba(0,255,0,0.5), 0 0 20px rgba(0,255,0,0.25);
+      animation: progressGlow 2s ease-in-out infinite;
+    }
+    .progress-bar-pending { background: rgba(255,255,255,0.08); }
 
     .result-block {
       border-radius: 20px;
       padding: 24px;
-      background: rgba(0,255,0,0.02);
+      background: rgba(0,0,0,0.6);
       backdrop-filter: blur(40px);
       -webkit-backdrop-filter: blur(40px);
-      border: 1px solid rgba(0,255,0,0.1);
+      border: 1px solid rgba(0,255,0,0.35);
       white-space: pre-wrap;
       font-size: 13px;
-      color: rgba(255,255,255,0.75);
+      color: rgba(255,255,255,0.9);
       line-height: 1.9;
       font-weight: 300;
+      box-shadow: 0 0 16px rgba(0,255,0,0.15), 0 0 40px rgba(0,255,0,0.08), inset 0 0 20px rgba(0,255,0,0.03);
     }
-    .result-block strong, .result-block b { color: #00FF00; font-weight: 600; }
+    .result-block strong, .result-block b { color: #00FF00; font-weight: 600; text-shadow: 0 0 8px rgba(0,255,0,0.4); }
 
     .toast {
       position: fixed;
@@ -436,8 +482,8 @@ function SuccessPageInner() {
       font-weight: 600;
       letter-spacing: 1px;
       text-transform: uppercase;
-      background: rgba(0,255,0,0.15);
-      border: 1px solid rgba(0,255,0,0.3);
+      background: rgba(0,0,0,0.8);
+      border: 1px solid #00FF00;
       border-radius: 100px;
       color: #00FF00;
       font-family: 'Montserrat', sans-serif;
@@ -446,28 +492,32 @@ function SuccessPageInner() {
       z-index: 1000;
       pointer-events: none;
       animation: toastIn 0.3s ease-out;
+      text-shadow: 0 0 10px #00FF00;
+      box-shadow: 0 0 16px rgba(0,255,0,0.3), 0 0 40px rgba(0,255,0,0.15);
     }
     .toast-exit { animation: toastOut 0.3s ease-in forwards; }
 
     .dots span {
       display: inline-block;
-      width: 8px; height: 8px;
-      margin: 0 3px;
+      width: 10px; height: 10px;
+      margin: 0 5px;
       border-radius: 50%;
       background: #00FF00;
+      box-shadow: 0 0 10px #00FF00, 0 0 24px rgba(0,255,0,0.5);
       animation: dotPulse 1.4s infinite ease-in-out both;
     }
     .dots span:nth-child(1) { animation-delay: -0.32s; }
-    .dots span:nth-child(2) { animation-delay: -0.16s; }
+    .dots span:nth-child(2) { animation-delay: -0.16s; background: #FF00FF; box-shadow: 0 0 10px #FF00FF, 0 0 24px rgba(255,0,255,0.5); }
     .dots span:nth-child(3) { animation-delay: 0s; }
 
     .spinner {
       width: 40px; height: 40px;
-      border: 3px solid rgba(0,255,0,0.15);
+      border: 3px solid rgba(0,255,0,0.2);
       border-top-color: #00FF00;
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      animation: spin 0.8s linear infinite, neonSpinner 2s ease-in-out infinite;
       margin: 0 auto 20px;
+      filter: drop-shadow(0 0 8px #00FF00);
     }
 
     @media (min-width: 640px) {
@@ -485,7 +535,7 @@ function SuccessPageInner() {
         <main className="page-wrap" style={{ padding: "28px 16px", maxWidth: 480, margin: "0 auto", color: "#fff" }}>
           <div style={{ textAlign: "center", paddingTop: 100 }}>
             <div className="spinner" />
-            <div style={{ fontSize: 13, color: "rgba(255,0,255,0.5)", fontWeight: 500, letterSpacing: 1 }}>
+            <div className="glow-magenta" style={{ fontSize: 13, color: "#FF00FF", fontWeight: 500, letterSpacing: 1 }}>
               Verifying your purchase...
             </div>
           </div>
@@ -501,42 +551,42 @@ function SuccessPageInner() {
         <style>{css}</style>
         <main ref={mainRef} className={`page-wrap ${fadeClass}`} style={{ padding: "28px 16px", maxWidth: 480, margin: "0 auto", color: "#fff" }}>
           <div style={{ textAlign: "center", marginBottom: 28, paddingTop: 16 }}>
-            <div style={{ fontSize: 10, letterSpacing: 4, textTransform: "uppercase", color: "rgba(255,0,255,0.5)", marginBottom: 16 }}>Glow Wit Da Flow</div>
+            <div className="glow-magenta" style={{ fontSize: 10, letterSpacing: 4, textTransform: "uppercase", color: "#FF00FF", marginBottom: 16 }}>Glow Wit Da Flow</div>
             <h1 className="glow-green glow-green-anim" style={{ fontSize: 32, fontWeight: 900, letterSpacing: 6, textTransform: "uppercase", color: "#00FF00", margin: 0, lineHeight: 1.1 }}>Flow Arts</h1>
-            <h2 className="glow-magenta" style={{ fontSize: 16, fontWeight: 400, letterSpacing: 8, textTransform: "uppercase", color: "rgba(255,0,255,0.6)", margin: "4px 0 0" }}>Professional</h2>
-            <div style={{ width: "100%", maxWidth: 200, height: 1.5, background: "rgba(0,255,0,0.3)", margin: "14px auto", borderRadius: 1 }} />
-            <div style={{ display: "inline-block", padding: "6px 18px", fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", background: "rgba(0,255,0,0.1)", border: "1px solid rgba(0,255,0,0.2)", borderRadius: 10, color: "#00FF00" }}>Unlocked</div>
+            <h2 className="glow-magenta" style={{ fontSize: 16, fontWeight: 400, letterSpacing: 8, textTransform: "uppercase", color: "#FF00FF", margin: "4px 0 0" }}>Professional</h2>
+            <div style={{ width: "100%", maxWidth: 200, height: 1.5, background: "#00FF00", boxShadow: "0 0 8px #00FF00, 0 0 20px rgba(0,255,0,0.4)", margin: "14px auto", borderRadius: 1 }} />
+            <div style={{ display: "inline-block", padding: "6px 18px", fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", background: "rgba(0,255,0,0.12)", border: "1px solid #00FF00", borderRadius: 10, color: "#00FF00", textShadow: "0 0 10px #00FF00", boxShadow: "0 0 12px rgba(0,255,0,0.25)" }}>Unlocked</div>
             {userEmail && (
-              <div style={{ marginTop: 14, fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 300 }}>
-                Welcome, <span style={{ color: "rgba(0,255,0,0.7)", fontWeight: 500 }}>{userEmail}</span>
+              <div style={{ marginTop: 14, fontSize: 12, color: "rgba(255,255,255,0.85)", fontWeight: 300 }}>
+                Welcome, <span className="glow-green" style={{ color: "#00FF00", fontWeight: 500 }}>{userEmail}</span>
               </div>
             )}
           </div>
-          <p style={{ fontSize: 13, color: "rgba(255,0,255,0.5)", fontWeight: 500, textAlign: "center", marginBottom: 6 }}>The Thinking Has Already Been Done, So You Can Create!</p>
-          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 300, textAlign: "center", marginBottom: 24 }}>Choose A Generator Below To Get Started.</p>
+          <p className="glow-magenta" style={{ fontSize: 13, color: "#FF00FF", fontWeight: 500, textAlign: "center", marginBottom: 6 }}>The Thinking Has Already Been Done, So You Can Create!</p>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", fontWeight: 300, textAlign: "center", marginBottom: 24 }}>Choose A Generator Below To Get Started.</p>
 
           <div className="gen-grid" style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
             <div className="gen-card" onClick={() => setCurrentFlow("sponsor")}>
-              <div style={{ fontSize: 18, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Custom Sponsor Pitch</div>
-              <div style={{ width: "100%", maxWidth: 240, height: 1.5, background: "rgba(255,0,255,0.3)", margin: "0 auto 10px", borderRadius: 1 }} />
-              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 300, margin: 0 }}>Personalized pitch for 50 of the best brand companies.</p>
+              <div className="glow-green" style={{ fontSize: 18, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Custom Sponsor Pitch</div>
+              <div style={{ width: "100%", maxWidth: 240, height: 1.5, background: "#FF00FF", boxShadow: "0 0 6px #FF00FF", margin: "0 auto 10px", borderRadius: 1 }} />
+              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", fontWeight: 300, margin: 0 }}>Personalized pitch for 50 of the best brand companies.</p>
             </div>
             <div className="gen-card gen-card-m" onClick={() => setCurrentFlow("booking")}>
-              <div style={{ fontSize: 18, fontWeight: 600, color: "#FF00FF", marginBottom: 4 }}>Event Booking Sheet</div>
-              <div style={{ width: "100%", maxWidth: 220, height: 1.5, background: "rgba(0,255,0,0.3)", margin: "0 auto 10px", borderRadius: 1 }} />
-              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 300, margin: 0 }}>Tech rider, rates, and availability for event producers.</p>
+              <div className="glow-magenta" style={{ fontSize: 18, fontWeight: 600, color: "#FF00FF", marginBottom: 4 }}>Event Booking Sheet</div>
+              <div style={{ width: "100%", maxWidth: 220, height: 1.5, background: "#00FF00", boxShadow: "0 0 6px #00FF00", margin: "0 auto 10px", borderRadius: 1 }} />
+              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", fontWeight: 300, margin: 0 }}>Tech rider, rates, and availability for event producers.</p>
             </div>
             <div className="gen-card" onClick={() => setCurrentFlow("epk")}>
-              <div style={{ fontSize: 18, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Artist Press Kit</div>
-              <div style={{ width: "100%", maxWidth: 170, height: 1.5, background: "rgba(255,0,255,0.3)", margin: "0 auto 10px", borderRadius: 1 }} />
-              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 300, margin: 0 }}>Full EPK with bio, reels, testimonials, and socials.</p>
+              <div className="glow-green" style={{ fontSize: 18, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Artist Press Kit</div>
+              <div style={{ width: "100%", maxWidth: 170, height: 1.5, background: "#FF00FF", boxShadow: "0 0 6px #FF00FF", margin: "0 auto 10px", borderRadius: 1 }} />
+              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", fontWeight: 300, margin: 0 }}>Full EPK with bio, reels, testimonials, and socials.</p>
             </div>
           </div>
 
           <div style={{ textAlign: "center", paddingTop: 16 }}>
-            <p style={{ fontSize: 10, letterSpacing: 3, textTransform: "uppercase", color: "rgba(255,0,255,0.25)", margin: "0 0 4px" }}>Your Vibe Attracts Your Tribe.</p>
-            <div style={{ width: "100%", maxWidth: 220, height: 1, background: "rgba(0,255,0,0.15)", margin: "0 auto 4px" }} />
-            <p style={{ fontSize: 9, letterSpacing: 2, textTransform: "uppercase", color: "rgba(0,255,0,0.2)", margin: 0 }}>Glow Wit Da Flow</p>
+            <p className="glow-magenta" style={{ fontSize: 10, letterSpacing: 3, textTransform: "uppercase", color: "#FF00FF", margin: "0 0 4px" }}>Your Vibe Attracts Your Tribe.</p>
+            <div style={{ width: "100%", maxWidth: 220, height: 1, background: "#00FF00", boxShadow: "0 0 6px rgba(0,255,0,0.5)", margin: "0 auto 4px" }} />
+            <p className="glow-green" style={{ fontSize: 9, letterSpacing: 2, textTransform: "uppercase", color: "#00FF00", margin: 0 }}>Glow Wit Da Flow</p>
           </div>
         </main>
         {toast && <div className="toast">{toast}</div>}
@@ -559,11 +609,11 @@ function SuccessPageInner() {
         <main className={`page-wrap ${fadeClass}`} style={{ padding: "28px 16px", maxWidth: 480, margin: "0 auto", color: "#fff" }}>
           <button className="btn-back" onClick={resetAll}>&larr; Back</button>
           <div style={{ textAlign: "center", marginBottom: 20 }}>
-            <div style={{ display: "inline-block", padding: "5px 14px", fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", background: "rgba(255,0,255,0.15)", border: "1px solid rgba(255,0,255,0.25)", borderRadius: 10, color: "#FF00FF", marginBottom: 14 }}>Generated</div>
+            <div className="glow-magenta" style={{ display: "inline-block", padding: "5px 14px", fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", background: "rgba(255,0,255,0.15)", border: "1px solid #FF00FF", borderRadius: 10, color: "#FF00FF", marginBottom: 14, boxShadow: "0 0 12px rgba(255,0,255,0.25)", textShadow: "0 0 10px #FF00FF" }}>Generated</div>
             <div className={isMagenta ? "glow-magenta" : "glow-green"} style={{ fontSize: 22, fontWeight: 600, color: flow.color }}>{flow.title}</div>
-            <div style={{ width: "100%", maxWidth: 240, height: 1.5, background: flow.accent, opacity: 0.3, margin: "8px auto", borderRadius: 1 }} />
-            <p style={{ fontSize: 12, color: "rgba(255,0,255,0.45)", fontWeight: 500, margin: "0 0 6px" }}>The Thinking Has Already Been Done, So You Can Create!</p>
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", fontWeight: 300 }}>Personalized For {(formData.name as string) || "You"}. Edit, Copy, And Send.</p>
+            <div style={{ width: "100%", maxWidth: 240, height: 1.5, background: flow.accent, boxShadow: `0 0 8px ${flow.accent}`, margin: "8px auto", borderRadius: 1 }} />
+            <p className="glow-magenta" style={{ fontSize: 12, color: "#FF00FF", fontWeight: 500, margin: "0 0 6px" }}>The Thinking Has Already Been Done, So You Can Create!</p>
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", fontWeight: 300 }}>Personalized For {(formData.name as string) || "You"}. Edit, Copy, And Send.</p>
           </div>
           <div className="result-block">{result}</div>
           <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
@@ -583,16 +633,16 @@ function SuccessPageInner() {
         <style>{css}</style>
         <main className={`page-wrap ${fadeClass}`} style={{ padding: "28px 16px", maxWidth: 480, margin: "0 auto", color: "#fff" }}>
           <div style={{ textAlign: "center", padding: "60px 16px" }}>
-            <div style={{ display: "inline-block", padding: "5px 14px", fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", background: "rgba(255,0,255,0.15)", border: "1px solid rgba(255,0,255,0.25)", borderRadius: 10, color: "#FF00FF", marginBottom: 14 }}>Generating</div>
+            <div className="glow-magenta" style={{ display: "inline-block", padding: "5px 14px", fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", background: "rgba(255,0,255,0.15)", border: "1px solid #FF00FF", borderRadius: 10, color: "#FF00FF", marginBottom: 14, boxShadow: "0 0 12px rgba(255,0,255,0.25)", textShadow: "0 0 10px #FF00FF" }}>Generating</div>
             <div className={isMagenta ? "glow-magenta" : "glow-green"} style={{ fontSize: 22, fontWeight: 600, color: flow.color, marginBottom: 6 }}>{flow.title}</div>
             <div className="dots" style={{ margin: "20px 0" }}>
               <span /><span /><span />
             </div>
-            <p style={{ fontSize: 13, color: "rgba(0,255,0,0.6)", fontWeight: 400, margin: "0 0 24px", minHeight: 20, transition: "opacity 0.3s" }}>
+            <p className="glow-green" style={{ fontSize: 13, color: "#00FF00", fontWeight: 400, margin: "0 0 24px", minHeight: 20, transition: "opacity 0.3s" }}>
               {PROGRESS_MESSAGES[progressIdx]}
             </p>
-            <div style={{ width: 240, height: 5, background: "rgba(255,255,255,0.04)", borderRadius: 3, margin: "0 auto", overflow: "hidden" }}>
-              <div style={{ height: "100%", background: "linear-gradient(90deg, #00FF00, rgba(0,255,0,0.3))", borderRadius: 3, animation: "pulse 2s ease-in-out infinite" }} />
+            <div style={{ width: 240, height: 5, background: "rgba(255,255,255,0.06)", borderRadius: 3, margin: "0 auto", overflow: "hidden" }}>
+              <div style={{ height: "100%", background: "linear-gradient(90deg, #00FF00, #FF00FF, #00FF00)", backgroundSize: "200% 100%", borderRadius: 3, animation: "pulse 2s ease-in-out infinite, shimmer 2s linear infinite", boxShadow: "0 0 12px #00FF00, 0 0 24px rgba(0,255,0,0.4)" }} />
             </div>
           </div>
         </main>
@@ -614,10 +664,10 @@ function SuccessPageInner() {
         </button>
 
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <div style={{ fontSize: 10, letterSpacing: 3, textTransform: "uppercase", color: flow.accent, opacity: 0.5, marginBottom: 6 }}>{flow.title}</div>
+          <div className={isMagenta ? "glow-magenta" : "glow-green"} style={{ fontSize: 10, letterSpacing: 3, textTransform: "uppercase", color: flow.accent, marginBottom: 6 }}>{flow.title}</div>
           <div className={isMagenta ? "glow-magenta" : "glow-green"} style={{ fontSize: 24, fontWeight: 600, color: flow.color }}>{currentStep.title}</div>
-          <div style={{ width: "100%", maxWidth: 180, height: 1.5, background: flow.accent, opacity: 0.3, margin: "8px auto 4px", borderRadius: 1 }} />
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", fontWeight: 300 }}>Step {step + 1} Of {flow.steps.length}</div>
+          <div style={{ width: "100%", maxWidth: 180, height: 1.5, background: flow.accent, boxShadow: `0 0 8px ${flow.accent}`, margin: "8px auto 4px", borderRadius: 1 }} />
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", fontWeight: 300 }}>Step {step + 1} Of {flow.steps.length}</div>
         </div>
 
         {/* Animated progress bar */}
@@ -633,7 +683,7 @@ function SuccessPageInner() {
         {/* Fields */}
         {currentStep.fields.map((f) => (
           <div key={f.id} style={{ marginBottom: 20 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: isMagenta ? "#FF00FF" : "#00FF00", marginBottom: 8, display: "block", letterSpacing: 0.3 }}>{f.label}</label>
+            <label className={isMagenta ? "glow-magenta" : "glow-green"} style={{ fontSize: 13, fontWeight: 600, color: isMagenta ? "#FF00FF" : "#00FF00", marginBottom: 8, display: "block", letterSpacing: 0.3 }}>{f.label}</label>
 
             {(f.type === "text" || f.type === "url" || f.type === "number") && (
               <input
@@ -660,7 +710,7 @@ function SuccessPageInner() {
                 value={(formData[f.id] as string) || ""}
                 onChange={(e) => setFormData({ ...formData, [f.id]: e.target.value })}
                 className={focusClass}
-                style={{ cursor: "pointer", color: formData[f.id] ? "#fff" : "rgba(255,255,255,0.25)" }}
+                style={{ cursor: "pointer", color: formData[f.id] ? "#fff" : "rgba(255,255,255,0.3)" }}
               >
                 <option value="">Select...</option>
                 {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}

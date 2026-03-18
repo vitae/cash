@@ -3,23 +3,28 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 // ── Keyframes injected once ──
 const KEYFRAMES = `
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(32px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 20px rgba(0,255,0,0.3), 0 0 60px rgba(0,255,0,0.1); }
-  50% { box-shadow: 0 0 30px rgba(0,255,0,0.5), 0 0 80px rgba(0,255,0,0.2), 0 0 120px rgba(0,255,0,0.05); }
+  0%, 100% { box-shadow: 0 0 20px rgba(0,255,0,0.4), 0 0 60px rgba(0,255,0,0.2); }
+  50% { box-shadow: 0 0 40px rgba(0,255,0,0.6), 0 0 100px rgba(0,255,0,0.3), 0 0 160px rgba(0,255,0,0.1); }
 }
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-6px); }
+  50% { transform: translateY(-8px); }
 }
 @keyframes particleDrift {
   0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
   10% { opacity: 1; }
   90% { opacity: 1; }
-  100% { transform: translateY(-100vh) translateX(40px) scale(0); opacity: 0; }
+  100% { transform: translateY(-100vh) translateX(60px) scale(0); opacity: 0; }
 }
 @keyframes shimmer {
   0% { background-position: -200% center; }
@@ -28,6 +33,27 @@ const KEYFRAMES = `
 @keyframes headerSlideDown {
   from { transform: translateY(-100%); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+@keyframes spinBorder {
+  from { --angle: 0deg; }
+  to { --angle: 360deg; }
+}
+@keyframes buyPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(0,255,0,0.5), 0 0 80px rgba(0,255,0,0.2), 0 0 120px rgba(255,0,255,0.1); }
+  50% { transform: scale(1.02); box-shadow: 0 0 40px rgba(255,0,255,0.5), 0 0 100px rgba(255,0,255,0.3), 0 0 160px rgba(0,255,0,0.1); }
+}
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes neonFlicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.8; }
+  94% { opacity: 1; }
+  96% { opacity: 0.9; }
+  97% { opacity: 1; }
 }
 html { scroll-behavior: smooth; }
 `;
@@ -124,25 +150,41 @@ export default function Home() {
       {/* Particle background */}
       <ParticleBackground />
 
+      {/* Noise/grain overlay */}
+      <div style={{
+        position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+        zIndex: 0, pointerEvents: "none", opacity: 0.035,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`,
+        backgroundRepeat: "repeat",
+        backgroundSize: "180px 180px",
+      }} />
+
       {/* Sticky header */}
       <div
         style={{
           position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-          background: "rgba(0,0,0,0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-          borderBottom: "1px solid rgba(0,255,0,0.15)",
+          background: "rgba(0,0,0,0.92)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
+          borderBottom: "1px solid rgba(0,255,0,0.3)",
           padding: "12px 24px",
           display: "flex", alignItems: "center", justifyContent: "space-between",
           transform: showStickyHeader ? "translateY(0)" : "translateY(-100%)",
           opacity: showStickyHeader ? 1 : 0,
           transition: "transform 0.35s cubic-bezier(.4,0,.2,1), opacity 0.35s ease",
           pointerEvents: showStickyHeader ? "auto" : "none",
+          boxShadow: showStickyHeader ? "0 4px 40px rgba(0,255,0,0.15), 0 1px 0 rgba(0,255,0,0.3)" : "none",
         }}
       >
         <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-          <span style={{ fontSize: 16, fontWeight: 900, color: "#00FF00", letterSpacing: 3, textTransform: "uppercase", textShadow: "0 0 20px rgba(0,255,0,0.5)" }}>
+          <span style={{
+            fontSize: 16, fontWeight: 900, color: "#00FF00", letterSpacing: 3, textTransform: "uppercase",
+            textShadow: "0 0 10px #00FF00, 0 0 40px #00FF00, 0 0 80px rgba(0,255,0,0.5)",
+          }}>
             Flow Arts
           </span>
-          <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(255,0,255,0.6)", letterSpacing: 4, textTransform: "uppercase" }}>
+          <span style={{
+            fontSize: 11, fontWeight: 700, color: "#FF00FF", letterSpacing: 4, textTransform: "uppercase",
+            textShadow: "0 0 10px #FF00FF, 0 0 30px rgba(255,0,255,0.5)",
+          }}>
             Pro
           </span>
         </div>
@@ -150,17 +192,21 @@ export default function Home() {
           onClick={hasAccess ? goToGenerators : handleBuyNow}
           disabled={loading}
           style={{
-            padding: "8px 20px", background: "#00FF00", color: "#000",
-            fontFamily: "Montserrat, sans-serif", fontSize: 11, fontWeight: 800,
+            padding: "8px 20px",
+            background: "linear-gradient(135deg, #00FF00 0%, #FF00FF 100%)",
+            backgroundSize: "200% 200%",
+            animation: "gradientShift 3s ease infinite",
+            color: "#000",
+            fontFamily: "Montserrat, sans-serif", fontSize: 11, fontWeight: 900,
             letterSpacing: 2, textTransform: "uppercase", border: "none",
             borderRadius: 8, cursor: loading ? "wait" : "pointer",
-            boxShadow: "0 0 15px rgba(0,255,0,0.3)",
+            boxShadow: "0 0 15px rgba(0,255,0,0.4), 0 0 30px rgba(255,0,255,0.2)",
             transition: "transform 0.15s ease, box-shadow 0.15s ease",
           }}
-          onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 0 25px rgba(0,255,0,0.5)"; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 0 15px rgba(0,255,0,0.3)"; }}
+          onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 0 25px rgba(0,255,0,0.6), 0 0 50px rgba(255,0,255,0.3)"; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 0 15px rgba(0,255,0,0.4), 0 0 30px rgba(255,0,255,0.2)"; }}
           onMouseDown={e => { e.currentTarget.style.transform = "scale(0.95)"; }}
-          onMouseUp={e => { e.currentTarget.style.transform = "scale(1.05)"; }}
+          onMouseUp={e => { e.currentTarget.style.transform = "scale(1.08)"; }}
         >
           {loading ? "..." : hasAccess ? "GENERATORS" : "$5"}
         </button>
@@ -177,45 +223,54 @@ export default function Home() {
 
         {/* ── Header ── */}
         <RevealSection delay={0}>
-          <div style={{ textAlign: "center", marginBottom: 48, paddingTop: 24 }}>
+          <div style={{ textAlign: "center", marginBottom: 56, paddingTop: 32 }}>
             <div style={{
-              fontSize: "clamp(10px, 2.5vw, 12px)", letterSpacing: 6, textTransform: "uppercase",
-              color: "rgba(255,0,255,0.5)", marginBottom: 24,
+              fontSize: "clamp(11px, 2.5vw, 13px)", letterSpacing: 8, textTransform: "uppercase",
+              color: "#FF00FF", marginBottom: 28,
+              textShadow: "0 0 10px #FF00FF, 0 0 40px #FF00FF, 0 0 80px rgba(255,0,255,0.5)",
+              animation: "neonFlicker 5s ease-in-out infinite",
             }}>
               For Flow Artists, By Flow Artists
             </div>
             <h1 style={{
-              fontSize: "clamp(40px, 10vw, 64px)", fontWeight: 900, letterSpacing: "clamp(6px, 2vw, 14px)",
-              textTransform: "uppercase", color: "#00FF00", margin: 0, lineHeight: 1.05,
-              textShadow: "0 0 40px rgba(0,255,0,0.4), 0 0 80px rgba(0,255,0,0.15)",
+              fontSize: "clamp(48px, 12vw, 80px)", fontWeight: 900, letterSpacing: "clamp(8px, 3vw, 20px)",
+              textTransform: "uppercase", margin: 0, lineHeight: 1.0,
+              background: "linear-gradient(135deg, #00FF00 0%, #00FF99 25%, #FF00FF 50%, #FF00FF 75%, #00FF00 100%)",
+              backgroundSize: "300% 300%",
+              animation: "gradientShift 6s ease infinite",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              filter: "drop-shadow(0 0 30px rgba(0,255,0,0.4)) drop-shadow(0 0 60px rgba(255,0,255,0.2))",
             }}>
               Flow Arts
             </h1>
             <h2 style={{
-              fontSize: "clamp(16px, 4vw, 24px)", fontWeight: 400,
-              letterSpacing: "clamp(8px, 2.5vw, 16px)", textTransform: "uppercase",
-              color: "rgba(255,0,255,0.6)", margin: "6px 0 0", lineHeight: 1.3,
-              textShadow: "0 0 30px rgba(255,0,255,0.25)",
+              fontSize: "clamp(20px, 5vw, 32px)", fontWeight: 300,
+              letterSpacing: "clamp(10px, 3vw, 22px)", textTransform: "uppercase",
+              color: "#FF00FF", margin: "8px 0 0", lineHeight: 1.3,
+              textShadow: "0 0 10px #FF00FF, 0 0 40px #FF00FF, 0 0 80px rgba(255,0,255,0.5)",
             }}>
               Professional
             </h2>
             <div style={{
-              width: "100%", maxWidth: 260, height: 2,
-              background: "linear-gradient(90deg, transparent, rgba(255,0,255,0.5), transparent)",
-              margin: "24px auto", borderRadius: 1,
+              width: "100%", maxWidth: 300, height: 2,
+              background: "linear-gradient(90deg, transparent, #FF00FF, transparent)",
+              margin: "28px auto", borderRadius: 1,
+              boxShadow: "0 0 15px rgba(255,0,255,0.5)",
             }} />
             <p style={{
-              fontSize: "clamp(14px, 3.5vw, 17px)", color: "rgba(255,255,255,0.5)",
-              margin: "0 auto", maxWidth: 500, lineHeight: 1.8, fontWeight: 300,
+              fontSize: "clamp(15px, 3.5vw, 18px)", color: "rgba(255,255,255,0.85)",
+              margin: "0 auto", maxWidth: 520, lineHeight: 1.8, fontWeight: 300,
             }}>
               Tools that write your <Glow color="green">sponsor pitches</Glow>, build your{" "}
               <Glow color="magenta">booking sheets</Glow>, and assemble your{" "}
               <Glow color="green">press kit</Glow> — all from a few questions.
             </p>
             <p style={{
-              fontSize: "clamp(11px, 2.8vw, 13px)", color: "rgba(255,0,255,0.45)",
-              fontWeight: 500, margin: "18px auto 0", letterSpacing: 0.5,
-              textShadow: "0 0 20px rgba(255,0,255,0.15)",
+              fontSize: "clamp(12px, 2.8vw, 14px)", color: "#FF00FF",
+              fontWeight: 600, margin: "20px auto 0", letterSpacing: 1,
+              textShadow: "0 0 10px #FF00FF, 0 0 30px rgba(255,0,255,0.4)",
             }}>
               The Thinking Has Already Been Done, So You Can Create!
             </p>
@@ -226,14 +281,14 @@ export default function Home() {
         <RevealSection delay={0.05}>
           <Section variant="green" style={{ marginBottom: 20 }}>
             <div style={{
-              fontSize: "clamp(24px, 6vw, 34px)", fontWeight: 800, color: "#00FF00", marginBottom: 4,
-              textShadow: "0 0 30px rgba(0,255,0,0.35)",
+              fontSize: "clamp(26px, 6.5vw, 38px)", fontWeight: 900, color: "#00FF00", marginBottom: 6,
+              textShadow: "0 0 10px #00FF00, 0 0 40px #00FF00, 0 0 80px rgba(0,255,0,0.5)",
             }}>
               We Make Artists Money.
             </div>
             <GradientLine color="magenta" />
             <p style={{
-              fontSize: "clamp(13px, 3.2vw, 15px)", color: "rgba(255,255,255,0.5)",
+              fontSize: "clamp(13px, 3.2vw, 16px)", color: "rgba(255,255,255,0.85)",
               fontWeight: 300, lineHeight: 1.8, maxWidth: 520, margin: "0 auto",
             }}>
               When artists on our platform start landing paid gigs, word spreads fast. Flow Arts
@@ -248,8 +303,8 @@ export default function Home() {
           <Section variant="magenta" style={{ marginBottom: 20 }}>
             <div style={{ textAlign: "center", marginBottom: 6 }}>
               <div style={{
-                fontSize: "clamp(14px, 3.5vw, 18px)", fontWeight: 700, color: "#FF00FF",
-                textShadow: "0 0 25px rgba(255,0,255,0.3)",
+                fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 800, color: "#FF00FF",
+                textShadow: "0 0 10px #FF00FF, 0 0 40px #FF00FF, 0 0 80px rgba(255,0,255,0.5)",
               }}>
                 This Is YOUR MOMENT.
               </div>
@@ -257,7 +312,7 @@ export default function Home() {
             <GradientLine color="green" />
             <p style={{
               textAlign: "center", marginBottom: 18,
-              fontSize: "clamp(12px, 3vw, 14px)", color: "rgba(255,255,255,0.45)",
+              fontSize: "clamp(12px, 3vw, 15px)", color: "rgba(255,255,255,0.8)",
               fontWeight: 400, lineHeight: 1.7, maxWidth: 480, marginLeft: "auto", marginRight: "auto",
             }}>
               Flow arts is at the same stage right now that these industries were before they exploded.
@@ -268,11 +323,11 @@ export default function Home() {
               <EraItem name="DJing" desc="Before SoundCloud and Beatport built the ecosystem." />
             </div>
             <p style={{
-              fontSize: "clamp(13px, 3.2vw, 15px)", color: "rgba(255,255,255,0.6)",
+              fontSize: "clamp(14px, 3.2vw, 16px)", color: "rgba(255,255,255,0.85)",
               fontWeight: 500, lineHeight: 1.6, textAlign: "center",
             }}>
               The talent exists. The centralized system doesn&apos;t —{" "}
-              <span style={{ color: "rgba(255,0,255,0.8)", textShadow: "0 0 15px rgba(255,0,255,0.3)" }}>until now</span>.
+              <span style={{ color: "#FF00FF", textShadow: "0 0 10px #FF00FF, 0 0 30px rgba(255,0,255,0.5)" }}>until now</span>.
             </p>
           </Section>
         </RevealSection>
@@ -282,7 +337,8 @@ export default function Home() {
           <Section style={{ marginBottom: 20 }}>
             <div style={{ textAlign: "center", marginBottom: 6 }}>
               <div style={{
-                fontSize: "clamp(14px, 3.5vw, 18px)", fontWeight: 700, color: "rgba(255,255,255,0.85)",
+                fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 800, color: "#fff",
+                textShadow: "0 0 20px rgba(255,255,255,0.3)",
               }}>
                 The Core Problem
               </div>
@@ -290,12 +346,12 @@ export default function Home() {
             <GradientLine color="magenta" />
             <p style={{
               textAlign: "center", marginBottom: 18,
-              fontSize: "clamp(12px, 3vw, 14px)", color: "rgba(255,255,255,0.45)",
+              fontSize: "clamp(12px, 3vw, 15px)", color: "rgba(255,255,255,0.8)",
               fontWeight: 400, lineHeight: 1.7, maxWidth: 520, marginLeft: "auto", marginRight: "auto",
             }}>
               Brands and event organizers don&apos;t take flow artists seriously — not because they
               lack talent, but because they lack{" "}
-              <span style={{ color: "rgba(255,0,255,0.7)", fontWeight: 500 }}>infrastructure</span>.
+              <span style={{ color: "#FF00FF", fontWeight: 600, textShadow: "0 0 10px #FF00FF, 0 0 20px rgba(255,0,255,0.3)" }}>infrastructure</span>.
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10, maxWidth: 600, marginLeft: "auto", marginRight: "auto" }}>
               <GapItem title="No Portfolio Standard" desc="Models, DJs, and designers all have one. Flow artists don't." />
@@ -311,8 +367,8 @@ export default function Home() {
           <Section variant="green" style={{ marginBottom: 20 }}>
             <div style={{ textAlign: "center", marginBottom: 6 }}>
               <div style={{
-                fontSize: "clamp(14px, 3.5vw, 18px)", fontWeight: 700, color: "#00FF00",
-                textShadow: "0 0 25px rgba(0,255,0,0.3)",
+                fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 800, color: "#00FF00",
+                textShadow: "0 0 10px #00FF00, 0 0 40px #00FF00, 0 0 80px rgba(0,255,0,0.5)",
               }}>
                 We&apos;re Defining The Industry Standard.
               </div>
@@ -320,7 +376,7 @@ export default function Home() {
             <GradientLine color="magenta" />
             <p style={{
               textAlign: "center", marginBottom: 18,
-              fontSize: "clamp(12px, 3vw, 14px)", color: "rgba(255,255,255,0.45)",
+              fontSize: "clamp(12px, 3vw, 15px)", color: "rgba(255,255,255,0.8)",
               fontWeight: 400, lineHeight: 1.7, maxWidth: 520, marginLeft: "auto", marginRight: "auto",
             }}>
               Flow Arts Professional isn&apos;t just a tool. It&apos;s the infrastructure the industry has been missing.
@@ -344,9 +400,9 @@ export default function Home() {
           }}>
             <Section variant="magenta" style={{ padding: "clamp(16px, 4vw, 24px)" }}>
               <div style={{
-                fontSize: "clamp(13px, 3.3vw, 16px)", fontWeight: 700, color: "#FF00FF",
+                fontSize: "clamp(14px, 3.5vw, 18px)", fontWeight: 800, color: "#FF00FF",
                 textAlign: "center", marginBottom: 8,
-                textShadow: "0 0 20px rgba(255,0,255,0.3)",
+                textShadow: "0 0 10px #FF00FF, 0 0 40px #FF00FF, 0 0 80px rgba(255,0,255,0.5)",
               }}>
                 For Brands
               </div>
@@ -357,9 +413,9 @@ export default function Home() {
             </Section>
             <Section variant="green" style={{ padding: "clamp(16px, 4vw, 24px)" }}>
               <div style={{
-                fontSize: "clamp(13px, 3.3vw, 16px)", fontWeight: 700, color: "#00FF00",
+                fontSize: "clamp(14px, 3.5vw, 18px)", fontWeight: 800, color: "#00FF00",
                 textAlign: "center", marginBottom: 8,
-                textShadow: "0 0 20px rgba(0,255,0,0.3)",
+                textShadow: "0 0 10px #00FF00, 0 0 40px #00FF00, 0 0 80px rgba(0,255,0,0.5)",
               }}>
                 For Artists
               </div>
@@ -389,29 +445,44 @@ export default function Home() {
         <RevealSection delay={0.05}>
           <div style={{
             marginBottom: 32,
-            padding: "clamp(24px, 6vw, 40px) clamp(20px, 5vw, 32px)",
+            padding: "clamp(28px, 7vw, 48px) clamp(20px, 5vw, 36px)",
             textAlign: "center",
-            background: "linear-gradient(135deg, rgba(0,255,0,0.06) 0%, rgba(0,255,0,0.02) 50%, rgba(255,0,255,0.04) 100%)",
+            background: "radial-gradient(ellipse at 20% 0%, rgba(0,255,0,0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 100%, rgba(255,0,255,0.08) 0%, transparent 50%), rgba(0,0,0,0.6)",
             backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)",
-            border: "2px solid rgba(0,255,0,0.25)",
+            border: "2px solid rgba(0,255,0,0.4)",
             borderRadius: 28,
-            boxShadow: "0 0 60px rgba(0,255,0,0.06), inset 0 0 60px rgba(0,255,0,0.02)",
+            boxShadow: "0 0 20px rgba(0,255,0,0.3), 0 0 60px rgba(0,255,0,0.1), inset 0 1px 0 rgba(0,255,0,0.2)",
+            position: "relative" as const,
+            overflow: "hidden",
           }}>
+            {/* Gradient mesh bleed */}
             <div style={{
-              fontSize: "clamp(22px, 5.5vw, 32px)", fontWeight: 900, color: "#00FF00",
-              letterSpacing: "clamp(2px, 0.8vw, 5px)", textTransform: "uppercase", marginBottom: 8,
-              textShadow: "0 0 30px rgba(0,255,0,0.4), 0 0 60px rgba(0,255,0,0.15)",
+              position: "absolute", top: 0, left: 0, right: 0, bottom: 0, pointerEvents: "none",
+              background: "radial-gradient(circle at 0% 0%, rgba(0,255,0,0.06) 0%, transparent 40%), radial-gradient(circle at 100% 100%, rgba(255,0,255,0.06) 0%, transparent 40%)",
+            }} />
+            <div style={{
+              fontSize: "clamp(24px, 6vw, 38px)", fontWeight: 900,
+              letterSpacing: "clamp(3px, 1vw, 6px)", textTransform: "uppercase", marginBottom: 10,
+              background: "linear-gradient(135deg, #00FF00, #00FFAA, #FF00FF, #00FF00)",
+              backgroundSize: "300% 300%",
+              animation: "gradientShift 4s ease infinite",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              filter: "drop-shadow(0 0 20px rgba(0,255,0,0.4))",
+              position: "relative" as const,
             }}>
               {hasAccess ? "Your Generators Are Ready" : "Unlock Everything For $5"}
             </div>
             <div style={{
               width: "100%", maxWidth: 400, height: 2,
-              background: "linear-gradient(90deg, transparent, rgba(255,0,255,0.5), transparent)",
+              background: "linear-gradient(90deg, transparent, #FF00FF, transparent)",
               margin: "0 auto 14px", borderRadius: 1,
+              boxShadow: "0 0 10px rgba(255,0,255,0.5)",
             }} />
             <div style={{
-              fontSize: "clamp(11px, 2.8vw, 13px)", color: "rgba(255,255,255,0.35)",
-              fontWeight: 300, marginBottom: 24,
+              fontSize: "clamp(12px, 2.8vw, 14px)", color: "rgba(255,255,255,0.7)",
+              fontWeight: 300, marginBottom: 28,
             }}>
               {hasAccess ? "You have lifetime access. Open your generators anytime." : "One-Time Payment. Lifetime Access. Unlimited Uses."}
             </div>
@@ -419,28 +490,30 @@ export default function Home() {
               onClick={hasAccess ? goToGenerators : handleBuyNow}
               disabled={loading}
               style={{
-                width: "100%", maxWidth: 340,
-                padding: "clamp(16px, 4vw, 22px) 32px",
-                background: "linear-gradient(135deg, #00FF00 0%, #00DD00 100%)",
+                width: "100%", maxWidth: 360,
+                padding: "clamp(18px, 4.5vw, 24px) 32px",
+                background: "linear-gradient(135deg, #00FF00 0%, #00DD00 30%, #FF00FF 70%, #00FF00 100%)",
+                backgroundSize: "300% 300%",
+                animation: loading ? "none" : "gradientShift 3s ease infinite, buyPulse 2.5s ease-in-out infinite",
                 color: "#000",
                 fontFamily: "Montserrat, sans-serif",
-                fontSize: "clamp(18px, 4.5vw, 24px)",
+                fontSize: "clamp(20px, 5vw, 28px)",
                 fontWeight: 900,
-                letterSpacing: "clamp(3px, 1vw, 6px)",
+                letterSpacing: "clamp(4px, 1.2vw, 8px)",
                 textTransform: "uppercase",
                 border: "none",
                 borderRadius: 16,
                 cursor: loading ? "wait" : "pointer",
-                transition: "transform 0.15s cubic-bezier(.4,0,.2,1), box-shadow 0.3s ease",
+                transition: "transform 0.15s cubic-bezier(.4,0,.2,1)",
                 WebkitAppearance: "none" as const,
                 opacity: loading ? 0.7 : 1,
-                animation: loading ? "none" : "pulseGlow 2.5s ease-in-out infinite",
-                boxShadow: "0 0 20px rgba(0,255,0,0.3), 0 0 60px rgba(0,255,0,0.1)",
+                boxShadow: "0 0 30px rgba(0,255,0,0.5), 0 0 80px rgba(0,255,0,0.2), 0 0 120px rgba(255,0,255,0.1)",
+                position: "relative" as const,
               }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.04)"; }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.06)"; }}
               onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
               onMouseDown={e => { e.currentTarget.style.transform = "scale(0.96)"; }}
-              onMouseUp={e => { e.currentTarget.style.transform = "scale(1.04)"; }}
+              onMouseUp={e => { e.currentTarget.style.transform = "scale(1.06)"; }}
             >
               {loading ? "Redirecting..." : hasAccess ? "OPEN GENERATORS" : "BUY NOW!"}
             </button>
@@ -451,14 +524,14 @@ export default function Home() {
         <RevealSection delay={0.05}>
           <Section variant="magenta" style={{ marginBottom: 32, textAlign: "center" as const }}>
             <div style={{
-              fontSize: "clamp(14px, 3.5vw, 18px)", fontWeight: 600, color: "#FF00FF", marginBottom: 6,
-              textShadow: "0 0 20px rgba(255,0,255,0.3)",
+              fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 700, color: "#FF00FF", marginBottom: 6,
+              textShadow: "0 0 10px #FF00FF, 0 0 40px #FF00FF, 0 0 80px rgba(255,0,255,0.5)",
             }}>
               Submit Your Flow Reel For Free!
             </div>
             <GradientLine color="green" />
             <p style={{
-              fontSize: "clamp(11px, 2.8vw, 13px)", color: "rgba(255,255,255,0.4)",
+              fontSize: "clamp(12px, 3vw, 14px)", color: "rgba(255,255,255,0.8)",
               fontWeight: 300, lineHeight: 1.7, marginBottom: 20, maxWidth: 480,
               marginLeft: "auto", marginRight: "auto",
             }}>
@@ -473,21 +546,22 @@ export default function Home() {
         <RevealSection delay={0.05}>
           <div style={{ textAlign: "center", paddingTop: 24, paddingBottom: 16 }}>
             <p style={{
-              fontSize: "clamp(10px, 2.5vw, 12px)", letterSpacing: 4, textTransform: "uppercase",
-              color: "rgba(255,0,255,0.35)", margin: "0 0 8px",
-              textShadow: "0 0 15px rgba(255,0,255,0.15)",
+              fontSize: "clamp(11px, 2.5vw, 13px)", letterSpacing: 6, textTransform: "uppercase",
+              color: "#FF00FF", margin: "0 0 10px",
+              textShadow: "0 0 10px #FF00FF, 0 0 40px #FF00FF, 0 0 80px rgba(255,0,255,0.5)",
             }}>
               Your Vibe Attracts Your Tribe.
             </p>
             <div style={{
-              width: "100%", maxWidth: 260, height: 1,
-              background: "linear-gradient(90deg, transparent, rgba(0,255,0,0.3), transparent)",
-              margin: "0 auto 8px",
+              width: "100%", maxWidth: 260, height: 2,
+              background: "linear-gradient(90deg, transparent, #00FF00, transparent)",
+              margin: "0 auto 10px",
+              boxShadow: "0 0 10px rgba(0,255,0,0.4)",
             }} />
             <p style={{
-              fontSize: "clamp(9px, 2.2vw, 11px)", letterSpacing: 3, textTransform: "uppercase",
-              color: "rgba(0,255,0,0.3)", margin: 0,
-              textShadow: "0 0 15px rgba(0,255,0,0.1)",
+              fontSize: "clamp(10px, 2.4vw, 12px)", letterSpacing: 4, textTransform: "uppercase",
+              color: "#00FF00", margin: 0,
+              textShadow: "0 0 10px #00FF00, 0 0 40px #00FF00, 0 0 80px rgba(0,255,0,0.5)",
             }}>
               Glow Wit Da Flow
             </p>
@@ -515,8 +589,11 @@ function RevealSection({ children, delay = 0 }: { children: React.ReactNode; del
   );
 }
 
-// ── Section card ──
+// ── Section card with animated gradient border ──
 function Section({ children, variant, style }: { children: React.ReactNode; variant?: "green" | "magenta"; style?: React.CSSProperties }) {
+  const borderColor = variant === "green" ? "#00FF00" : variant === "magenta" ? "#FF00FF" : "rgba(255,255,255,0.15)";
+  const glowRgb = variant === "green" ? "0,255,0" : variant === "magenta" ? "255,0,255" : "255,255,255";
+
   const base: React.CSSProperties = {
     padding: "clamp(20px, 5vw, 28px)",
     textAlign: "center",
@@ -524,24 +601,27 @@ function Section({ children, variant, style }: { children: React.ReactNode; vari
     WebkitBackdropFilter: "blur(40px)",
     borderRadius: 24,
     transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+    position: "relative",
+    overflow: "hidden",
   };
+
   if (variant === "green") {
     Object.assign(base, {
-      background: "linear-gradient(135deg, rgba(0,255,0,0.05) 0%, rgba(0,255,0,0.015) 100%)",
-      border: "1px solid rgba(0,255,0,0.15)",
-      boxShadow: "0 0 40px rgba(0,255,0,0.03), inset 0 0 40px rgba(0,255,0,0.01)",
+      background: "radial-gradient(ellipse at 30% 0%, rgba(0,255,0,0.1) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(0,255,0,0.05) 0%, transparent 50%), rgba(0,0,0,0.5)",
+      border: "1px solid rgba(0,255,0,0.35)",
+      boxShadow: "0 0 20px rgba(0,255,0,0.3), 0 0 60px rgba(0,255,0,0.1), inset 0 1px 0 rgba(0,255,0,0.2)",
     });
   } else if (variant === "magenta") {
     Object.assign(base, {
-      background: "linear-gradient(135deg, rgba(255,0,255,0.05) 0%, rgba(255,0,255,0.015) 100%)",
-      border: "1px solid rgba(255,0,255,0.15)",
-      boxShadow: "0 0 40px rgba(255,0,255,0.03), inset 0 0 40px rgba(255,0,255,0.01)",
+      background: "radial-gradient(ellipse at 30% 0%, rgba(255,0,255,0.1) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(255,0,255,0.05) 0%, transparent 50%), rgba(0,0,0,0.5)",
+      border: "1px solid rgba(255,0,255,0.35)",
+      boxShadow: "0 0 20px rgba(255,0,255,0.3), 0 0 60px rgba(255,0,255,0.1), inset 0 1px 0 rgba(255,0,255,0.2)",
     });
   } else {
     Object.assign(base, {
-      background: "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)",
-      border: "1px solid rgba(255,255,255,0.08)",
-      boxShadow: "0 0 40px rgba(255,255,255,0.01)",
+      background: "radial-gradient(ellipse at 30% 0%, rgba(255,255,255,0.06) 0%, transparent 50%), rgba(0,0,0,0.5)",
+      border: "1px solid rgba(255,255,255,0.12)",
+      boxShadow: "0 0 20px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.08)",
     });
   }
   return <div style={{ ...base, ...style }}>{children}</div>;
@@ -549,12 +629,13 @@ function Section({ children, variant, style }: { children: React.ReactNode; vari
 
 // ── Gradient line divider ──
 function GradientLine({ color }: { color: "green" | "magenta" }) {
-  const c = color === "green" ? "0,255,0" : "255,0,255";
+  const c = color === "green" ? "#00FF00" : "#FF00FF";
   return (
     <div style={{
       width: "100%", maxWidth: 280, height: 2,
-      background: `linear-gradient(90deg, transparent, rgba(${c},0.5), transparent)`,
-      margin: "0 auto 12px", borderRadius: 1,
+      background: `linear-gradient(90deg, transparent, ${c}, transparent)`,
+      margin: "0 auto 14px", borderRadius: 1,
+      boxShadow: `0 0 10px ${c === "#00FF00" ? "rgba(0,255,0,0.5)" : "rgba(255,0,255,0.5)"}`,
     }} />
   );
 }
@@ -565,8 +646,8 @@ function Glow({ color, children }: { color: "green" | "magenta"; children: React
   const rgb = color === "green" ? "0,255,0" : "255,0,255";
   return (
     <span style={{
-      color: `rgba(${rgb},0.85)`, fontWeight: 500,
-      textShadow: `0 0 12px rgba(${rgb},0.3)`,
+      color: c, fontWeight: 600,
+      textShadow: `0 0 10px ${c}, 0 0 40px ${c}, 0 0 80px rgba(${rgb},0.5)`,
     }}>
       {children}
     </span>
@@ -583,26 +664,27 @@ function EraItem({ name, desc }: { name: string; desc: string }) {
       style={{
         display: "flex", alignItems: "center", gap: 14,
         padding: "14px 16px", borderRadius: 16,
-        background: hovered ? "rgba(255,0,255,0.06)" : "rgba(255,255,255,0.02)",
-        border: `1px solid ${hovered ? "rgba(255,0,255,0.2)" : "rgba(255,255,255,0.05)"}`,
+        background: hovered ? "rgba(255,0,255,0.1)" : "rgba(255,0,255,0.03)",
+        border: `1px solid ${hovered ? "rgba(255,0,255,0.4)" : "rgba(255,0,255,0.12)"}`,
         transition: "all 0.25s ease",
         cursor: "default",
+        boxShadow: hovered ? "0 0 20px rgba(255,0,255,0.15)" : "none",
       }}
     >
       <div style={{
-        width: 24, height: 24, borderRadius: 8,
-        background: "rgba(255,0,255,0.08)", border: "1px solid rgba(255,0,255,0.2)",
+        width: 26, height: 26, borderRadius: 8,
+        background: "rgba(255,0,255,0.12)", border: "1px solid rgba(255,0,255,0.35)",
         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-        boxShadow: hovered ? "0 0 12px rgba(255,0,255,0.2)" : "none",
+        boxShadow: hovered ? "0 0 15px rgba(255,0,255,0.3)" : "0 0 8px rgba(255,0,255,0.1)",
         transition: "box-shadow 0.25s ease",
       }}>
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <polyline points="3,2 7,5 3,8" stroke="rgba(255,0,255,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <polyline points="3,2 7,5 3,8" stroke="#FF00FF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
       <div>
-        <div style={{ fontSize: "clamp(12px, 3vw, 14px)", color: "rgba(255,0,255,0.75)", fontWeight: 600 }}>{name}</div>
-        <div style={{ fontSize: "clamp(11px, 2.8vw, 13px)", color: "rgba(255,255,255,0.35)", fontWeight: 300, marginTop: 2 }}>{desc}</div>
+        <div style={{ fontSize: "clamp(13px, 3vw, 15px)", color: "#FF00FF", fontWeight: 700, textShadow: "0 0 10px rgba(255,0,255,0.3)" }}>{name}</div>
+        <div style={{ fontSize: "clamp(11px, 2.8vw, 13px)", color: "rgba(255,255,255,0.7)", fontWeight: 300, marginTop: 2 }}>{desc}</div>
       </div>
     </div>
   );
@@ -618,27 +700,28 @@ function GapItem({ title, desc }: { title: string; desc: string }) {
       style={{
         display: "flex", alignItems: "flex-start", gap: 12,
         padding: "14px 16px", borderRadius: 16,
-        background: hovered ? "rgba(255,80,80,0.04)" : "rgba(255,255,255,0.02)",
-        border: `1px solid ${hovered ? "rgba(255,80,80,0.15)" : "rgba(255,255,255,0.05)"}`,
+        background: hovered ? "rgba(255,80,80,0.08)" : "rgba(255,80,80,0.03)",
+        border: `1px solid ${hovered ? "rgba(255,80,80,0.3)" : "rgba(255,80,80,0.1)"}`,
         transition: "all 0.25s ease",
         cursor: "default",
+        boxShadow: hovered ? "0 0 20px rgba(255,80,80,0.1)" : "none",
       }}
     >
       <div style={{
-        width: 24, height: 24, borderRadius: 8,
-        background: "rgba(255,0,0,0.08)", border: "1px solid rgba(255,0,0,0.15)",
+        width: 26, height: 26, borderRadius: 8,
+        background: "rgba(255,0,0,0.1)", border: "1px solid rgba(255,80,80,0.25)",
         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1,
-        boxShadow: hovered ? "0 0 12px rgba(255,80,80,0.15)" : "none",
+        boxShadow: hovered ? "0 0 15px rgba(255,80,80,0.2)" : "none",
         transition: "box-shadow 0.25s ease",
       }}>
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <line x1="2" y1="2" x2="8" y2="8" stroke="rgba(255,80,80,0.6)" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="8" y1="2" x2="2" y2="8" stroke="rgba(255,80,80,0.6)" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="2" y1="2" x2="8" y2="8" stroke="rgba(255,80,80,0.8)" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="8" y1="2" x2="2" y2="8" stroke="rgba(255,80,80,0.8)" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       </div>
       <div>
-        <div style={{ fontSize: "clamp(12px, 3vw, 14px)", color: "rgba(255,255,255,0.65)", fontWeight: 500 }}>{title}</div>
-        <div style={{ fontSize: "clamp(11px, 2.8vw, 13px)", color: "rgba(255,255,255,0.35)", fontWeight: 300, marginTop: 3 }}>{desc}</div>
+        <div style={{ fontSize: "clamp(13px, 3vw, 15px)", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>{title}</div>
+        <div style={{ fontSize: "clamp(11px, 2.8vw, 13px)", color: "rgba(255,255,255,0.65)", fontWeight: 300, marginTop: 3 }}>{desc}</div>
       </div>
     </div>
   );
@@ -654,26 +737,27 @@ function SolveItem({ title, desc }: { title: string; desc: string }) {
       style={{
         display: "flex", alignItems: "flex-start", gap: 12,
         padding: "14px 16px", borderRadius: 16,
-        background: hovered ? "rgba(0,255,0,0.06)" : "rgba(0,255,0,0.02)",
-        border: `1px solid ${hovered ? "rgba(0,255,0,0.2)" : "rgba(0,255,0,0.06)"}`,
+        background: hovered ? "rgba(0,255,0,0.1)" : "rgba(0,255,0,0.03)",
+        border: `1px solid ${hovered ? "rgba(0,255,0,0.35)" : "rgba(0,255,0,0.12)"}`,
         transition: "all 0.25s ease",
         cursor: "default",
+        boxShadow: hovered ? "0 0 20px rgba(0,255,0,0.15)" : "none",
       }}
     >
       <div style={{
-        width: 24, height: 24, borderRadius: 8,
-        background: "rgba(0,255,0,0.08)", border: "1px solid rgba(0,255,0,0.2)",
+        width: 26, height: 26, borderRadius: 8,
+        background: "rgba(0,255,0,0.12)", border: "1px solid rgba(0,255,0,0.35)",
         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1,
-        boxShadow: hovered ? "0 0 12px rgba(0,255,0,0.2)" : "none",
+        boxShadow: hovered ? "0 0 15px rgba(0,255,0,0.3)" : "0 0 8px rgba(0,255,0,0.1)",
         transition: "box-shadow 0.25s ease",
       }}>
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <polyline points="2,5.5 4,7.5 8,3" stroke="rgba(0,255,0,0.7)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <polyline points="2,5.5 4,7.5 8,3" stroke="#00FF00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
       <div>
-        <div style={{ fontSize: "clamp(12px, 3vw, 14px)", color: "rgba(0,255,0,0.75)", fontWeight: 500 }}>{title}</div>
-        <div style={{ fontSize: "clamp(11px, 2.8vw, 13px)", color: "rgba(255,255,255,0.35)", fontWeight: 300, marginTop: 3 }}>{desc}</div>
+        <div style={{ fontSize: "clamp(13px, 3vw, 15px)", color: "#00FF00", fontWeight: 600, textShadow: "0 0 10px rgba(0,255,0,0.3)" }}>{title}</div>
+        <div style={{ fontSize: "clamp(11px, 2.8vw, 13px)", color: "rgba(255,255,255,0.65)", fontWeight: 300, marginTop: 3 }}>{desc}</div>
       </div>
     </div>
   );
@@ -681,16 +765,17 @@ function SolveItem({ title, desc }: { title: string; desc: string }) {
 
 // ── Benefit bullet item ──
 function BenefitItem({ color, text }: { color: "green" | "magenta"; text: string }) {
+  const c = color === "green" ? "#00FF00" : "#FF00FF";
   const rgb = color === "green" ? "0,255,0" : "255,0,255";
   return (
     <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "8px 0" }}>
       <div style={{
-        width: 10, height: 10, borderRadius: 5, flexShrink: 0, marginTop: 4,
-        background: `rgba(${rgb},0.5)`,
-        boxShadow: `0 0 8px rgba(${rgb},0.3)`,
+        width: 12, height: 12, borderRadius: 6, flexShrink: 0, marginTop: 4,
+        background: c,
+        boxShadow: `0 0 10px ${c}, 0 0 20px rgba(${rgb},0.4)`,
       }} />
       <div style={{
-        fontSize: "clamp(11px, 2.8vw, 14px)", color: "rgba(255,255,255,0.5)",
+        fontSize: "clamp(12px, 3vw, 15px)", color: "rgba(255,255,255,0.85)",
         fontWeight: 300, lineHeight: 1.6,
       }}>
         {text}
@@ -701,23 +786,24 @@ function BenefitItem({ color, text }: { color: "green" | "magenta"; text: string
 
 // ── Stat card ──
 function StatCard({ value, label, color }: { value: string; label: string; color: "green" | "magenta" }) {
+  const c = color === "green" ? "#00FF00" : "#FF00FF";
   const rgb = color === "green" ? "0,255,0" : "255,0,255";
   return (
     <Section style={{
-      padding: "clamp(16px, 4vw, 24px) clamp(10px, 3vw, 16px)",
+      padding: "clamp(18px, 4.5vw, 28px) clamp(10px, 3vw, 16px)",
       textAlign: "center",
     }}>
       <div style={{
-        fontSize: "clamp(22px, 5.5vw, 32px)", fontWeight: 700,
-        color: `rgba(${rgb},0.85)`,
-        textShadow: `0 0 20px rgba(${rgb},0.3)`,
+        fontSize: "clamp(26px, 6vw, 38px)", fontWeight: 900,
+        color: c,
+        textShadow: `0 0 10px ${c}, 0 0 40px ${c}, 0 0 80px rgba(${rgb},0.5)`,
         animation: "float 4s ease-in-out infinite",
       }}>
         {value}
       </div>
       <div style={{
-        fontSize: "clamp(9px, 2.2vw, 11px)", color: "rgba(255,255,255,0.3)",
-        fontWeight: 300, marginTop: 6, letterSpacing: 0.5,
+        fontSize: "clamp(10px, 2.4vw, 12px)", color: "rgba(255,255,255,0.7)",
+        fontWeight: 400, marginTop: 6, letterSpacing: 1,
       }}>
         {label}
       </div>
@@ -794,19 +880,29 @@ function UploadZone() {
   if (uploadStatus === "success") {
     return (
       <div style={{
-        border: "1.5px solid rgba(0,255,0,0.3)", borderRadius: 20,
+        border: "1.5px solid rgba(0,255,0,0.5)", borderRadius: 20,
         padding: "clamp(24px, 6vw, 36px) clamp(16px, 4vw, 24px)",
-        background: "rgba(0,255,0,0.04)", maxWidth: 400, margin: "0 auto", textAlign: "center",
+        background: "radial-gradient(ellipse at center, rgba(0,255,0,0.08) 0%, rgba(0,0,0,0.4) 100%)",
+        maxWidth: 400, margin: "0 auto", textAlign: "center",
+        boxShadow: "0 0 30px rgba(0,255,0,0.15), inset 0 0 30px rgba(0,255,0,0.05)",
       }}>
-        <div style={{ fontSize: 20, color: "#00FF00", marginBottom: 8 }}>Submitted!</div>
-        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", fontWeight: 300, lineHeight: 1.6 }}>
+        <div style={{
+          fontSize: 22, color: "#00FF00", marginBottom: 8, fontWeight: 800,
+          textShadow: "0 0 10px #00FF00, 0 0 40px #00FF00, 0 0 80px rgba(0,255,0,0.5)",
+        }}>
+          Submitted!
+        </div>
+        <div style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", fontWeight: 300, lineHeight: 1.6 }}>
           Your reel has been uploaded. We&apos;ll tag you when it goes live.
         </div>
         <button onClick={() => setUploadStatus("idle")} style={{
-          marginTop: 16, padding: "10px 24px", fontSize: 12, fontWeight: 600,
-          letterSpacing: 1, textTransform: "uppercase", background: "rgba(255,0,255,0.1)",
-          border: "1px solid rgba(255,0,255,0.25)", borderRadius: 12, color: "#FF00FF",
+          marginTop: 16, padding: "12px 28px", fontSize: 13, fontWeight: 700,
+          letterSpacing: 2, textTransform: "uppercase", background: "rgba(255,0,255,0.15)",
+          border: "1px solid rgba(255,0,255,0.4)", borderRadius: 12, color: "#FF00FF",
           fontFamily: "Montserrat, sans-serif", cursor: "pointer",
+          textShadow: "0 0 10px rgba(255,0,255,0.3)",
+          boxShadow: "0 0 15px rgba(255,0,255,0.15)",
+          transition: "all 0.2s ease",
         }}>
           Upload Another
         </button>
@@ -815,9 +911,10 @@ function UploadZone() {
   }
 
   const inputStyle: React.CSSProperties = {
-    width: "100%", padding: "12px 16px", background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#fff",
-    fontFamily: "Montserrat, sans-serif", fontSize: 13, fontWeight: 300, outline: "none",
+    width: "100%", padding: "14px 18px", background: "rgba(0,0,0,0.5)",
+    border: "1px solid rgba(0,255,0,0.2)", borderRadius: 12, color: "#fff",
+    fontFamily: "Montserrat, sans-serif", fontSize: 14, fontWeight: 300, outline: "none",
+    transition: "border-color 0.2s ease, box-shadow 0.2s ease",
   };
 
   return (
@@ -831,26 +928,42 @@ function UploadZone() {
         onDragLeave={() => setDragging(false)} onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
         style={{
-          border: `1.5px dashed ${dragging ? "rgba(0,255,0,0.5)" : hovered ? "rgba(255,0,255,0.4)" : "rgba(255,0,255,0.2)"}`,
-          borderRadius: 20, padding: "clamp(20px, 5vw, 32px) clamp(16px, 4vw, 24px)",
-          background: dragging ? "rgba(0,255,0,0.06)" : hovered ? "rgba(255,0,255,0.04)" : "rgba(255,0,255,0.015)",
+          border: `2px dashed ${dragging ? "#00FF00" : hovered ? "#FF00FF" : "rgba(255,0,255,0.35)"}`,
+          borderRadius: 20, padding: "clamp(22px, 5.5vw, 36px) clamp(16px, 4vw, 24px)",
+          background: dragging
+            ? "radial-gradient(ellipse at center, rgba(0,255,0,0.1) 0%, rgba(0,0,0,0.4) 100%)"
+            : hovered
+              ? "radial-gradient(ellipse at center, rgba(255,0,255,0.08) 0%, rgba(0,0,0,0.4) 100%)"
+              : "rgba(255,0,255,0.03)",
           transition: "all 0.3s ease", cursor: "pointer",
-          boxShadow: dragging ? "0 0 30px rgba(0,255,0,0.1)" : hovered ? "0 0 30px rgba(255,0,255,0.06)" : "none",
+          boxShadow: dragging
+            ? "0 0 30px rgba(0,255,0,0.2), inset 0 0 30px rgba(0,255,0,0.05)"
+            : hovered
+              ? "0 0 30px rgba(255,0,255,0.15), inset 0 0 30px rgba(255,0,255,0.03)"
+              : "none",
         }}
       >
         {file ? (
           <>
-            <div style={{ fontSize: 13, color: "#00FF00", fontWeight: 500 }}>{file.name}</div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 4 }}>
+            <div style={{
+              fontSize: 14, color: "#00FF00", fontWeight: 600,
+              textShadow: "0 0 10px rgba(0,255,0,0.4)",
+            }}>
+              {file.name}
+            </div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 4 }}>
               {(file.size / (1024 * 1024)).toFixed(1)} MB &bull; Tap to change
             </div>
           </>
         ) : (
           <>
-            <div style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "rgba(0,255,0,0.65)", fontWeight: 500 }}>
+            <div style={{
+              fontSize: "clamp(14px, 3.5vw, 17px)", color: "#00FF00", fontWeight: 600,
+              textShadow: "0 0 10px #00FF00, 0 0 30px rgba(0,255,0,0.4)",
+            }}>
               {dragging ? "Drop Your Video Here" : "Tap To Select Video"}
             </div>
-            <div style={{ fontSize: "clamp(10px, 2.5vw, 12px)", color: "rgba(255,255,255,0.25)", fontWeight: 300, marginTop: 6 }}>
+            <div style={{ fontSize: "clamp(11px, 2.8vw, 13px)", color: "rgba(255,255,255,0.5)", fontWeight: 300, marginTop: 6 }}>
               MP4, MOV, HEVC, or WebM &bull; Up To 500 MB
             </div>
           </>
@@ -858,20 +971,34 @@ function UploadZone() {
       </div>
       {file && (
         <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-          <input type="text" placeholder="Your Artist Name" value={artistName} onChange={e => setArtistName(e.target.value)} style={inputStyle} />
-          <input type="email" placeholder="Your Email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
+          <input
+            type="text" placeholder="Your Artist Name" value={artistName}
+            onChange={e => setArtistName(e.target.value)} style={inputStyle}
+            onFocus={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.5)"; e.currentTarget.style.boxShadow = "0 0 15px rgba(0,255,0,0.15)"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.2)"; e.currentTarget.style.boxShadow = "none"; }}
+          />
+          <input
+            type="email" placeholder="Your Email" value={email}
+            onChange={e => setEmail(e.target.value)} style={inputStyle}
+            onFocus={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.5)"; e.currentTarget.style.boxShadow = "0 0 15px rgba(0,255,0,0.15)"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.2)"; e.currentTarget.style.boxShadow = "none"; }}
+          />
           <button onClick={handleSubmit} disabled={uploading} style={{
-            padding: "14px 24px", fontSize: 13, fontWeight: 700, letterSpacing: 1.5,
-            textTransform: "uppercase", background: uploading ? "rgba(0,255,0,0.08)" : "rgba(0,255,0,0.15)",
-            border: "1px solid rgba(0,255,0,0.3)", borderRadius: 14, color: "#00FF00",
+            padding: "16px 28px", fontSize: 14, fontWeight: 800, letterSpacing: 2,
+            textTransform: "uppercase",
+            background: uploading ? "rgba(0,255,0,0.08)" : "rgba(0,255,0,0.2)",
+            border: "1px solid rgba(0,255,0,0.4)", borderRadius: 14, color: "#00FF00",
             fontFamily: "Montserrat, sans-serif", cursor: uploading ? "wait" : "pointer",
+            textShadow: "0 0 10px rgba(0,255,0,0.3)",
+            boxShadow: uploading ? "none" : "0 0 20px rgba(0,255,0,0.15)",
+            transition: "all 0.2s ease",
           }}>
             {uploading ? "Uploading..." : "Submit Reel"}
           </button>
         </div>
       )}
       {errorMsg && (
-        <div style={{ marginTop: 10, fontSize: 12, color: "rgba(255,80,80,0.8)", textAlign: "center" }}>{errorMsg}</div>
+        <div style={{ marginTop: 10, fontSize: 13, color: "#ff5050", textAlign: "center", textShadow: "0 0 10px rgba(255,80,80,0.3)" }}>{errorMsg}</div>
       )}
     </div>
   );
@@ -879,31 +1006,55 @@ function UploadZone() {
 
 // ── CSS Particle background ──
 function ParticleBackground() {
-  const particles = useRef<Array<{ left: string; size: number; delay: number; duration: number; color: string }> | null>(null);
+  const particles = useRef<Array<{ left: string; size: number; delay: number; duration: number; color: string; glow: string }> | null>(null);
   if (!particles.current) {
-    particles.current = Array.from({ length: 30 }, (_, i) => ({
-      left: `${Math.random() * 100}%`,
-      size: Math.random() * 3 + 1,
-      delay: Math.random() * 20,
-      duration: Math.random() * 15 + 15,
-      color: i % 3 === 0 ? "rgba(0,255,0,0.15)" : i % 3 === 1 ? "rgba(255,0,255,0.12)" : "rgba(255,255,255,0.04)",
-    }));
+    particles.current = Array.from({ length: 60 }, (_, i) => {
+      const isGreen = i % 3 === 0;
+      const isMagenta = i % 3 === 1;
+      const size = Math.random() * 5 + 2;
+      return {
+        left: `${Math.random() * 100}%`,
+        size,
+        delay: Math.random() * 18,
+        duration: Math.random() * 12 + 10,
+        color: isGreen
+          ? "rgba(0,255,0,0.4)"
+          : isMagenta
+            ? "rgba(255,0,255,0.35)"
+            : "rgba(255,255,255,0.15)",
+        glow: isGreen
+          ? `0 0 ${size * 4}px rgba(0,255,0,0.4), 0 0 ${size * 8}px rgba(0,255,0,0.15)`
+          : isMagenta
+            ? `0 0 ${size * 4}px rgba(255,0,255,0.35), 0 0 ${size * 8}px rgba(255,0,255,0.12)`
+            : `0 0 ${size * 3}px rgba(255,255,255,0.1)`,
+      };
+    });
   }
   return (
     <div style={{
       position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
       overflow: "hidden", zIndex: 0, pointerEvents: "none",
     }}>
-      {/* Radial glow layers */}
+      {/* Gradient mesh background bleeds */}
       <div style={{
-        position: "absolute", top: "-20%", left: "50%", transform: "translateX(-50%)",
-        width: "120vw", height: "60vh",
-        background: "radial-gradient(ellipse at center, rgba(0,255,0,0.04) 0%, transparent 70%)",
+        position: "absolute", top: "-20%", left: "30%", transform: "translateX(-50%)",
+        width: "80vw", height: "60vh",
+        background: "radial-gradient(ellipse at center, rgba(0,255,0,0.07) 0%, transparent 60%)",
+      }} />
+      <div style={{
+        position: "absolute", top: "20%", right: "-10%",
+        width: "50vw", height: "50vh",
+        background: "radial-gradient(ellipse at center, rgba(255,0,255,0.05) 0%, transparent 60%)",
       }} />
       <div style={{
         position: "absolute", bottom: "-10%", left: "50%", transform: "translateX(-50%)",
         width: "100vw", height: "50vh",
-        background: "radial-gradient(ellipse at center, rgba(255,0,255,0.03) 0%, transparent 70%)",
+        background: "radial-gradient(ellipse at center, rgba(255,0,255,0.06) 0%, transparent 60%)",
+      }} />
+      <div style={{
+        position: "absolute", bottom: "30%", left: "-10%",
+        width: "60vw", height: "40vh",
+        background: "radial-gradient(ellipse at center, rgba(0,255,0,0.04) 0%, transparent 60%)",
       }} />
       {/* Floating particles */}
       {particles.current.map((p, i) => (
@@ -917,7 +1068,7 @@ function ParticleBackground() {
             height: p.size,
             borderRadius: "50%",
             background: p.color,
-            boxShadow: `0 0 ${p.size * 3}px ${p.color}`,
+            boxShadow: p.glow,
             animation: `particleDrift ${p.duration}s linear ${p.delay}s infinite`,
             opacity: 0,
           }}
