@@ -528,8 +528,9 @@ function SuccessPageInner() {
 
     @media (min-width: 640px) {
       .page-wrap { max-width: 800px !important; padding: 48px 40px !important; }
-      .gen-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
+      .gen-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 12px !important; justify-items: center; }
       .gen-grid-label { grid-column: 1 / -1; }
+      .gen-grid .gen-card, .gen-grid .gen-card-m { width: 100%; }
       .result-block { padding: 32px; font-size: 14px; }
     }
   `;
@@ -573,7 +574,7 @@ function SuccessPageInner() {
           <p style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", fontWeight: 300, textAlign: "center", marginBottom: 24 }}>Choose A Generator Below To Get Started.</p>
 
           <div className="gen-grid" style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
-            <div className="gen-grid-label" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: "#00FF00", textShadow: "0 0 8px rgba(0,255,0,0.4)", marginBottom: -4 }}>AI Generators</div>
+            <div className="gen-grid-label" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: "#00FF00", textShadow: "0 0 8px rgba(0,255,0,0.4)", marginBottom: -4, textAlign: "center" }}>AI Generators</div>
             <div className="gen-card" onClick={() => setCurrentFlow("sponsor")}>
               <div className="glow-green" style={{ fontSize: 16, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Sponsor Pitch</div>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Personalized pitch for brand companies</p>
@@ -587,7 +588,7 @@ function SuccessPageInner() {
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Full EPK with bio, reels & socials</p>
             </div>
 
-            <div className="gen-grid-label" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: "#FF00FF", textShadow: "0 0 8px rgba(255,0,255,0.4)", marginTop: 4, marginBottom: -4 }}>Guides</div>
+            <div className="gen-grid-label" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: "#FF00FF", textShadow: "0 0 8px rgba(255,0,255,0.4)", marginTop: 4, marginBottom: -4, textAlign: "center" }}>Guides</div>
             <a href="/guides/how-to-be-a-pro" className="gen-card gen-card-m" style={{ textDecoration: "none" }}>
               <div className="glow-magenta" style={{ fontSize: 16, fontWeight: 600, color: "#FF00FF", marginBottom: 4 }}>How To Go Pro</div>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>The complete playbook for your career</p>
