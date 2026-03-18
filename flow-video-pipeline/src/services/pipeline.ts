@@ -47,9 +47,38 @@ export async function processSubmission(submissionId: string): Promise<void> {
     const processedPath = await transcodeForShorts(inputPath, outputPath, probe);
 
     // Build YouTube metadata
+    const captions = [
+      "Look at them GLOW!",
+      "Glow Wit Da Flow!",
+      "She's on FIRE!",
+      "Amazing Flow!",
+      "This is INSANE!",
+      "The vibes are UNREAL!",
+      "Flow state activated!",
+      "Can't stop watching this!",
+      "Pure magic right here!",
+      "They ATE this up!",
+      "The flow is IMMACULATE!",
+      "Mesmerizing!",
+      "How is this even real?!",
+      "Living for this energy!",
+      "That flow hits DIFFERENT!",
+      "Absolutely hypnotizing!",
+      "YOOO this is fire!",
+      "Main character energy!",
+      "The glow up is REAL!",
+      "Sending all the flow vibes!",
+      "This one RIGHT HERE!",
+      "Drop what you're doing and WATCH!",
+      "Literal chills!",
+      "Flow game on another level!",
+      "When the music hits just right!",
+    ];
+    const caption = captions[Math.floor(Math.random() * captions.length)];
+
     const title = submission.description
       ? submission.description.slice(0, 100)
-      : `@${handle} | Flow Arts Professional`;
+      : `${caption} @${handle}`;
 
     const hashtags = "#flowarts #edm #dance #hulahoop #poi #rave #Shorts";
 
