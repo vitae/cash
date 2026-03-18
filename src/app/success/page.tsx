@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-type FlowType = "sponsor" | "booking" | "epk";
+type FlowType = "sponsor" | "booking" | "epk" | "festival";
 type Step = { title: string; fields: Field[] };
 type Field = { id: string; label: string; type: string; placeholder?: string; options?: string[] };
 
@@ -49,6 +49,21 @@ const flows: Record<FlowType, { title: string; color: string; accent: string; st
       { id: "notable", label: "Achievements / Events", type: "textarea", placeholder: "e.g. Electric Forest, 100k views" },
       { id: "email", label: "Booking Email", type: "text", placeholder: "bookings@yoursite.com" },
       { id: "website", label: "Website (Optional)", type: "text", placeholder: "https://yoursite.com" },
+    ]},
+  ]},
+  festival: { title: "Festival Application", color: "#00FF00", accent: "#FF00FF", steps: [
+    { title: "About You", fields: [
+      { id: "name", label: "Stage Name", type: "text", placeholder: "e.g. FlowMaster Kai" },
+      { id: "ig_handle", label: "@Instagram", type: "text", placeholder: "@yourhandle" },
+      { id: "location", label: "Based In", type: "text", placeholder: "e.g. Austin, Texas" },
+      { id: "props", label: "Performance Props", type: "text", placeholder: "e.g. LED poi, fire hoop, staff" },
+      { id: "experience", label: "Years Performing", type: "number", placeholder: "e.g. 4" },
+      { id: "past_festivals", label: "Past Festivals", type: "textarea", placeholder: "e.g. Burning Man, Lightning in a Bottle, Envision" },
+    ]},
+    { title: "Your Application", fields: [
+      { id: "festival_name", label: "Festival Applying To", type: "text", placeholder: "e.g. Electric Forest 2026" },
+      { id: "act_style", label: "Performance Style", type: "multiselect", options: ["LED / Glow Show", "Fire Performance", "Ambient Roaming", "Stage Show", "Workshop / Playshop", "Interactive Installation"] },
+      { id: "what_you_bring", label: "What Makes You Unique", type: "textarea", placeholder: "e.g. Custom LED choreography synced to music, 10-person fire circle" },
     ]},
   ]},
 };
@@ -587,6 +602,10 @@ function SuccessPageInner() {
               <div className="glow-green" style={{ fontSize: 16, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Artist Press Kit</div>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Full EPK with bio, reels & socials</p>
             </div>
+            <div className="gen-card" onClick={() => setCurrentFlow("festival")}>
+              <div className="glow-green" style={{ fontSize: 16, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Festival Application</div>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Stand-out performer applications</p>
+            </div>
 
             <div className="gen-grid-label" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: "#FF00FF", textShadow: "0 0 8px rgba(255,0,255,0.4)", marginTop: 4, marginBottom: -4, textAlign: "center" }}>Guides</div>
             <a href="/guides/how-to-be-a-pro" className="gen-card gen-card-m" style={{ textDecoration: "none" }}>
@@ -600,6 +619,10 @@ function SuccessPageInner() {
             <a href="/guides/contact-50-brands" className="gen-card gen-card-m" style={{ textDecoration: "none" }}>
               <div className="glow-magenta" style={{ fontSize: 16, fontWeight: 600, color: "#FF00FF", marginBottom: 4 }}>Contact 50 Brands</div>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Top companies to pitch for sponsorship</p>
+            </a>
+            <a href="/guides/build-your-brand" className="gen-card gen-card-m" style={{ textDecoration: "none" }}>
+              <div className="glow-magenta" style={{ fontSize: 16, fontWeight: 600, color: "#FF00FF", marginBottom: 4 }}>Build Your Brand</div>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Grow your audience & go viral</p>
             </a>
           </div>
 

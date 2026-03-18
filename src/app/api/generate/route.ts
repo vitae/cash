@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const VALID_TYPES = ["sponsor", "booking", "epk"] as const;
+const VALID_TYPES = ["sponsor", "booking", "epk", "festival"] as const;
 type GenerationType = (typeof VALID_TYPES)[number];
 
 const MAX_GENERATIONS_PER_SESSION = 10;
@@ -18,6 +18,8 @@ const PROMPTS: Record<GenerationType, string> = {
     "You are an event industry copywriter creating booking sheets for flow arts performers. Create a clean, scannable booking document. Include: header, performance types, tech rider, rate card, availability, contact.",
   epk:
     "You are a publicist creating an Electronic Press Kit for a flow artist. Write a third-person artist profile for production companies and festivals. Include: one-line bio, full bio, signature prop, achievements, testimonials, socials.",
+  festival:
+    "You are an experienced festival performer who has been accepted to 100+ festivals. Write a compelling festival performer application that stands out from hundreds of other applicants. Be specific about what this artist brings that's unique. Include: attention-grabbing opening statement, performance description with sensory details, relevant experience and festivals, what makes their act special for THIS specific festival's audience, technical requirements, workshop offering if applicable, and a confident closing. Keep it under 500 words. Make it feel authentic and passionate, not corporate.",
 };
 
 export async function POST(request: NextRequest) {
