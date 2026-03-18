@@ -634,6 +634,10 @@ function SuccessPageInner() {
               <div className="glow-magenta" style={{ fontSize: 16, fontWeight: 600, color: "#FF00FF", marginBottom: 4 }}>Build Your Brand</div>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Grow your audience & go viral</p>
             </a>
+            <a href="/guides/top-100-artists" className="gen-card gen-card-m" style={{ textDecoration: "none" }}>
+              <div className="glow-magenta" style={{ fontSize: 16, fontWeight: 600, color: "#FF00FF", marginBottom: 4 }}>Top 100 Artists</div>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Follow, study & collaborate</p>
+            </a>
           </div>
 
           <div style={{ textAlign: "center", paddingTop: 16 }}>
