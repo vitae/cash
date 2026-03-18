@@ -590,7 +590,7 @@ function SuccessPageInner() {
           </div>
 
           <div style={{ textAlign: "center", paddingTop: 16 }}>
-            <p className="glow-magenta" style={{ fontSize: 10, letterSpacing: 3, textTransform: "uppercase", color: "#FF00FF", margin: "0 0 4px" }}>Your Vibe Attracts Your Tribe.</p>
+            <p className="glow-magenta" style={{ fontSize: 10, letterSpacing: 3, textTransform: "uppercase", color: "#FF00FF", margin: "0 0 4px" }}>Your Vibe Attracts Your Tribe</p>
             <div style={{ width: "100%", maxWidth: 220, height: 1, background: "#00FF00", boxShadow: "0 0 6px rgba(0,255,0,0.5)", margin: "0 auto 4px" }} />
             <p className="glow-green" style={{ fontSize: 9, letterSpacing: 2, textTransform: "uppercase", color: "#00FF00", margin: 0 }}>Glow Wit Da Flow</p>
           </div>

@@ -583,7 +583,7 @@ export default function Home() {
               color: "#FF00FF", margin: "0 0 10px", whiteSpace: "nowrap",
               textShadow: "0 0 10px #FF00FF, 0 0 40px #FF00FF, 0 0 80px rgba(255,0,255,0.5)",
             }}>
-              Your Vibe Attracts Your Tribe.
+              Your Vibe Attracts Your Tribe
             </p>
             <div style={{
               width: "100%", maxWidth: 260, height: 2,
@@ -789,7 +789,7 @@ function SolveItem({ title, desc }: { title: string; desc: string }) {
         </svg>
       </div>
       <div>
-        <div style={{ fontSize: "clamp(13px, 3vw, 15px)", color: "#00FF00", fontWeight: 600, textShadow: "0 0 10px rgba(0,255,0,0.3)" }}>{title}</div>
+        <div style={{ fontSize: "clamp(13px, 3vw, 15px)", color: "#00FF00", fontWeight: 600, textShadow: "0 0 10px rgba(0,255,0,0.3)", whiteSpace: "nowrap" }}>{title}</div>
         <div style={{ fontSize: "clamp(11px, 2.8vw, 13px)", color: "rgba(255,255,255,0.65)", fontWeight: 300, marginTop: 3 }}>{desc}</div>
       </div>
     </div>
