@@ -981,7 +981,7 @@ function UploadZone() {
     } else {
       setUploadStatus("error");
       setErrorMsg("Some uploads failed. Tap Submit again to retry.");
-      setFiles(prev => prev.filter((_, i) => progress[i] === "failed"));
+      setFiles(prev => prev.filter((_, i) => progress[i]?.status === "failed"));
     }
     setUploading(false);
   };
