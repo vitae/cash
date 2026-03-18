@@ -15,12 +15,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!email || typeof email !== "string" || !email.includes("@")) {
-      return NextResponse.json(
-        { error: "A valid email is required." },
-        { status: 400 }
-      );
-    }
+    // Email is optional
 
     if (!videoUrl || typeof videoUrl !== "string") {
       return NextResponse.json(
@@ -43,7 +38,7 @@ export async function POST(request: NextRequest) {
       .from("reel_submissions")
       .insert({
         artist_name: artistName.trim(),
-        email: email.trim().toLowerCase(),
+        email: email && typeof email === "string" ? email.trim().toLowerCase() : null,
         video_url: videoUrl.trim(),
         status: "pending",
         description: typeof description === "string" ? description.trim() || null : null,

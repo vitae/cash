@@ -882,8 +882,8 @@ function UploadZone() {
   };
 
   const handleSubmit = async () => {
-    if (!file || !instagram.trim() || !email.includes("@")) {
-      setErrorMsg("Please fill in your Instagram handle, email, and select a video.");
+    if (!file || !instagram.trim()) {
+      setErrorMsg("@instagram (required)");
       return;
     }
     setUploading(true);
@@ -919,7 +919,7 @@ function UploadZone() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           artistName: instagram.trim(),
-          email: email.trim(),
+          email: email.trim() || undefined,
           videoUrl,
           description: description.trim() || undefined,
         }),
