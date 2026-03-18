@@ -17,7 +17,10 @@ h1{color:#00FF00;font-size:28px;font-weight:900;letter-spacing:3px;text-transfor
 .step{display:flex;gap:12px;margin-bottom:16px;align-items:flex-start}
 .num{background:#00FF00;color:#000;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;margin-top:2px}
 .step p{color:rgba(255,255,255,0.85);font-size:13px;line-height:1.6}
-.step code{display:block;margin-top:6px;padding:8px 12px;background:rgba(0,0,0,0.6);border:1px solid rgba(0,255,0,0.2);border-radius:8px;font-size:11px;color:#00FF00;word-break:break-all;font-family:monospace}
+.code-wrap{display:flex;align-items:center;gap:4px;margin-top:6px;padding:8px 12px;background:rgba(0,0,0,0.6);border:1px solid rgba(0,255,0,0.2);border-radius:8px}
+.step code{flex:1;font-size:11px;color:#00FF00;word-break:break-all;font-family:monospace}
+.copy-btn{background:none;border:none;color:rgba(255,255,255,0.5);font-size:11px;font-weight:600;cursor:pointer;padding:2px 6px;letter-spacing:1px;text-transform:uppercase;flex-shrink:0}
+.copy-btn.copied{color:#00FF00}
 .step .label{color:#FF00FF;font-weight:600;font-size:12px}
 .divider{height:1px;background:linear-gradient(90deg,transparent,#FF00FF,transparent);margin:24px 0;box-shadow:0 0 8px rgba(255,0,255,0.3)}
 .footer{margin-top:32px;font-size:10px;color:#FF00FF;letter-spacing:3px;text-transform:uppercase;text-shadow:0 0 8px rgba(255,0,255,0.4)}
@@ -62,7 +65,10 @@ h1{color:#00FF00;font-size:28px;font-weight:900;letter-spacing:3px;text-transfor
             <span class="label">Show Notification</span><span style="color:rgba(255,255,255,0.6);font-size:11px"> &mdash; Title: "Reel Submitted!"</span>
           </div>
         </div>
-        <code>https://cash-production-680c.up.railway.app/quick-upload?handle=</code>
+        <div class="code-wrap">
+          <code id="url-text">https://cash-production-680c.up.railway.app/quick-upload?handle=</code>
+          <button class="copy-btn" onclick="copyUrl(this)">Copy</button>
+        </div>
       </div>
     </div>
 
@@ -95,5 +101,14 @@ h1{color:#00FF00;font-size:28px;font-weight:900;letter-spacing:3px;text-transfor
   <div class="divider"></div>
   <div class="footer">flowarts.pro</div>
 </div>
+<script>
+function copyUrl(btn){
+  var text=document.getElementById('url-text').textContent;
+  navigator.clipboard.writeText(text).then(function(){
+    btn.textContent='Copied!';btn.classList.add('copied');
+    setTimeout(function(){btn.textContent='Copy';btn.classList.remove('copied')},2000);
+  });
+}
+</script>
 </body>
 </html>

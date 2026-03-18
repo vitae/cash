@@ -1,5 +1,31 @@
 "use client";
 
+import { useState } from "react";
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      style={{
+        background: "none", border: "none", color: copied ? "#00FF00" : "rgba(255,255,255,0.5)",
+        fontSize: 11, fontWeight: 600, cursor: "pointer", padding: "2px 6px",
+        letterSpacing: 1, textTransform: "uppercase", flexShrink: 0,
+      }}
+    >
+      {copied ? "Copied!" : "Copy"}
+    </button>
+  );
+}
+
 export default function ShortcutPage() {
   const PIPELINE_URL = "https://cash-production-680c.up.railway.app/quick-upload";
 
@@ -84,14 +110,19 @@ export default function ShortcutPage() {
                   </div>
                 )}
                 {step.code && (
-                  <code style={{
-                    display: "block", marginTop: 8, padding: "8px 12px",
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 4, marginTop: 8,
                     background: "rgba(0,0,0,0.6)", border: "1px solid rgba(0,255,0,0.2)",
-                    borderRadius: 8, fontSize: 11, color: "#00FF00",
-                    wordBreak: "break-all", fontFamily: "monospace",
+                    borderRadius: 8, padding: "8px 12px",
                   }}>
-                    {step.code}
-                  </code>
+                    <code style={{
+                      flex: 1, fontSize: 11, color: "#00FF00",
+                      wordBreak: "break-all", fontFamily: "monospace",
+                    }}>
+                      {step.code}
+                    </code>
+                    <CopyButton text={step.code} />
+                  </div>
                 )}
               </div>
             </div>
