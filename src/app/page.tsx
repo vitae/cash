@@ -274,6 +274,39 @@ export default function Home() {
             }}>
               The Thinking Has Already Been Done, So You Can Create!
             </p>
+
+            {/* Prominent OPEN GENERATORS button for paid users */}
+            {hasAccess && (
+              <button
+                onClick={goToGenerators}
+                style={{
+                  marginTop: 32,
+                  width: "100%", maxWidth: 380,
+                  padding: "clamp(18px, 4.5vw, 24px) 32px",
+                  background: "linear-gradient(135deg, #00FF00 0%, #00DD00 30%, #FF00FF 70%, #00FF00 100%)",
+                  backgroundSize: "300% 300%",
+                  animation: "gradientShift 3s ease infinite, buyPulse 2.5s ease-in-out infinite",
+                  color: "#000",
+                  fontFamily: "Montserrat, sans-serif",
+                  fontSize: "clamp(18px, 4.5vw, 26px)",
+                  fontWeight: 900,
+                  letterSpacing: "clamp(3px, 1vw, 7px)",
+                  textTransform: "uppercase" as const,
+                  border: "none",
+                  borderRadius: 16,
+                  cursor: "pointer",
+                  boxShadow: "0 0 30px rgba(0,255,0,0.5), 0 0 80px rgba(0,255,0,0.2), 0 0 120px rgba(255,0,255,0.1)",
+                  transition: "transform 0.15s cubic-bezier(.4,0,.2,1)",
+                  WebkitAppearance: "none" as const,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.06)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
+                onMouseDown={e => { e.currentTarget.style.transform = "scale(0.96)"; }}
+                onMouseUp={e => { e.currentTarget.style.transform = "scale(1.06)"; }}
+              >
+                OPEN GENERATORS
+              </button>
+            )}
           </div>
         </RevealSection>
 
