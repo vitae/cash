@@ -165,8 +165,47 @@ function SuccessPageInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: currentFlow, formData, session_id: sessionId }),
       });
-      const data = await res.json();
-      setResult(data.content || "Generation complete. Check your email for the full output.");
+
+      // Handle SSE streaming response
+      if (res.headers.get("content-type")?.includes("text/event-stream")) {
+        const reader = res.body?.getReader();
+        const decoder = new TextDecoder();
+        let fullText = "";
+
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split("\n");
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const payload = line.slice(6);
+                if (payload === "[DONE]") continue;
+                try {
+                  const parsed = JSON.parse(payload);
+                  if (parsed.text) {
+                    fullText += parsed.text;
+                    setResult(fullText);
+                  }
+                  if (parsed.error) {
+                    fullText += `\n\n[Error: ${parsed.error}]`;
+                  }
+                } catch { /* skip malformed chunks */ }
+              }
+            }
+          }
+        }
+        if (!fullText) setResult("Generation complete but no content was returned.");
+      } else {
+        // Fallback for JSON response
+        const data = await res.json();
+        if (data.error) {
+          setResult(`Error: ${data.error}`);
+        } else {
+          setResult(data.content || "Generation complete.");
+        }
+      }
     } catch {
       setResult("Something went wrong. Please try again.");
     }
