@@ -845,21 +845,63 @@ function StatCard({ value, label, color }: { value: string; label: string; color
 }
 
 // ── Upload zone with real file upload ──
+type FileEntry = {
+  file: File;
+  status: "uploading" | "uploaded" | "failed" | "submitting" | "done";
+  percent: number;
+  videoUrl?: string;
+  filename?: string;
+};
+
 function UploadZone() {
   const [hovered, setHovered] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const [files, setFiles] = useState<File[]>([]);
+  const [entries, setEntries] = useState<FileEntry[]>([]);
   const [instagram, setInstagram] = useState("");
   const [email, setEmail] = useState("");
   const [description, setDescription] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<Record<number, { status: "pending" | "uploading" | "done" | "failed"; percent: number }>>({});
+  const [submitting, setSubmitting] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
   const ACCEPTED = ".mp4,.mov,.hevc,.webm";
   const ACCEPTED_TYPES = ["video/mp4", "video/quicktime", "video/hevc", "video/webm"];
+
+  // Upload a single file to Supabase Storage immediately
+  const uploadToStorage = useCallback((file: File, index: number) => {
+    const ext = file.name.split(".").pop() || "mp4";
+    const slug = `upload-${Date.now()}-${index}`;
+    const filename = `${slug}.${ext}`;
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${supabaseUrl}/storage/v1/object/reels/${filename}`);
+    xhr.setRequestHeader("Authorization", `Bearer ${supabaseKey}`);
+    xhr.setRequestHeader("apikey", supabaseKey);
+    xhr.setRequestHeader("Content-Type", file.type);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        setEntries(prev => prev.map((en, i) => i === index ? { ...en, percent, status: "uploading" } : en));
+      }
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const videoUrl = `${supabaseUrl}/storage/v1/object/public/reels/${filename}`;
+        setEntries(prev => prev.map((en, i) => i === index ? { ...en, status: "uploaded", percent: 100, videoUrl, filename } : en));
+      } else {
+        setEntries(prev => prev.map((en, i) => i === index ? { ...en, status: "failed", percent: 0 } : en));
+      }
+    };
+    xhr.onerror = () => {
+      setEntries(prev => prev.map((en, i) => i === index ? { ...en, status: "failed", percent: 0 } : en));
+    };
+    xhr.send(file);
+  }, [supabaseUrl, supabaseKey]);
 
   const handleFiles = (newFiles: FileList | File[]) => {
     const valid: File[] = [];
@@ -873,19 +915,28 @@ function UploadZone() {
       setErrorMsg("Please upload MP4, MOV, HEVC, or WebM files only (max 500 MB each).");
       return;
     }
-    const remaining = 3 - files.length;
+    const remaining = 3 - entries.length;
     if (remaining <= 0) {
       setErrorMsg("MAX UPLOADS: 3");
       return;
     }
     if (valid.length > remaining) valid.splice(remaining);
     setErrorMsg("");
-    setFiles(prev => [...prev, ...valid]);
     setUploadStatus("idle");
+
+    // Add entries and start uploading immediately
+    const startIndex = entries.length;
+    const newEntries: FileEntry[] = valid.map(f => ({
+      file: f, status: "uploading" as const, percent: 0,
+    }));
+    setEntries(prev => [...prev, ...newEntries]);
+
+    // Kick off uploads right away
+    valid.forEach((f, i) => uploadToStorage(f, startIndex + i));
   };
 
   const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    setEntries(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -894,97 +945,72 @@ function UploadZone() {
     if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
   };
 
+  // Submit just sends the DB records (files already uploaded)
   const handleSubmit = async () => {
-    if (files.length === 0 || !instagram.trim()) {
+    if (entries.length === 0 || !instagram.trim()) {
       setErrorMsg("@instagram (required)");
       return;
     }
-    setUploading(true);
+    const ready = entries.filter(e => e.status === "uploaded");
+    const stillUploading = entries.some(e => e.status === "uploading");
+    if (stillUploading) {
+      setErrorMsg("Videos still uploading — please wait a moment.");
+      return;
+    }
+    if (ready.length === 0) {
+      setErrorMsg("No videos uploaded successfully. Try again.");
+      return;
+    }
+
+    setSubmitting(true);
     setErrorMsg("");
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    const slug = instagram.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
-
     let allSuccess = true;
-    const progress: Record<number, { status: "pending" | "uploading" | "done" | "failed"; percent: number }> = {};
-    files.forEach((_, i) => { progress[i] = { status: "pending", percent: 0 }; });
-    setUploadProgress({ ...progress });
 
-    const uploadFileWithProgress = (file: File, url: string, headers: Record<string, string>): Promise<boolean> => {
-      return new Promise((resolve) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", url);
-        Object.entries(headers).forEach(([k, v]) => xhr.setRequestHeader(k, v));
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            const idx = files.indexOf(file);
-            progress[idx] = { status: "uploading", percent: Math.round((e.loaded / e.total) * 100) };
-            setUploadProgress({ ...progress });
-          }
-        };
-        xhr.onload = () => resolve(xhr.status >= 200 && xhr.status < 300);
-        xhr.onerror = () => resolve(false);
-        xhr.send(file);
-      });
-    };
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      if (entry.status !== "uploaded" || !entry.videoUrl) continue;
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      progress[i] = { status: "uploading", percent: 0 };
-      setUploadProgress({ ...progress });
+      setEntries(prev => prev.map((en, j) => j === i ? { ...en, status: "submitting" } : en));
 
       try {
-        const ext = file.name.split(".").pop() || "mp4";
-        const filename = `${slug}-${Date.now()}-${i}.${ext}`;
-
-        const ok = await uploadFileWithProgress(file, `${supabaseUrl}/storage/v1/object/reels/${filename}`, {
-          "Authorization": `Bearer ${supabaseKey}`,
-          "apikey": supabaseKey,
-          "Content-Type": file.type,
-        });
-
-        if (!ok) throw new Error("Storage upload failed");
-
-        const videoUrl = `${supabaseUrl}/storage/v1/object/public/reels/${filename}`;
-
         const res = await fetch("/api/submit-reel", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             artistName: instagram.trim(),
             email: email.trim() || undefined,
-            videoUrl,
+            videoUrl: entry.videoUrl,
             description: description.trim() || undefined,
           }),
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          progress[i] = { status: "done", percent: 100 };
+          setEntries(prev => prev.map((en, j) => j === i ? { ...en, status: "done" } : en));
         } else {
-          progress[i] = { status: "failed", percent: 0 };
+          setEntries(prev => prev.map((en, j) => j === i ? { ...en, status: "failed" } : en));
           allSuccess = false;
         }
       } catch {
-        progress[i] = { status: "failed", percent: 0 };
+        setEntries(prev => prev.map((en, j) => j === i ? { ...en, status: "failed" } : en));
         allSuccess = false;
       }
-      setUploadProgress({ ...progress });
     }
 
     if (allSuccess) {
       setUploadStatus("success");
-      setFiles([]);
+      setEntries([]);
       setInstagram("");
       setEmail("");
       setDescription("");
     } else {
       setUploadStatus("error");
-      setErrorMsg("Some uploads failed. Tap Submit again to retry.");
-      setFiles(prev => prev.filter((_, i) => progress[i]?.status === "failed"));
+      setErrorMsg("Some submissions failed. Tap Submit again to retry.");
     }
-    setUploading(false);
+    setSubmitting(false);
   };
+
+  const allUploaded = entries.length > 0 && entries.every(e => e.status === "uploaded" || e.status === "done");
+  const anyUploading = entries.some(e => e.status === "uploading");
 
   if (uploadStatus === "success") {
     return (
@@ -1002,7 +1028,7 @@ function UploadZone() {
           Submitted!
         </div>
         <div style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", fontWeight: 300, lineHeight: 1.6 }}>
-          Your {files.length > 1 ? "reels have" : "reel has"} been uploaded. We&apos;ll tag you when they go live.
+          Your {entries.length > 1 ? "reels have" : "reel has"} been uploaded. We&apos;ll tag you when they go live.
         </div>
         <button onClick={() => setUploadStatus("idle")} style={{
           marginTop: 16, padding: "12px 28px", fontSize: 13, fontWeight: 700,
@@ -1052,16 +1078,16 @@ function UploadZone() {
               : "none",
         }}
       >
-        {files.length > 0 ? (
+        {entries.length > 0 ? (
           <>
             <div style={{
-              fontSize: 14, color: "#00FF00", fontWeight: 600,
-              textShadow: "0 0 10px rgba(0,255,0,0.4)",
+              fontSize: 14, color: allUploaded ? "#00FF00" : anyUploading ? "#FF00FF" : "#00FF00", fontWeight: 600,
+              textShadow: `0 0 10px ${allUploaded ? "rgba(0,255,0,0.4)" : "rgba(255,0,255,0.4)"}`,
             }}>
-              {files.length} video{files.length > 1 ? "s" : ""} selected
+              {anyUploading ? "Uploading..." : `${entries.length} video${entries.length > 1 ? "s" : ""} ready`}
             </div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 4 }}>
-              {(files.reduce((sum, f) => sum + f.size, 0) / (1024 * 1024)).toFixed(1)} MB total &bull; Tap to add more
+              {(entries.reduce((sum, e) => sum + e.file.size, 0) / (1024 * 1024)).toFixed(1)} MB total &bull; Tap to add more
             </div>
           </>
         ) : (
@@ -1078,52 +1104,47 @@ function UploadZone() {
           </>
         )}
       </div>
-      {files.length > 0 && (
+      {entries.length > 0 && (
         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
-          {files.map((f, i) => {
-            const p = uploadProgress[i];
-            const status = p?.status;
-            const percent = p?.percent || 0;
-            return (
-              <div key={i}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
-                  <span style={{
-                    color: status === "done" ? "#00FF00" : status === "failed" ? "#ff5050" : status === "uploading" ? "#FF00FF" : "rgba(255,255,255,0.5)",
-                    fontWeight: 600, minWidth: 14, textAlign: "center",
-                  }}>
-                    {status === "done" ? "\u2713" : status === "failed" ? "\u2717" : status === "uploading" ? `${percent}%` : "\u25CB"}
-                  </span>
-                  <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
-                  <span style={{ color: "rgba(255,255,255,0.4)" }}>{(f.size / (1024 * 1024)).toFixed(1)}MB</span>
-                  {!uploading && (
-                    <button onClick={(e) => { e.stopPropagation(); removeFile(i); }} style={{
-                      background: "none", border: "none", color: "rgba(255,80,80,0.7)", cursor: "pointer", fontSize: 14, padding: "0 2px",
-                    }}>&times;</button>
-                  )}
-                </div>
-                {status === "uploading" && (
-                  <div style={{
-                    marginTop: 4, height: 4, borderRadius: 2,
-                    background: "rgba(255,255,255,0.08)", overflow: "hidden",
-                  }}>
-                    <div style={{
-                      height: "100%", width: `${percent}%`,
-                      background: "#00FF00",
-                      boxShadow: "0 0 8px #00FF00, 0 0 16px rgba(0,255,0,0.4)",
-                      borderRadius: 2,
-                      transition: "width 0.2s ease",
-                    }} />
-                  </div>
-                )}
-                {status === "done" && (
-                  <div style={{ marginTop: 4, height: 4, borderRadius: 2, background: "#00FF00", boxShadow: "0 0 6px rgba(0,255,0,0.4)" }} />
+          {entries.map((entry, i) => (
+            <div key={i}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
+                <span style={{
+                  color: entry.status === "done" ? "#00FF00" : entry.status === "uploaded" ? "#00FF00" : entry.status === "failed" ? "#ff5050" : "#FF00FF",
+                  fontWeight: 600, minWidth: 14, textAlign: "center",
+                }}>
+                  {entry.status === "done" ? "\u2713" : entry.status === "uploaded" ? "\u2713" : entry.status === "failed" ? "\u2717" : `${entry.percent}%`}
+                </span>
+                <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.file.name}</span>
+                <span style={{ color: "rgba(255,255,255,0.4)" }}>{(entry.file.size / (1024 * 1024)).toFixed(1)}MB</span>
+                {!submitting && entry.status !== "uploading" && (
+                  <button onClick={(e) => { e.stopPropagation(); removeFile(i); }} style={{
+                    background: "none", border: "none", color: "rgba(255,80,80,0.7)", cursor: "pointer", fontSize: 14, padding: "0 2px",
+                  }}>&times;</button>
                 )}
               </div>
-            );
-          })}
+              {entry.status === "uploading" && (
+                <div style={{
+                  marginTop: 4, height: 4, borderRadius: 2,
+                  background: "rgba(255,255,255,0.08)", overflow: "hidden",
+                }}>
+                  <div style={{
+                    height: "100%", width: `${entry.percent}%`,
+                    background: "#00FF00",
+                    boxShadow: "0 0 8px #00FF00, 0 0 16px rgba(0,255,0,0.4)",
+                    borderRadius: 2,
+                    transition: "width 0.2s ease",
+                  }} />
+                </div>
+              )}
+              {(entry.status === "uploaded" || entry.status === "done") && (
+                <div style={{ marginTop: 4, height: 4, borderRadius: 2, background: "#00FF00", boxShadow: "0 0 6px rgba(0,255,0,0.4)" }} />
+              )}
+            </div>
+          ))}
         </div>
       )}
-      {files.length > 0 && (
+      {entries.length > 0 && (
         <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
           <input
             type="text" placeholder="@instagram (required)" value={instagram}
@@ -1150,17 +1171,17 @@ function UploadZone() {
             onFocus={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.5)"; e.currentTarget.style.boxShadow = "0 0 15px rgba(0,255,0,0.15)"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.2)"; e.currentTarget.style.boxShadow = "none"; }}
           />
-          <button onClick={handleSubmit} disabled={uploading} style={{
+          <button onClick={handleSubmit} disabled={submitting || anyUploading} style={{
             padding: "16px 28px", fontSize: 14, fontWeight: 800, letterSpacing: 2,
             textTransform: "uppercase",
-            background: uploading ? "rgba(0,255,0,0.08)" : "rgba(0,255,0,0.2)",
+            background: submitting || anyUploading ? "rgba(0,255,0,0.08)" : allUploaded ? "rgba(0,255,0,0.2)" : "rgba(0,255,0,0.08)",
             border: "1px solid rgba(0,255,0,0.4)", borderRadius: 14, color: "#00FF00",
-            fontFamily: "Inter, sans-serif", cursor: uploading ? "wait" : "pointer",
+            fontFamily: "Inter, sans-serif", cursor: submitting || anyUploading ? "wait" : "pointer",
             textShadow: "0 0 10px rgba(0,255,0,0.3)",
-            boxShadow: uploading ? "none" : "0 0 20px rgba(0,255,0,0.15)",
+            boxShadow: allUploaded && !submitting ? "0 0 20px rgba(0,255,0,0.15)" : "none",
             transition: "all 0.2s ease",
           }}>
-            {uploading ? `Uploading ${Object.values(uploadProgress).filter(s => s.status === "done").length}/${files.length}...` : files.length > 1 ? `Submit ${files.length} Reels` : "Submit Reel"}
+            {anyUploading ? "Videos uploading..." : submitting ? "Submitting..." : allUploaded ? (entries.length > 1 ? `Submit ${entries.length} Reels` : "Submit Reel") : "Waiting for uploads..."}
           </button>
         </div>
       )}
