@@ -51,14 +51,18 @@ export async function processSubmission(submissionId: string): Promise<void> {
       ? submission.description.slice(0, 100)
       : `@${handle} | Flow Arts Professional`;
 
+    const hashtags = "#flowarts #edm #dance #hulahoop #poi #rave #Shorts";
+
     const description = [
       submission.description || "",
       "",
       `Featured artist: @${handle}`,
       "Submit your reel: flowarts.pro",
+      "",
+      hashtags,
     ].join("\n").trim();
 
-    const tags = ["flow arts", "Shorts", handle];
+    const tags = ["flow arts", "edm", "dance", "hulahoop", "poi", "rave", "Shorts", handle];
 
     // Upload to YouTube
     const youtubeUrl = await uploadToYouTube({
