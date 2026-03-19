@@ -38,9 +38,15 @@ export async function processSubmission(submissionId: string): Promise<void> {
     const probe = await probeVideo(inputPath);
     console.log(`Video: ${probe.width}x${probe.height}, ${probe.duration.toFixed(1)}s, ${probe.videoCodec}/${probe.audioCodec}`);
 
-    // Duration validation
+    // Validation
     if (probe.duration > MAX_DURATION_SECONDS) {
       throw new Error(`Video exceeds 3-minute limit (${probe.duration.toFixed(0)}s)`);
+    }
+    if (probe.duration < 1) {
+      throw new Error(`Video too short or unreadable (${probe.duration.toFixed(1)}s)`);
+    }
+    if (probe.width === 0 || probe.height === 0) {
+      throw new Error(`Invalid video dimensions (${probe.width}x${probe.height}) — file may be corrupted`);
     }
 
     // Transcode

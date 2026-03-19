@@ -18,29 +18,55 @@ interface ProbeResult {
   audioCodec: string;
 }
 
-export async function downloadVideo(url: string, outputPath: string): Promise<void> {
+const DOWNLOAD_TIMEOUT_MS = 120_000; // 2 minutes
+const MAX_REDIRECTS = 5;
+
+export async function downloadVideo(url: string, outputPath: string, redirectCount = 0): Promise<void> {
+  if (redirectCount > MAX_REDIRECTS) {
+    throw new Error(`Too many redirects (${MAX_REDIRECTS}) downloading ${url}`);
+  }
+
   const proto = url.startsWith("https") ? https : http;
 
   return new Promise((resolve, reject) => {
-    proto.get(url, (response) => {
+    const timeout = setTimeout(() => {
+      req.destroy();
+      reject(new Error(`Download timed out after ${DOWNLOAD_TIMEOUT_MS / 1000}s: ${url}`));
+    }, DOWNLOAD_TIMEOUT_MS);
+
+    const req = proto.get(url, (response) => {
       if (response.statusCode === 301 || response.statusCode === 302) {
+        clearTimeout(timeout);
         const redirectUrl = response.headers.location;
         if (redirectUrl) {
-          downloadVideo(redirectUrl, outputPath).then(resolve).catch(reject);
+          downloadVideo(redirectUrl, outputPath, redirectCount + 1).then(resolve).catch(reject);
           return;
         }
       }
 
       if (response.statusCode !== 200) {
+        clearTimeout(timeout);
         reject(new Error(`Download failed with status ${response.statusCode}`));
         return;
       }
 
       const fileStream = fsSync.createWriteStream(outputPath);
       response.pipe(fileStream);
-      fileStream.on("finish", () => { fileStream.close(); resolve(); });
-      fileStream.on("error", reject);
-    }).on("error", reject);
+      fileStream.on("finish", () => {
+        clearTimeout(timeout);
+        fileStream.close();
+        resolve();
+      });
+      fileStream.on("error", (err) => {
+        clearTimeout(timeout);
+        reject(err);
+      });
+    });
+
+    req.on("error", (err) => {
+      clearTimeout(timeout);
+      reject(err);
+    });
   });
 }
 

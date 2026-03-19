@@ -10,7 +10,7 @@ export async function sweepStaleProcessing(): Promise<void> {
     .from("reel_submissions")
     .update({ status: "pending" })
     .eq("status", "processing")
-    .lt("created_at", threshold)
+    .lt("updated_at", threshold)
     .select("id");
 
   if (error) {

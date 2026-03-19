@@ -1,14 +1,21 @@
+import crypto from "crypto";
 import { Router, Request, Response } from "express";
 import { webhookPayloadSchema } from "../types";
 import { enqueue, processQueue } from "../services/queue";
 import { supabase } from "../lib/supabase";
 
+function safeCompare(a: string | undefined, b: string | undefined): boolean {
+  if (!a || !b) return false;
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
+
 const router = Router();
 
 router.post("/webhook", (req: Request, res: Response) => {
-  // Validate webhook secret
-  const secret = req.headers["x-webhook-secret"];
-  if (secret !== process.env.WEBHOOK_SECRET) {
+  // Validate webhook secret (timing-safe)
+  const secret = req.headers["x-webhook-secret"] as string | undefined;
+  if (!safeCompare(secret, process.env.WEBHOOK_SECRET)) {
     res.status(401).json({ error: "Invalid webhook secret" });
     return;
   }
@@ -36,9 +43,9 @@ router.post("/webhook", (req: Request, res: Response) => {
 router.post("/retry/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  // Validate admin secret (reuse webhook secret)
-  const secret = req.headers["x-webhook-secret"];
-  if (secret !== process.env.WEBHOOK_SECRET) {
+  // Validate admin secret (timing-safe)
+  const retrySecret = req.headers["x-webhook-secret"] as string | undefined;
+  if (!safeCompare(retrySecret, process.env.WEBHOOK_SECRET)) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
