@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-type FlowType = "sponsor" | "booking" | "epk" | "festival";
+type FlowType = "sponsor" | "booking" | "epk" | "festival" | "instagram";
 type Step = { title: string; fields: Field[] };
 type Field = { id: string; label: string; type: string; placeholder?: string; options?: string[] };
 
@@ -66,9 +66,23 @@ const flows: Record<FlowType, { title: string; color: string; accent: string; st
       { id: "what_you_bring", label: "What Makes You Unique", type: "textarea", placeholder: "e.g. Custom LED choreography synced to music, 10-person fire circle" },
     ]},
   ]},
+  instagram: { title: "Instagram Reels Strategy", color: "#FF00FF", accent: "#00FF00", steps: [
+    { title: "Your Profile", fields: [
+      { id: "name", label: "Stage Name", type: "text", placeholder: "e.g. FlowMaster Kai" },
+      { id: "ig_handle", label: "@Instagram Handle", type: "text", placeholder: "@yourhandle" },
+      { id: "props", label: "Flow Props / Style", type: "text", placeholder: "e.g. LED poi, fire hoop, silk fans" },
+      { id: "ig_followers", label: "Current Followers", type: "number", placeholder: "e.g. 1200" },
+      { id: "niche", label: "Content Niche", type: "multiselect", options: ["Fire Performance", "LED / Glow", "Poi", "Hoops", "Staff", "Fans / Silk", "Contact Staff", "Multi-Prop", "Dance / Movement", "Tutorials", "Festivals"] },
+    ]},
+    { title: "Your Goals", fields: [
+      { id: "target_audience", label: "Target Audience", type: "multiselect", options: ["Beginners", "Intermediate Spinners", "Festival Goers", "Event Planners", "Flow Arts Fans", "General Public"] },
+      { id: "goal", label: "Primary Goal", type: "multiselect", options: ["Grow Following", "Sell Starter Pack", "Sell $9 Product", "Drive Subscriptions", "Get Bookings", "Build Brand"] },
+      { id: "existing_content", label: "Content You Already Have", type: "textarea", placeholder: "e.g. Practice clips, festival footage, slow-mo LED spins, beginner tutorials" },
+    ]},
+  ]},
 };
 
-const VALID_FLOWS: FlowType[] = ["sponsor", "booking", "epk", "festival"];
+const VALID_FLOWS: FlowType[] = ["sponsor", "booking", "epk", "festival", "instagram"];
 
 const PROGRESS_MESSAGES = [
   "Analyzing your flow profile...",
@@ -615,6 +629,10 @@ function SuccessPageInner() {
             <div className="gen-card" onClick={() => setCurrentFlow("festival")}>
               <div className="glow-green" style={{ fontSize: 16, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Festival Application</div>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Stand-out performer applications</p>
+            </div>
+            <div className="gen-card gen-card-m" onClick={() => setCurrentFlow("instagram")}>
+              <div className="glow-magenta" style={{ fontSize: 16, fontWeight: 600, color: "#FF00FF", marginBottom: 4 }}>Instagram Reels Strategy</div>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>10 viral Reel ideas + copy + CTAs</p>
             </div>
 
             <div className="gen-grid-label" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: "#FF00FF", textShadow: "0 0 8px rgba(255,0,255,0.4)", marginTop: 4, marginBottom: -4, textAlign: "center" }}>Guides</div>
