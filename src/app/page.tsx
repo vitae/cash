@@ -253,27 +253,6 @@ export default function Home() {
             }}>
               Professional
             </h2>
-            <div style={{
-              width: "100%", maxWidth: 300, height: 2,
-              background: "linear-gradient(90deg, transparent, #FF00FF, transparent)",
-              margin: "28px auto", borderRadius: 1,
-              boxShadow: "0 0 15px rgba(255,0,255,0.5)",
-            }} />
-            <p style={{
-              fontSize: "clamp(15px, 3.5vw, 18px)", color: "rgba(255,255,255,0.85)",
-              margin: "0 auto", maxWidth: 520, lineHeight: 1.8, fontWeight: 300,
-            }}>
-              Tools that write your <Glow color="green">sponsor pitches</Glow>, build your{" "}
-              <Glow color="magenta">booking sheets</Glow>, and assemble your{" "}
-              <Glow color="green">press kit</Glow> — all from a few questions.
-            </p>
-            <p style={{
-              fontSize: "clamp(12px, 2.8vw, 14px)", color: "#FF00FF",
-              fontWeight: 600, margin: "20px auto 0", letterSpacing: 1,
-              textShadow: "0 0 10px #FF00FF, 0 0 30px rgba(255,0,255,0.4)",
-            }}>
-              The Thinking Has Already Been Done, So You Can Create!
-            </p>
 
             {/* Prominent OPEN GENERATORS button for paid users */}
             {hasAccess && (
