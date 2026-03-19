@@ -66,41 +66,83 @@ export async function probeVideo(filePath: string): Promise<ProbeResult> {
   };
 }
 
-// Fetch a random music track from Supabase Storage "music" bucket
-// Each track is used ONCE and then permanently deleted from the bucket
-async function getRandomMusicTrack(): Promise<string | null> {
+// Fetch the highest-popularity unused music track
+// Uses music_tracks table (ranked by popularity_score DESC)
+// Falls back to raw bucket files if table is empty
+// Each track is used ONCE then permanently deleted
+async function getTopMusicTrack(): Promise<string | null> {
+  // Strategy 1: Use music_tracks table (ranked by popularity)
+  const { data: topTrack, error: dbError } = await supabase
+    .from("music_tracks")
+    .select("*")
+    .eq("used", false)
+    .order("popularity_score", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (topTrack && !dbError) {
+    console.log(`🎵 Top track: "${topTrack.name}" by ${topTrack.artist_name} (popularity: ${topTrack.popularity_score})`);
+
+    // Download from storage
+    const { data: urlData } = supabase.storage
+      .from("music")
+      .getPublicUrl(topTrack.storage_path);
+
+    const musicPath = path.join(os.tmpdir(), `music-${Date.now()}.mp3`);
+    await downloadVideo(urlData.publicUrl, musicPath);
+
+    // Mark as used in database
+    await supabase
+      .from("music_tracks")
+      .update({ used: true, used_at: new Date().toISOString() })
+      .eq("id", topTrack.id);
+
+    // Delete from storage bucket
+    const { error: deleteError } = await supabase.storage
+      .from("music")
+      .remove([topTrack.storage_path]);
+
+    if (deleteError) {
+      console.error(`Failed to delete ${topTrack.storage_path}:`, deleteError);
+    } else {
+      console.log(`🗑️ Deleted "${topTrack.name}" from bucket after use`);
+    }
+
+    // Count remaining
+    const { count } = await supabase
+      .from("music_tracks")
+      .select("*", { count: "exact", head: true })
+      .eq("used", false);
+    console.log(`🎵 ${count ?? 0} tracks remaining in library`);
+
+    return musicPath;
+  }
+
+  // Strategy 2: Fallback to raw bucket files (for legacy tracks without DB entries)
   const { data: files, error } = await supabase.storage
     .from("music")
     .list("", { limit: 200 });
 
   if (error || !files || files.length === 0) {
-    console.log("⚠️ No music tracks in bucket — uploading without audio. Add more tracks to the 'music' bucket!");
+    console.log("⚠️ No music tracks available — uploading without audio. Run the music discovery function!");
     return null;
   }
 
-  // Filter to audio files only
   const audioFiles = files.filter(f =>
     f.name.match(/\.(mp3|aac|m4a|wav|ogg)$/i)
   );
 
   if (audioFiles.length === 0) {
-    console.log("⚠️ No audio files in music bucket — uploading without audio");
+    console.log("⚠️ No audio files in music bucket");
     return null;
   }
 
-  console.log(`🎵 Music library: ${audioFiles.length} tracks remaining`);
+  console.log(`🎵 Fallback: ${audioFiles.length} untracked files in bucket`);
 
-  // Shuffle using Fisher-Yates for true randomness
-  const shuffled = [...audioFiles];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
+  // Pick first available
+  const track = audioFiles[0];
+  console.log(`🎵 Using: ${track.name} (unranked)`);
 
-  const track = shuffled[0];
-  console.log(`🎵 Selected: ${track.name} — will be deleted after use`);
-
-  // Download to temp
   const { data: urlData } = supabase.storage
     .from("music")
     .getPublicUrl(track.name);
@@ -108,16 +150,9 @@ async function getRandomMusicTrack(): Promise<string | null> {
   const musicPath = path.join(os.tmpdir(), `music-${Date.now()}.mp3`);
   await downloadVideo(urlData.publicUrl, musicPath);
 
-  // Delete the track from the bucket permanently so it's never reused
-  const { error: deleteError } = await supabase.storage
-    .from("music")
-    .remove([track.name]);
-
-  if (deleteError) {
-    console.error(`Failed to delete ${track.name} from bucket:`, deleteError);
-  } else {
-    console.log(`🗑️ Deleted ${track.name} from music bucket (${audioFiles.length - 1} tracks remaining)`);
-  }
+  // Delete from bucket
+  await supabase.storage.from("music").remove([track.name]);
+  console.log(`🗑️ Deleted ${track.name} from bucket after use`);
 
   return musicPath;
 }
@@ -128,7 +163,7 @@ export async function transcodeForShorts(
   probe: ProbeResult
 ): Promise<string> {
   // Try to get a music track to mix in
-  const musicPath = await getRandomMusicTrack();
+  const musicPath = await getTopMusicTrack();
 
   const videoDuration = Math.min(probe.duration, 60);
 
