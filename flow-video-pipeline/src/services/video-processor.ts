@@ -67,13 +67,14 @@ export async function probeVideo(filePath: string): Promise<ProbeResult> {
 }
 
 // Fetch a random music track from Supabase Storage "music" bucket
+// Each track is used ONCE and then permanently deleted from the bucket
 async function getRandomMusicTrack(): Promise<string | null> {
   const { data: files, error } = await supabase.storage
     .from("music")
-    .list("", { limit: 100 });
+    .list("", { limit: 200 });
 
   if (error || !files || files.length === 0) {
-    console.log("No music tracks found in music bucket, uploading without audio");
+    console.log("⚠️ No music tracks in bucket — uploading without audio. Add more tracks to the 'music' bucket!");
     return null;
   }
 
@@ -83,13 +84,21 @@ async function getRandomMusicTrack(): Promise<string | null> {
   );
 
   if (audioFiles.length === 0) {
-    console.log("No audio files found in music bucket");
+    console.log("⚠️ No audio files in music bucket — uploading without audio");
     return null;
   }
 
-  // Pick random track
-  const track = audioFiles[Math.floor(Math.random() * audioFiles.length)];
-  console.log(`Selected music track: ${track.name}`);
+  console.log(`🎵 Music library: ${audioFiles.length} tracks remaining`);
+
+  // Shuffle using Fisher-Yates for true randomness
+  const shuffled = [...audioFiles];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  const track = shuffled[0];
+  console.log(`🎵 Selected: ${track.name} — will be deleted after use`);
 
   // Download to temp
   const { data: urlData } = supabase.storage
@@ -98,6 +107,17 @@ async function getRandomMusicTrack(): Promise<string | null> {
 
   const musicPath = path.join(os.tmpdir(), `music-${Date.now()}.mp3`);
   await downloadVideo(urlData.publicUrl, musicPath);
+
+  // Delete the track from the bucket permanently so it's never reused
+  const { error: deleteError } = await supabase.storage
+    .from("music")
+    .remove([track.name]);
+
+  if (deleteError) {
+    console.error(`Failed to delete ${track.name} from bucket:`, deleteError);
+  } else {
+    console.log(`🗑️ Deleted ${track.name} from music bucket (${audioFiles.length - 1} tracks remaining)`);
+  }
 
   return musicPath;
 }
