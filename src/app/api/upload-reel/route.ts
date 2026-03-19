@@ -27,9 +27,8 @@ export async function POST(request: NextRequest) {
     if (!artistName || artistName.trim().length === 0) {
       return NextResponse.json({ error: "Artist name is required." }, { status: 400 });
     }
-    if (!email || !email.includes("@")) {
-      return NextResponse.json({ error: "Valid email is required." }, { status: 400 });
-    }
+    // Email is optional — validate format only if provided
+    const validEmail = email && email.includes("@") ? email.trim().toLowerCase() : null;
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
         { error: "Invalid file type. Accepted: MP4, MOV, HEVC, WebM." },
@@ -75,7 +74,7 @@ export async function POST(request: NextRequest) {
       .from("reel_submissions")
       .insert({
         artist_name: artistName.trim(),
-        email: email.trim().toLowerCase(),
+        email: validEmail,
         video_url: urlData.publicUrl,
         status: "pending",
         description: description?.trim() || null,

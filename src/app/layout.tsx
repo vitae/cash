@@ -9,7 +9,7 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const siteUrl = "https://cash-gwdf.vercel.app";
+const siteUrl = "https://flowarts.pro";
 
 export const viewport: Viewport = {
   width: "device-width",
