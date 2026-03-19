@@ -247,8 +247,6 @@ function SuccessPageInner() {
 
   // ─── Styles ───────────────────────────────────────────────────────────
   const css = `
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
     * { box-sizing: border-box; }
 
     body {
@@ -567,7 +565,7 @@ function SuccessPageInner() {
         <style>{css}</style>
         <main className="page-wrap" style={{ padding: "28px 16px", maxWidth: 480, margin: "0 auto", color: "#fff" }}>
           <div style={{ textAlign: "center", paddingTop: 100 }}>
-            <div className="spinner" />
+            <div className="spinner" role="status" aria-label="Loading" />
             <div className="glow-magenta" style={{ fontSize: 13, color: "#FF00FF", fontWeight: 500, letterSpacing: 1 }}>
               Verifying your purchase...
             </div>
@@ -600,19 +598,19 @@ function SuccessPageInner() {
 
           <div className="gen-grid" style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
             <div className="gen-grid-label" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: "#00FF00", textShadow: "0 0 8px rgba(0,255,0,0.4)", marginBottom: -4, textAlign: "center" }}>AI Generators</div>
-            <div className="gen-card" onClick={() => setCurrentFlow("sponsor")}>
+            <div className="gen-card" role="button" tabIndex={0} aria-label="Open Sponsor Pitch generator" onClick={() => setCurrentFlow("sponsor")} onKeyDown={e => e.key === "Enter" && setCurrentFlow("sponsor")}>
               <div className="glow-green" style={{ fontSize: 16, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Sponsor Pitch</div>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Personalized pitch for brand companies</p>
             </div>
-            <div className="gen-card" onClick={() => setCurrentFlow("booking")}>
+            <div className="gen-card" role="button" tabIndex={0} aria-label="Open Booking Sheet generator" onClick={() => setCurrentFlow("booking")} onKeyDown={e => e.key === "Enter" && setCurrentFlow("booking")}>
               <div className="glow-green" style={{ fontSize: 16, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Booking Sheet</div>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Tech rider, rates & availability</p>
             </div>
-            <div className="gen-card" onClick={() => setCurrentFlow("epk")}>
+            <div className="gen-card" role="button" tabIndex={0} aria-label="Open Artist Press Kit generator" onClick={() => setCurrentFlow("epk")} onKeyDown={e => e.key === "Enter" && setCurrentFlow("epk")}>
               <div className="glow-green" style={{ fontSize: 16, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Artist Press Kit</div>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Full EPK with bio, reels & socials</p>
             </div>
-            <div className="gen-card" onClick={() => setCurrentFlow("festival")}>
+            <div className="gen-card" role="button" tabIndex={0} aria-label="Open Festival Application generator" onClick={() => setCurrentFlow("festival")} onKeyDown={e => e.key === "Enter" && setCurrentFlow("festival")}>
               <div className="glow-green" style={{ fontSize: 16, fontWeight: 600, color: "#00FF00", marginBottom: 4 }}>Festival Application</div>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 300, margin: 0 }}>Stand-out performer applications</p>
             </div>

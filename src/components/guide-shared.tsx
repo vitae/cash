@@ -89,13 +89,13 @@ export function Tip({ children }: { children: ReactNode }) {
 // ─── Checklist Item ──────────────────────────────────────────────────
 export function CheckItem({ children }: { children: ReactNode }) {
   return (
-    <div style={{ display: "flex", gap: 10, marginBottom: 10, alignItems: "flex-start" }}>
-      <div style={{
+    <div role="listitem" style={{ display: "flex", gap: 10, marginBottom: 10, alignItems: "flex-start" }}>
+      <div aria-hidden="true" style={{
         width: 20, height: 20, borderRadius: 6,
         background: "rgba(0,255,0,0.12)", border: "1px solid rgba(0,255,0,0.35)",
         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2,
       }}>
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
           <polyline points="2,5.5 4,7.5 8,3" stroke="#00FF00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
