@@ -26,9 +26,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { type, formData } = body;
-    const sessionId =
-      body.session_id ||
-      request.nextUrl.searchParams.get("session_id");
+    // Accept session_id from POST body only (not URL params) to prevent CSRF
+    const sessionId = body.session_id;
 
     // --- Stripe session verification ---
     if (!sessionId) {
@@ -164,8 +163,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     console.error("Generate error:", err);
-    const message =
-      err instanceof Error ? err.message : "Failed to generate content";
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Don't leak internal error details to client
+    return NextResponse.json(
+      { error: "Failed to generate content. Please try again." },
+      { status: 500 }
+    );
   }
 }

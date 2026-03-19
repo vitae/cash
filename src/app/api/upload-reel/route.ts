@@ -12,9 +12,39 @@ const ALLOWED_TYPES = [
   "video/webm",
 ];
 const MAX_SIZE = 500 * 1024 * 1024; // 500 MB
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Simple in-memory rate limiter (per IP, 10 uploads/hour)
+const uploadCounts = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 10;
+const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = uploadCounts.get(ip);
+  if (!entry || now > entry.resetAt) {
+    uploadCounts.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT) return false;
+  entry.count++;
+  return true;
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit by IP
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      || request.headers.get("x-real-ip")
+      || "unknown";
+
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json(
+        { error: "Too many uploads. Please wait before trying again." },
+        { status: 429 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const artistName = formData.get("artistName") as string | null;
@@ -27,8 +57,10 @@ export async function POST(request: NextRequest) {
     if (!artistName || artistName.trim().length === 0) {
       return NextResponse.json({ error: "Artist name is required." }, { status: 400 });
     }
-    // Email is optional — validate format only if provided
-    const validEmail = email && email.includes("@") ? email.trim().toLowerCase() : null;
+
+    // Email is optional — validate with proper regex if provided
+    const validEmail = email && EMAIL_REGEX.test(email.trim()) ? email.trim().toLowerCase() : null;
+
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
         { error: "Invalid file type. Accepted: MP4, MOV, HEVC, WebM." },
@@ -44,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename
     const ext = file.name.split(".").pop() || "mp4";
-    const slug = artistName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const slug = artistName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 50);
     const filename = `${slug}-${Date.now()}.${ext}`;
 
     // Upload to Supabase Storage
