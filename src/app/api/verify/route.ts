@@ -5,11 +5,13 @@ import { supabaseAdmin } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 async function sendWelcomeEmail(email: string) {
   try {
-    await resend.emails.send({
+    await getResend().emails.send({
       from: "Flow Arts Professional <onboarding@resend.dev>",
       to: email,
       subject: "Welcome to Flow Arts Professional — Your Generators Are Ready",
