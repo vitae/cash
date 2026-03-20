@@ -295,5 +295,48 @@ export async function discoverMusic(targetCount: number = 10): Promise<{ added: 
   console.log(`\n🎵 Discovery complete: +${added} added, ${skipped} skipped, ${errors} errors`);
   console.log(`📊 Library now has ${currentUnused + added} unused tracks\n`);
 
+  // Prune the 5 lowest-ranked unused tracks to keep quality high
+  await pruneLowestRanked(5);
+
   return { added, skipped, errors };
+}
+
+/**
+ * Remove the N lowest-popularity unused tracks from the library.
+ * Deletes both the DB record and the file from storage.
+ */
+async function pruneLowestRanked(count: number): Promise<void> {
+  const { data: lowest, error } = await supabase
+    .from("music_tracks")
+    .select("id, name, artist_name, storage_path, popularity_score")
+    .eq("used", false)
+    .order("popularity_score", { ascending: true })
+    .limit(count);
+
+  if (error || !lowest || lowest.length === 0) return;
+
+  // Only prune if we have more than 20 tracks (don't empty the library)
+  const { count: totalUnused } = await supabase
+    .from("music_tracks")
+    .select("*", { count: "exact", head: true })
+    .eq("used", false);
+
+  if ((totalUnused ?? 0) <= 20) {
+    console.log("🗑️ Skipping prune — library too small to trim");
+    return;
+  }
+
+  console.log(`🗑️ Pruning ${lowest.length} lowest-ranked tracks:`);
+
+  for (const track of lowest) {
+    // Delete from storage
+    if (track.storage_path) {
+      await supabase.storage.from("music").remove([track.storage_path]);
+    }
+
+    // Delete from database
+    await supabase.from("music_tracks").delete().eq("id", track.id);
+
+    console.log(`  🗑️ Removed: "${track.name}" by ${track.artist_name} (score: ${track.popularity_score})`);
+  }
 }
