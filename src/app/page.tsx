@@ -316,6 +316,28 @@ export default function Home() {
           </Section>
         </RevealSection>
 
+        {/* ── Free Reel Upload ── */}
+        <RevealSection delay={0.05}>
+          <Section variant="magenta" style={{ marginBottom: 32, textAlign: "center" as const }}>
+            <div style={{
+              fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 700, color: "#FF00FF", marginBottom: 6,
+              textShadow: "0 0 10px #FF00FF, 0 0 40px #FF00FF, 0 0 80px rgba(255,0,255,0.5)",
+            }}>
+              Submit Your Flow Reel For Free!
+            </div>
+            <GradientLine color="green" />
+            <p style={{
+              fontSize: "clamp(12px, 3vw, 14px)", color: "rgba(255,255,255,0.8)",
+              fontWeight: 300, lineHeight: 1.7, marginBottom: 20, maxWidth: 480,
+              marginLeft: "auto", marginRight: "auto",
+            }}>
+              Upload a video of your best flow performance. Your reel enters our media pipeline and
+              gets posted everywhere, tagging you and giving you credit.
+            </p>
+            <UploadZone />
+          </Section>
+        </RevealSection>
+
         {/* ── YOUR MOMENT ── */}
         <RevealSection delay={0.05}>
           <Section variant="magenta" style={{ marginBottom: 20 }}>
@@ -536,28 +558,6 @@ export default function Home() {
               {loading ? "Redirecting..." : hasAccess ? "OPEN GENERATORS" : "BUY NOW!"}
             </button>
           </div>
-        </RevealSection>
-
-        {/* ── Free Reel Upload ── */}
-        <RevealSection delay={0.05}>
-          <Section variant="magenta" style={{ marginBottom: 32, textAlign: "center" as const }}>
-            <div style={{
-              fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 700, color: "#FF00FF", marginBottom: 6,
-              textShadow: "0 0 10px #FF00FF, 0 0 40px #FF00FF, 0 0 80px rgba(255,0,255,0.5)",
-            }}>
-              Submit Your Flow Reel For Free!
-            </div>
-            <GradientLine color="green" />
-            <p style={{
-              fontSize: "clamp(12px, 3vw, 14px)", color: "rgba(255,255,255,0.8)",
-              fontWeight: 300, lineHeight: 1.7, marginBottom: 20, maxWidth: 480,
-              marginLeft: "auto", marginRight: "auto",
-            }}>
-              Upload a video of your best flow performance. Your reel enters our media pipeline and
-              gets posted everywhere, tagging you and giving you credit.
-            </p>
-            <UploadZone />
-          </Section>
         </RevealSection>
 
         {/* ── Footer ── */}
