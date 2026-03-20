@@ -54,9 +54,6 @@ export async function POST(request: NextRequest) {
     if (!file) {
       return NextResponse.json({ error: "No file provided." }, { status: 400 });
     }
-    if (!artistName || artistName.trim().length === 0) {
-      return NextResponse.json({ error: "Artist name is required." }, { status: 400 });
-    }
 
     // Email is optional — validate with proper regex if provided
     const validEmail = email && EMAIL_REGEX.test(email.trim()) ? email.trim().toLowerCase() : null;
@@ -76,7 +73,9 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename
     const ext = file.name.split(".").pop() || "mp4";
-    const slug = artistName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 50);
+    const slug = artistName?.trim()
+      ? artistName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 50)
+      : "upload";
     const filename = `${slug}-${Date.now()}.${ext}`;
 
     // Upload to Supabase Storage
@@ -105,7 +104,7 @@ export async function POST(request: NextRequest) {
     const { error: dbError } = await supabaseAdmin
       .from("reel_submissions")
       .insert({
-        artist_name: artistName.trim(),
+        artist_name: artistName?.trim() || "Unknown Artist",
         email: validEmail,
         video_url: urlData.publicUrl,
         status: "pending",

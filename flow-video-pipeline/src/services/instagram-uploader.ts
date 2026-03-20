@@ -38,6 +38,7 @@ export async function uploadToInstagram(
         media_type: "REELS",
         video_url: publicVideoUrl,
         caption,
+        location_id: "110843418940484", // Honolulu, Hawaii
         access_token: accessToken,
         appsecret_proof: proof,
       }),

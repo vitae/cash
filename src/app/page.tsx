@@ -947,8 +947,8 @@ function UploadZone() {
 
   // Submit just sends the DB records (files already uploaded)
   const handleSubmit = async () => {
-    if (entries.length === 0 || !instagram.trim()) {
-      setErrorMsg("@instagram (required)");
+    if (entries.length === 0) {
+      setErrorMsg("Please upload at least one video.");
       return;
     }
     const ready = entries.filter(e => e.status === "uploaded");
@@ -1147,7 +1147,7 @@ function UploadZone() {
       {entries.length > 0 && (
         <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
           <input
-            type="text" placeholder="@instagram (required)" value={instagram}
+            type="text" placeholder="@instagram (optional)" value={instagram}
             onChange={e => setInstagram(e.target.value)} style={inputStyle}
             onFocus={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.5)"; e.currentTarget.style.boxShadow = "0 0 15px rgba(0,255,0,0.15)"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "rgba(0,255,0,0.2)"; e.currentTarget.style.boxShadow = "none"; }}

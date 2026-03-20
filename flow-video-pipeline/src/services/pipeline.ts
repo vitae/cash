@@ -153,7 +153,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
       submission.description || caption,
       "",
       `Artist: @${handle}`,
-      "Submit your reel at flowarts.pro",
+      "Submit your reel at https://flowarts.pro",
       "",
       "#flowarts #edm #dance #hulahoop #poi #rave #flow #spinning #performance",
     ].join("\n").trim();

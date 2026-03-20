@@ -8,11 +8,7 @@ const router = Router();
 // POST /quick-upload?handle=@username
 // Body: raw video file (Content-Type: video/mp4)
 router.post("/quick-upload", async (req: Request, res: Response) => {
-  const handle = (req.query.handle as string || "").trim();
-  if (!handle) {
-    res.status(400).json({ error: "Missing ?handle= parameter" });
-    return;
-  }
+  const handle = (req.query.handle as string || "").trim() || "Unknown Artist";
 
   // Collect raw body chunks
   const chunks: Buffer[] = [];

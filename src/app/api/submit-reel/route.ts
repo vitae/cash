@@ -8,15 +8,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { artistName, email, videoUrl, description } = body;
 
-    if (!artistName || typeof artistName !== "string" || artistName.trim().length === 0) {
-      return NextResponse.json(
-        { error: "artistName is required." },
-        { status: 400 }
-      );
-    }
-
-    // Email is optional
-
     if (!videoUrl || typeof videoUrl !== "string") {
       return NextResponse.json(
         { error: "videoUrl is required." },
@@ -37,7 +28,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabaseAdmin
       .from("reel_submissions")
       .insert({
-        artist_name: artistName.trim(),
+        artist_name: artistName && typeof artistName === "string" && artistName.trim() ? artistName.trim() : "Unknown Artist",
         email: email && typeof email === "string" ? email.trim().toLowerCase() : null,
         video_url: videoUrl.trim(),
         status: "pending",
