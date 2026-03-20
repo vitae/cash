@@ -135,7 +135,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
       ? submission.description.slice(0, 100)
       : `${caption} @${handle}`;
 
-    const hashtags = "#flowarts #edm #dance #hulahoop #poi #rave #Shorts";
+    const hashtags = "#dance #edm #rave #hulahoop #flowarts #Shorts";
 
     const description = [
       submission.description || "",
@@ -146,7 +146,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
       hashtags,
     ].join("\n").trim();
 
-    const tags = ["flow arts", "edm", "dance", "hulahoop", "poi", "rave", "Shorts", handle];
+    const tags = ["dance", "edm", "rave", "hulahoop", "flow arts", "Shorts", handle];
 
     // Social media caption (IG/FB use a shorter format)
     const socialCaption = [
@@ -155,7 +155,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
       `Artist: @${handle}`,
       "Submit your reel at https://flowarts.pro",
       "",
-      "#flowarts #edm #dance #hulahoop #poi #rave #flow",
+      "#dance #edm #rave #hulahoop #flowarts",
     ].join("\n").trim();
 
     // Determine which platforms still need posting
