@@ -374,16 +374,16 @@ export default function Home() {
 
         {/* ── Core Problem ── */}
         <RevealSection delay={0.05}>
-          <Section style={{ marginBottom: 20 }}>
+          <Section variant="red" style={{ marginBottom: 20 }}>
             <div style={{ textAlign: "center", marginBottom: 6 }}>
               <div style={{
-                fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 800, color: "#FF3333",
-                textShadow: "0 0 10px #FF3333, 0 0 40px #FF3333, 0 0 80px rgba(255,51,51,0.5)",
+                fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 800, color: "#FF0000",
+                textShadow: "0 0 10px #FF0000, 0 0 40px #FF0000, 0 0 80px rgba(255,0,0,0.5)",
               }}>
                 The Core Problem
               </div>
             </div>
-            <GradientLine color="magenta" />
+            <GradientLine color="red" />
             <p style={{
               textAlign: "center", marginBottom: 18,
               fontSize: "clamp(12px, 3vw, 15px)", color: "rgba(255,255,255,0.8)",
@@ -512,7 +512,7 @@ export default function Home() {
               filter: "drop-shadow(0 0 20px rgba(0,255,0,0.4))",
               position: "relative" as const,
             }}>
-              {hasAccess ? "Your Generators Are Ready" : "Unlock Everything For Only $5"}
+              {hasAccess ? "Your Generators Are Ready" : (<>UNLOCK EVERYTHING<br />FOR ONLY $5</>)}
             </div>
             <div style={{
               width: "100%", maxWidth: 400, height: 2,
@@ -524,7 +524,7 @@ export default function Home() {
               fontSize: "clamp(12px, 2.8vw, 14px)", color: "rgba(255,255,255,0.7)",
               fontWeight: 300, marginBottom: 28,
             }}>
-              {hasAccess ? "You have lifetime access. Open your generators anytime." : "One-Time Payment. Lifetime Access. Unlimited Uses."}
+              {hasAccess ? "You have lifetime access. Open your generators anytime." : "One-Time Payment. Unlimited Lifetime Access."}
             </div>
             <button
               onClick={hasAccess ? goToGenerators : handleBuyNow}
@@ -608,9 +608,9 @@ function RevealSection({ children, delay = 0 }: { children: React.ReactNode; del
 }
 
 // ── Section card with animated gradient border ──
-function Section({ children, variant, style }: { children: React.ReactNode; variant?: "green" | "magenta"; style?: React.CSSProperties }) {
-  const borderColor = variant === "green" ? "#00FF00" : variant === "magenta" ? "#FF00FF" : "rgba(255,255,255,0.15)";
-  const glowRgb = variant === "green" ? "0,255,0" : variant === "magenta" ? "255,0,255" : "255,255,255";
+function Section({ children, variant, style }: { children: React.ReactNode; variant?: "green" | "magenta" | "red"; style?: React.CSSProperties }) {
+  const borderColor = variant === "green" ? "#00FF00" : variant === "magenta" ? "#FF00FF" : variant === "red" ? "#FF0000" : "rgba(255,255,255,0.15)";
+  const glowRgb = variant === "green" ? "0,255,0" : variant === "magenta" ? "255,0,255" : variant === "red" ? "255,0,0" : "255,255,255";
 
   const base: React.CSSProperties = {
     padding: "clamp(20px, 5vw, 28px)",
@@ -634,6 +634,12 @@ function Section({ children, variant, style }: { children: React.ReactNode; vari
       background: "radial-gradient(ellipse at 30% 0%, rgba(255,0,255,0.1) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(255,0,255,0.05) 0%, transparent 50%), rgba(0,0,0,0.5)",
       border: "1px solid rgba(255,0,255,0.35)",
       boxShadow: "0 0 20px rgba(255,0,255,0.3), 0 0 60px rgba(255,0,255,0.1), inset 0 1px 0 rgba(255,0,255,0.2)",
+    });
+  } else if (variant === "red") {
+    Object.assign(base, {
+      background: "radial-gradient(ellipse at 30% 0%, rgba(255,0,0,0.1) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(255,0,0,0.05) 0%, transparent 50%), rgba(0,0,0,0.5)",
+      border: "1px solid rgba(255,0,0,0.35)",
+      boxShadow: "0 0 20px rgba(255,0,0,0.3), 0 0 60px rgba(255,0,0,0.1), inset 0 1px 0 rgba(255,0,0,0.2)",
     });
   } else {
     Object.assign(base, {
