@@ -610,6 +610,36 @@ export default function Home() {
         {/* ── Footer ── */}
         <RevealSection delay={0.05}>
           <div style={{ textAlign: "center", paddingTop: 24, paddingBottom: 16 }}>
+            <div style={{
+              display: "flex", justifyContent: "center", gap: "clamp(16px, 4vw, 28px)",
+              marginBottom: 18,
+            }}>
+              <SocialLink href="https://www.instagram.com/glowwitdaflow" label="Instagram">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" />
+                  <circle cx="12" cy="12" r="5" />
+                  <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+                </svg>
+              </SocialLink>
+              <SocialLink href="https://www.youtube.com/@glowwitdaflow" label="YouTube">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22.54 6.42a2.78 2.78 0 00-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 00-1.94 2A29 29 0 001 12a29 29 0 00.46 5.58 2.78 2.78 0 001.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.46a2.78 2.78 0 001.94-2A29 29 0 0023 12a29 29 0 00-.46-5.58z" />
+                  <polygon points="9.75,15.02 15.5,12 9.75,8.98" fill="currentColor" stroke="none" />
+                </svg>
+              </SocialLink>
+              <SocialLink href="https://www.facebook.com/glowwitdaflow" label="Facebook">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
+                </svg>
+              </SocialLink>
+              <SocialLink href="https://www.threads.net/@glowwitdaflow" label="Threads">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
+                  <path d="M14.5 8.5c-1.5-1-3.5-.8-4.5.5s-1 3.5.5 4.5c1 .7 2.2.8 3.2.3" />
+                  <path d="M13.7 9c1.5.3 2.5 1.5 2.3 3-.2 1.8-1.8 3.2-4 3.5-2.5.3-4.5-1-5-3.5" />
+                </svg>
+              </SocialLink>
+            </div>
             <p style={{
               fontSize: "clamp(11px, 2.5vw, 13px)", letterSpacing: "clamp(2px, 1vw, 6px)", textTransform: "uppercase",
               color: "#FF00FF", margin: "0 0 10px", whiteSpace: "nowrap",
@@ -1228,6 +1258,30 @@ function UploadZone() {
         <div style={{ marginTop: 10, fontSize: 13, color: "#ff5050", textAlign: "center", textShadow: "0 0 10px rgba(255,80,80,0.3)" }}>{errorMsg}</div>
       )}
     </div>
+  );
+}
+
+// ── Social link icon ──
+function SocialLink({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        color: hovered ? "#00FF00" : "rgba(255,255,255,0.5)",
+        transition: "color 0.25s ease, filter 0.25s ease",
+        filter: hovered ? "drop-shadow(0 0 8px #00FF00) drop-shadow(0 0 20px rgba(0,255,0,0.4))" : "none",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        width: 36, height: 36,
+      }}
+    >
+      {children}
+    </a>
   );
 }
 
