@@ -62,8 +62,8 @@ app.listen(PORT, () => {
     .then(() => processQueue())
     .catch(err => console.error("⚠️ Startup sweep failed:", err));
 
-  // Discover music on startup (stock the library)
-  discoverMusic(15).catch(err => console.error("⚠️ Startup music discovery failed:", err));
+  // Discover music on startup (stock the library with 30 tracks)
+  discoverMusic(30).catch(err => console.error("⚠️ Startup music discovery failed:", err));
 
   // Sweep stale every 5 minutes
   safeInterval(
@@ -83,13 +83,13 @@ app.listen(PORT, () => {
     "Retry queued"
   );
 
-  // Discover new music every 6 hours to keep library stocked
+  // Discover new music every 3 hours to keep library stocked at 100+
   safeInterval(
     async () => {
       console.log("🎵 Running scheduled music discovery...");
-      await discoverMusic(10);
+      await discoverMusic(20);
     },
-    6 * 60 * 60 * 1000,
+    3 * 60 * 60 * 1000,
     "Music discovery"
   );
 });

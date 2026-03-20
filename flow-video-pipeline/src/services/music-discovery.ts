@@ -176,12 +176,12 @@ export async function discoverMusic(targetCount: number = 10): Promise<{ added: 
   const currentUnused = existingCount ?? 0;
   console.log(`📊 Currently ${currentUnused} unused tracks in library`);
 
-  if (currentUnused >= 50) {
-    console.log("✅ Library is well-stocked (50+ tracks). Skipping discovery.");
+  if (currentUnused >= 100) {
+    console.log("✅ Library is well-stocked (100+ tracks). Skipping discovery.");
     return { added: 0, skipped: 0, errors: 0 };
   }
 
-  const neededTracks = Math.min(targetCount, 50 - currentUnused);
+  const neededTracks = Math.min(targetCount, 100 - currentUnused);
   console.log(`📥 Need to fetch ${neededTracks} new tracks`);
 
   // Fetch from all sources in parallel
