@@ -26,15 +26,16 @@ export async function sweepStaleProcessing(): Promise<void> {
   }
 }
 
-// Retry queued submissions (quota-limited) — called on a longer interval
+// Retry queued and partial submissions — called on a longer interval
+// "queued" = all platforms failed (e.g. quota), "partial" = some succeeded, some still need posting
 export async function retryQueuedSubmissions(): Promise<void> {
   const { data, error } = await supabase
     .from("reel_submissions")
-    .update({ status: "pending", error_message: null })
-    .eq("status", "queued")
+    .update({ status: "pending" })
+    .in("status", ["queued", "partial"])
     .select("id")
     .order("created_at", { ascending: true })
-    .limit(2); // Retry 2 at a time to stay under quota
+    .limit(3);
 
   if (error) {
     console.error("Retry queued error:", error.message);
@@ -42,7 +43,7 @@ export async function retryQueuedSubmissions(): Promise<void> {
   }
 
   if (data && data.length > 0) {
-    console.log(`Retrying ${data.length} queued submissions`);
+    console.log(`Retrying ${data.length} queued/partial submissions`);
     for (const row of data) {
       enqueue(row.id);
     }

@@ -3,9 +3,20 @@ import os from "os";
 import { supabase } from "../lib/supabase";
 import { downloadVideo, probeVideo, transcodeForShorts, cleanup } from "./video-processor";
 import { uploadToYouTube } from "./youtube-uploader";
-import type { ReelSubmission } from "../types";
+import { uploadToInstagram } from "./instagram-uploader";
+import { uploadToFacebook } from "./facebook-uploader";
+import { uploadToPublicUrl, cleanupPublicUrl } from "./public-url-uploader";
+import type { ReelSubmission, PublishDetails } from "../types";
 
 const MAX_DURATION_SECONDS = 180; // 3 minutes
+
+function isInstagramEnabled(): boolean {
+  return !!(process.env.INSTAGRAM_ACCESS_TOKEN && process.env.INSTAGRAM_ACCOUNT_ID);
+}
+
+function isFacebookEnabled(): boolean {
+  return !!(process.env.FACEBOOK_ACCESS_TOKEN && process.env.FACEBOOK_PAGE_ID);
+}
 
 export async function processSubmission(submissionId: string): Promise<void> {
   const tmpDir = os.tmpdir();
@@ -13,22 +24,25 @@ export async function processSubmission(submissionId: string): Promise<void> {
   const outputPath = path.join(tmpDir, `${submissionId}-processed.mp4`);
 
   try {
-    // Lock: set status to processing (only if still pending)
+    // Lock: set status to processing (accept pending, queued, or partial for retries)
     const { data: lockData, error: lockError } = await supabase
       .from("reel_submissions")
       .update({ status: "processing" })
       .eq("id", submissionId)
-      .eq("status", "pending")
+      .in("status", ["pending", "queued", "partial"])
       .select("*")
       .single();
 
     if (lockError || !lockData) {
-      console.log(`Submission ${submissionId} is no longer pending, skipping`);
+      console.log(`Submission ${submissionId} is not available for processing, skipping`);
       return;
     }
 
     const submission = lockData as ReelSubmission;
     const handle = submission.artist_name.replace(/^@+/, "");
+
+    // Carry forward prior successful posts (don't re-post to platforms that already worked)
+    const prior: PublishDetails = submission.publish_details || {};
 
     // Download
     console.log(`Downloading video from ${submission.video_url}`);
@@ -50,9 +64,10 @@ export async function processSubmission(submissionId: string): Promise<void> {
     }
 
     // Transcode
-    const processedPath = await transcodeForShorts(inputPath, outputPath, probe);
+    const transcodeResult = await transcodeForShorts(inputPath, outputPath, probe);
+    const processedPath = transcodeResult.outputPath;
 
-    // Build YouTube metadata
+    // Build metadata
     const captions = [
       "Look at them GLOW!",
       "Glow Wit Da Flow!",
@@ -124,52 +139,203 @@ export async function processSubmission(submissionId: string): Promise<void> {
 
     const tags = ["flow arts", "edm", "dance", "hulahoop", "poi", "rave", "Shorts", handle];
 
-    // Upload to YouTube
-    const youtubeUrl = await uploadToYouTube({
-      filePath: processedPath,
-      title,
-      description,
-      tags,
-    });
+    // Social media caption (IG/FB use a shorter format)
+    const socialCaption = [
+      submission.description || caption,
+      "",
+      `Artist: @${handle}`,
+      "Submit your reel at flowarts.pro",
+      "",
+      "#flowarts #edm #dance #hulahoop #poi #rave #flow #spinning #performance",
+    ].join("\n").trim();
 
-    // Update status to posted
-    await supabase
-      .from("reel_submissions")
-      .update({
-        status: "posted",
-        youtube_url: youtubeUrl,
-        error_message: null,
-      })
-      .eq("id", submissionId);
+    // Determine which platforms still need posting
+    const needsYouTube = !prior.youtube;
+    const needsInstagram = isInstagramEnabled() && !prior.instagram;
+    const needsFacebook = isFacebookEnabled() && !prior.facebook;
 
-    console.log(`Submission ${submissionId} posted: ${youtubeUrl}`);
+    // Carry forward prior successes, clear old errors for platforms we're retrying
+    const publishDetails: PublishDetails = { ...prior };
+    if (transcodeResult.musicTrackName) {
+      publishDetails.music_track = transcodeResult.musicTrackName;
+    }
+    if (needsYouTube) delete publishDetails.youtube_error;
+    if (needsInstagram) delete publishDetails.instagram_error;
+    if (needsFacebook) delete publishDetails.facebook_error;
+
+    if (!needsYouTube && !needsInstagram && !needsFacebook) {
+      console.log(`Submission ${submissionId} already posted to all enabled platforms, skipping`);
+      await supabase
+        .from("reel_submissions")
+        .update({ status: "posted", error_message: null })
+        .eq("id", submissionId);
+      return;
+    }
+
+    const platformsToPost = [
+      needsYouTube ? "YouTube" : null,
+      needsInstagram ? "Instagram" : null,
+      needsFacebook ? "Facebook" : null,
+    ].filter(Boolean).join(", ");
+    console.log(`  Posting to: ${platformsToPost}`);
+
+    // Upload processed video to public URL for IG/FB (they need a URL to fetch)
+    let publicVideoUrl: string | null = null;
+    if (needsInstagram || needsFacebook) {
+      try {
+        publicVideoUrl = await uploadToPublicUrl(processedPath, submissionId, "social");
+        console.log(`  Public URL ready for IG/FB: ${publicVideoUrl}`);
+      } catch (err) {
+        console.error("  Failed to create public URL for IG/FB:", err);
+      }
+    }
+
+    // Upload to platforms in parallel (only ones that still need posting)
+    const uploadPromises: Promise<void>[] = [];
+
+    // YouTube Shorts
+    if (needsYouTube) {
+      uploadPromises.push(
+        uploadToYouTube({ filePath: processedPath, title, description, tags })
+          .then((youtubeUrl) => {
+            publishDetails.youtube = youtubeUrl;
+            console.log(`  YouTube: ${youtubeUrl}`);
+          })
+          .catch((err) => {
+            console.error("  YouTube upload failed:", err);
+            publishDetails.youtube_error = err instanceof Error ? err.message : String(err);
+          })
+      );
+    }
+
+    // Instagram Reels
+    if (needsInstagram && publicVideoUrl) {
+      uploadPromises.push(
+        uploadToInstagram(publicVideoUrl, socialCaption)
+          .then((result) => {
+            publishDetails.instagram = result.permalink;
+            console.log(`  Instagram: ${result.permalink}`);
+          })
+          .catch((err) => {
+            console.error("  Instagram upload failed:", err);
+            publishDetails.instagram_error = err instanceof Error ? err.message : String(err);
+          })
+      );
+    }
+
+    // Facebook Reels
+    if (needsFacebook && publicVideoUrl) {
+      uploadPromises.push(
+        uploadToFacebook(publicVideoUrl, socialCaption)
+          .then((result) => {
+            publishDetails.facebook = result.url;
+            console.log(`  Facebook: ${result.url}`);
+          })
+          .catch((err) => {
+            console.error("  Facebook upload failed:", err);
+            publishDetails.facebook_error = err instanceof Error ? err.message : String(err);
+          })
+      );
+    }
+
+    await Promise.all(uploadPromises);
+
+    // Clean up public URL from storage
+    if (publicVideoUrl) {
+      cleanupPublicUrl(submissionId, "social").catch((err) =>
+        console.error("  Failed to cleanup public URL:", err)
+      );
+    }
+
+    // Determine which platforms succeeded (including prior successes)
+    const postedYouTube = !!publishDetails.youtube;
+    const postedInstagram = !!publishDetails.instagram;
+    const postedFacebook = !!publishDetails.facebook;
+
+    // Which enabled platforms are still missing?
+    const stillMissingYouTube = !postedYouTube;
+    const stillMissingInstagram = isInstagramEnabled() && !postedInstagram;
+    const stillMissingFacebook = isFacebookEnabled() && !postedFacebook;
+    const allDone = !stillMissingYouTube && !stillMissingInstagram && !stillMissingFacebook;
+
+    const postedPlatforms = [
+      postedYouTube ? "YouTube" : null,
+      postedInstagram ? "Instagram" : null,
+      postedFacebook ? "Facebook" : null,
+    ].filter(Boolean).join(", ");
+
+    if (allDone) {
+      // All enabled platforms succeeded
+      await supabase
+        .from("reel_submissions")
+        .update({
+          status: "posted",
+          youtube_url: publishDetails.youtube || null,
+          publish_details: publishDetails,
+          error_message: null,
+        })
+        .eq("id", submissionId);
+      console.log(`Submission ${submissionId} fully posted to: ${postedPlatforms}`);
+    } else if (postedYouTube || postedInstagram || postedFacebook) {
+      // Some platforms succeeded, some still need retry — mark as partial
+      const missing = [
+        stillMissingYouTube ? "YouTube" : null,
+        stillMissingInstagram ? "Instagram" : null,
+        stillMissingFacebook ? "Facebook" : null,
+      ].filter(Boolean).join(", ");
+      await supabase
+        .from("reel_submissions")
+        .update({
+          status: "partial",
+          youtube_url: publishDetails.youtube || null,
+          publish_details: publishDetails,
+          error_message: `Posted to ${postedPlatforms}; still need: ${missing}`,
+        })
+        .eq("id", submissionId);
+      console.log(`Submission ${submissionId} partial — posted: ${postedPlatforms}, pending: ${missing}`);
+    } else {
+      // Nothing succeeded at all
+      const ytError = publishDetails.youtube_error || "";
+      const isQuotaError = ytError.includes("exceeded the number of videos")
+        || ytError.includes("quotaExceeded")
+        || ytError.includes("uploadLimitExceeded");
+
+      if (isQuotaError) {
+        await supabase
+          .from("reel_submissions")
+          .update({
+            status: "queued",
+            publish_details: publishDetails,
+            error_message: "YouTube quota reached — will retry all platforms",
+          })
+          .eq("id", submissionId);
+        console.log(`Submission ${submissionId} queued for retry (quota exceeded)`);
+      } else {
+        const errors = Object.entries(publishDetails)
+          .filter(([k]) => k.endsWith("_error"))
+          .map(([k, v]) => `${k}: ${v}`)
+          .join("; ");
+        await supabase
+          .from("reel_submissions")
+          .update({
+            status: "failed",
+            publish_details: publishDetails,
+            error_message: errors || "All platform uploads failed",
+          })
+          .eq("id", submissionId);
+      }
+    }
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     console.error(`Pipeline failed for ${submissionId}:`, errorMessage);
 
-    // YouTube quota exceeded — queue for retry instead of failing
-    const isQuotaError = errorMessage.includes("exceeded the number of videos")
-      || errorMessage.includes("quotaExceeded")
-      || errorMessage.includes("uploadLimitExceeded");
-
-    if (isQuotaError) {
-      console.log(`Quota exceeded — marking ${submissionId} as queued for retry`);
-      await supabase
-        .from("reel_submissions")
-        .update({
-          status: "queued",
-          error_message: "YouTube daily quota reached — will retry automatically",
-        })
-        .eq("id", submissionId);
-    } else {
-      await supabase
-        .from("reel_submissions")
-        .update({
-          status: "failed",
-          error_message: errorMessage,
-        })
-        .eq("id", submissionId);
-    }
+    await supabase
+      .from("reel_submissions")
+      .update({
+        status: "failed",
+        error_message: errorMessage,
+      })
+      .eq("id", submissionId);
   } finally {
     await cleanup(inputPath, outputPath);
   }

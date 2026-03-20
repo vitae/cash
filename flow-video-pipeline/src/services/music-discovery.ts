@@ -30,7 +30,7 @@ async function fetchTrendingEDM(limit: number = 20): Promise<JamendoTrack[]> {
     throw new Error(`Jamendo API error: ${response.status} ${response.statusText}`);
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as { results?: JamendoTrack[] };
   return data.results || [];
 }
 

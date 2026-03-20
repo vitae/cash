@@ -6,11 +6,23 @@ export interface ReelSubmission {
   email: string;
   video_url: string;
   description: string | null;
-  status: "pending" | "processing" | "posted" | "failed";
+  status: "pending" | "processing" | "posted" | "failed" | "queued" | "partial";
   youtube_url: string | null;
   error_message: string | null;
   retry_count: number;
+  publish_details: PublishDetails | null;
   created_at: string;
+}
+
+export interface PublishDetails {
+  youtube?: string;
+  youtube_error?: string;
+  instagram?: string;
+  instagram_error?: string;
+  facebook?: string;
+  facebook_error?: string;
+  music_track?: string;
+  [key: string]: string | undefined;
 }
 
 export interface YouTubeTokens {

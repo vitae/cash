@@ -92,11 +92,16 @@ export async function probeVideo(filePath: string): Promise<ProbeResult> {
   };
 }
 
+export interface MusicTrackInfo {
+  path: string;
+  name: string;
+}
+
 // Fetch the highest-popularity unused music track
 // Uses music_tracks table (ranked by popularity_score DESC)
 // Falls back to raw bucket files if table is empty
 // Each track is used ONCE then permanently deleted
-async function getTopMusicTrack(): Promise<string | null> {
+async function getTopMusicTrack(): Promise<MusicTrackInfo | null> {
   // Strategy 1: Use music_tracks table (ranked by popularity)
   const { data: topTrack, error: dbError } = await supabase
     .from("music_tracks")
@@ -141,7 +146,7 @@ async function getTopMusicTrack(): Promise<string | null> {
       .eq("used", false);
     console.log(`🎵 ${count ?? 0} tracks remaining in library`);
 
-    return musicPath;
+    return { path: musicPath, name: `${topTrack.name} by ${topTrack.artist_name}` };
   }
 
   // Strategy 2: Fallback to raw bucket files (for legacy tracks without DB entries)
@@ -180,24 +185,29 @@ async function getTopMusicTrack(): Promise<string | null> {
   await supabase.storage.from("music").remove([track.name]);
   console.log(`🗑️ Deleted ${track.name} from bucket after use`);
 
-  return musicPath;
+  return { path: musicPath, name: track.name };
+}
+
+export interface TranscodeResult {
+  outputPath: string;
+  musicTrackName: string | null;
 }
 
 export async function transcodeForShorts(
   inputPath: string,
   outputPath: string,
   probe: ProbeResult
-): Promise<string> {
+): Promise<TranscodeResult> {
   // Try to get a music track to mix in
-  const musicPath = await getTopMusicTrack();
+  const musicTrack = await getTopMusicTrack();
 
   const videoDuration = Math.min(probe.duration, 60);
 
-  if (musicPath) {
+  if (musicTrack) {
     // Copy video stream (no re-encode = low memory), only encode audio
     const args: string[] = [
       "-i", inputPath,
-      "-i", musicPath,
+      "-i", musicTrack.path,
       "-c:v", "copy",          // Copy video as-is (no re-encode, saves RAM)
       "-map", "0:v:0",         // Use video from first input
       "-map", "1:a:0",         // Use audio from second input (music)
@@ -225,11 +235,11 @@ export async function transcodeForShorts(
     try {
       await execFileAsync("ffmpeg", args, { timeout: 300_000 });
       console.log("Music mix complete");
-      await cleanup(musicPath);
-      return outputPath;
+      await cleanup(musicTrack.path);
+      return { outputPath, musicTrackName: musicTrack.name };
     } catch (err) {
       console.error("Music mix failed, falling back to silent:", err);
-      await cleanup(musicPath);
+      await cleanup(musicTrack.path);
     }
   }
 
@@ -251,7 +261,7 @@ export async function transcodeForShorts(
   await execFileAsync("ffmpeg", args, { timeout: 300_000 });
   console.log("Copy complete");
 
-  return outputPath;
+  return { outputPath, musicTrackName: null };
 }
 
 export async function cleanup(...paths: string[]): Promise<void> {
