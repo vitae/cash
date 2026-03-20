@@ -212,7 +212,7 @@ export async function transcodeForShorts(
       "-map", "0:v:0",         // Use video from first input
       "-map", "1:a:0",         // Use audio from second input (music)
       "-c:a", "aac",
-      "-b:a", "128k",
+      "-b:a", "192k",
       "-movflags", "+faststart",
     ];
 
