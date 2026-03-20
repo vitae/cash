@@ -40,7 +40,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
     }
 
     const submission = lockData as ReelSubmission;
-    const fallbackHandle = submission.artist_name.replace(/^@+/, "");
+    const submittedHandle = submission.artist_name?.replace(/^@+/, "") || "";
 
     // Carry forward prior successful posts (don't re-post to platforms that already worked)
     const prior: PublishDetails = submission.publish_details || {};
@@ -54,7 +54,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
     const detectedUsername = await extractUsernameFromVideo(inputPath);
     const handle = detectedUsername
       ? detectedUsername.replace(/^@+/, "")
-      : fallbackHandle;
+      : (submittedHandle && submittedHandle !== "Unknown Artist" ? submittedHandle : "glowwitdaflow");
     console.log(`  Using artist handle: @${handle}`);
 
     // Probe
