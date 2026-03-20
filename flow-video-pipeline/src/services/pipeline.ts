@@ -6,6 +6,7 @@ import { uploadToYouTube } from "./youtube-uploader";
 import { uploadToInstagram } from "./instagram-uploader";
 import { uploadToFacebook } from "./facebook-uploader";
 import { uploadToPublicUrl, cleanupPublicUrl } from "./public-url-uploader";
+import { extractUsernameFromVideo } from "./username-extractor";
 import type { ReelSubmission, PublishDetails } from "../types";
 
 const MAX_DURATION_SECONDS = 180; // 3 minutes
@@ -39,7 +40,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
     }
 
     const submission = lockData as ReelSubmission;
-    const handle = submission.artist_name.replace(/^@+/, "");
+    const fallbackHandle = submission.artist_name.replace(/^@+/, "");
 
     // Carry forward prior successful posts (don't re-post to platforms that already worked)
     const prior: PublishDetails = submission.publish_details || {};
@@ -47,6 +48,14 @@ export async function processSubmission(submissionId: string): Promise<void> {
     // Download
     console.log(`Downloading video from ${submission.video_url}`);
     await downloadVideo(submission.video_url, inputPath);
+
+    // Extract username from the upper-left corner of the video
+    console.log("  Extracting username from video...");
+    const detectedUsername = await extractUsernameFromVideo(inputPath);
+    const handle = detectedUsername
+      ? detectedUsername.replace(/^@+/, "")
+      : fallbackHandle;
+    console.log(`  Using artist handle: @${handle}`);
 
     // Probe
     const probe = await probeVideo(inputPath);
