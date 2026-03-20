@@ -587,11 +587,9 @@ function SuccessPageInner() {
             <h2 className="glow-magenta" style={{ fontSize: 16, fontWeight: 400, letterSpacing: 8, textTransform: "uppercase", color: "#FF00FF", margin: "4px 0 0" }}>Professional</h2>
             <div style={{ width: "100%", maxWidth: 200, height: 1.5, background: "#00FF00", boxShadow: "0 0 8px #00FF00, 0 0 20px rgba(0,255,0,0.4)", margin: "14px auto", borderRadius: 1 }} />
             <div style={{ display: "inline-block", padding: "6px 18px", fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", background: "rgba(0,255,0,0.12)", border: "1px solid #00FF00", borderRadius: 10, color: "#00FF00", textShadow: "0 0 10px #00FF00", boxShadow: "0 0 12px rgba(0,255,0,0.25)" }}>Unlocked</div>
-            {userEmail && (
-              <div style={{ marginTop: 14, fontSize: 12, color: "rgba(255,255,255,0.85)", fontWeight: 300 }}>
-                Welcome, <span className="glow-green" style={{ color: "#00FF00", fontWeight: 500 }}>{userEmail}</span>
-              </div>
-            )}
+            <div style={{ marginTop: 14, fontSize: 12, color: "rgba(255,255,255,0.85)", fontWeight: 300 }}>
+              Welcome!
+            </div>
           </div>
           <p className="glow-magenta" style={{ fontSize: 13, color: "#FF00FF", fontWeight: 500, textAlign: "center", marginBottom: 6 }}>The Thinking Has Already Been Done, So You Can Create!</p>
           <p style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", fontWeight: 300, textAlign: "center", marginBottom: 24 }}>Choose A Generator Below To Get Started.</p>
