@@ -240,7 +240,8 @@ export default function Home() {
               textShadow: "0 0 10px #FF00FF, 0 0 40px #FF00FF, 0 0 80px rgba(255,0,255,0.5)",
               animation: "neonFlicker 5s ease-in-out infinite",
             }}>
-              For Flow Artists<br />By Flow Artists
+              <span style={{ display: "inline-block", width: "3ch", textAlign: "right" }}>For</span> Flow Artists<br />
+              <span style={{ display: "inline-block", width: "3ch", textAlign: "right" }}>By</span> Flow Artists
             </div>
             <h1 style={{
               fontSize: "clamp(36px, 10vw, 80px)", fontWeight: 900, letterSpacing: "clamp(4px, 2vw, 20px)",
