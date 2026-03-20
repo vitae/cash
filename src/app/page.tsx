@@ -353,8 +353,8 @@ export default function Home() {
           <Section variant="green" style={{ marginBottom: 20 }}>
             <div style={{ textAlign: "center", marginBottom: 6 }}>
               <div style={{
-                fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 800, color: "#00FF88",
-                textShadow: "0 0 10px #00FF88, 0 0 40px #00FF88, 0 0 80px rgba(0,255,136,0.5)",
+                fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 800, color: "#00FF00",
+                textShadow: "0 0 10px #00FF00, 0 0 40px #00FF00, 0 0 80px rgba(0,255,0,0.5)",
               }}>
                 This Is YOUR MOMENT.
               </div>
