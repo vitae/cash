@@ -1,6 +1,7 @@
 import { supabase } from "../lib/supabase";
 import https from "https";
 import fs from "fs";
+import fsAsync from "fs/promises";
 import path from "path";
 import os from "os";
 
@@ -108,9 +109,9 @@ function downloadFile(url: string, dest: string): Promise<void> {
     proto.get(url, (response: { statusCode?: number; headers: { location?: string }; pipe: (dest: fs.WriteStream) => void }) => {
       if (response.statusCode === 301 || response.statusCode === 302) {
         const redirect = response.headers.location;
-        if (redirect) {
+        if (redirect && typeof redirect === "string") {
           file.close();
-          fs.unlinkSync(dest);
+          fsAsync.unlink(dest).catch(() => {});
           downloadFile(redirect, dest).then(resolve).catch(reject);
           return;
         }
@@ -240,16 +241,16 @@ export async function discoverMusic(targetCount: number = 10): Promise<{ added: 
       await downloadFile(track.downloadUrl, tmpPath);
 
       // Verify file size
-      const stats = fs.statSync(tmpPath);
+      const stats = await fsAsync.stat(tmpPath);
       if (stats.size < 50000) {
         console.log(`⚠️ File too small (${stats.size} bytes), skipping`);
-        fs.unlinkSync(tmpPath);
+        await fsAsync.unlink(tmpPath);
         skipped++;
         continue;
       }
 
       // Upload to Supabase Storage
-      const fileBuffer = fs.readFileSync(tmpPath);
+      const fileBuffer = await fsAsync.readFile(tmpPath);
       const { error: uploadError } = await supabase.storage
         .from("music")
         .upload(safeName, fileBuffer, {
@@ -259,7 +260,7 @@ export async function discoverMusic(targetCount: number = 10): Promise<{ added: 
 
       if (uploadError) {
         console.error(`Upload failed for "${track.name}":`, uploadError);
-        fs.unlinkSync(tmpPath);
+        await fsAsync.unlink(tmpPath).catch(() => {});
         errors++;
         continue;
       }
@@ -285,7 +286,7 @@ export async function discoverMusic(targetCount: number = 10): Promise<{ added: 
         console.log(`✅ Added: "${track.name}" by ${track.artistName} [${track.source}]`);
       }
 
-      fs.unlinkSync(tmpPath);
+      await fsAsync.unlink(tmpPath).catch(() => {});
     } catch (err) {
       console.error(`Error processing "${track.name}":`, err);
       errors++;

@@ -1,5 +1,6 @@
 import path from "path";
 import os from "os";
+import fs from "fs/promises";
 import { supabase } from "../lib/supabase";
 import { downloadVideo, probeVideo, transcodeForShorts, cleanup } from "./video-processor";
 import { uploadToYouTube } from "./youtube-uploader";
@@ -210,13 +211,18 @@ export async function publishSubmission(submissionId: string): Promise<void> {
     if (!publicVideoUrl) {
       console.error(`Submission ${submissionId} has no processed video URL — re-queuing as pending`);
       await supabase.from("reel_submissions").update({ status: "pending" }).eq("id", submissionId);
+      await cleanup(processedPath);
       return;
     }
 
     // Download processed video for YouTube upload (needs local file)
+    // Check if the file already exists locally (e.g. from a recent process phase)
     const needsYouTube = !prior.youtube;
     if (needsYouTube) {
-      await downloadVideo(publicVideoUrl, processedPath);
+      const fileExists = await fs.access(processedPath).then(() => true).catch(() => false);
+      if (!fileExists) {
+        await downloadVideo(publicVideoUrl, processedPath);
+      }
     }
 
     // Build captions
@@ -357,7 +363,7 @@ export async function publishSubmission(submissionId: string): Promise<void> {
       );
     }
 
-    await Promise.all(uploadPromises);
+    await Promise.allSettled(uploadPromises);
 
     // Determine results
     const postedYouTube = !!publishDetails.youtube;

@@ -1,10 +1,32 @@
 import { appsecretProof } from "./meta-auth";
 
 const GRAPH_API = "https://graph.threads.net/v1.0";
+const FETCH_TIMEOUT_MS = 30_000;
 
 export interface ThreadsUploadResult {
   mediaId: string;
   permalink: string;
+}
+
+function fetchWithTimeout(url: string, options?: RequestInit): Promise<Response> {
+  return fetch(url, { ...options, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+}
+
+async function fetchWithRetry(url: string, options?: RequestInit, retries = 2): Promise<Response> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetchWithTimeout(url, options);
+      if (res.status >= 500 && attempt < retries) {
+        await sleep(2000 * (attempt + 1));
+        continue;
+      }
+      return res;
+    } catch (err) {
+      if (attempt === retries) throw err;
+      await sleep(2000 * (attempt + 1));
+    }
+  }
+  throw new Error("fetchWithRetry: unreachable");
 }
 
 /**
@@ -31,7 +53,7 @@ export async function uploadToThreads(
   const proof = appsecretProof(accessToken);
 
   // Step 1: Create media container
-  const createRes = await fetch(
+  const createRes = await fetchWithRetry(
     `${GRAPH_API}/${userId}/threads`,
     {
       method: "POST",
@@ -48,23 +70,34 @@ export async function uploadToThreads(
 
   if (!createRes.ok) {
     const err = await createRes.text();
-    throw new Error(`Threads create container failed: ${err}`);
+    throw new Error(`Threads create container failed (${createRes.status}): ${err}`);
   }
 
   const { id: containerId } = (await createRes.json()) as { id: string };
 
-  // Step 2: Poll until ready (max 5 minutes)
-  const maxAttempts = 30;
+  // Step 2: Poll until ready (max 5 minutes, exponential backoff)
+  const maxAttempts = 20;
   for (let i = 0; i < maxAttempts; i++) {
-    await sleep(10_000);
+    const delay = Math.min(5000 * Math.pow(1.5, i), 30_000);
+    await sleep(delay);
 
-    const statusRes = await fetch(
-      `${GRAPH_API}/${containerId}?fields=status&access_token=${accessToken}&appsecret_proof=${proof}`
-    );
-    const statusData = (await statusRes.json()) as { status: string };
+    let statusData: { status?: string } | null = null;
+    try {
+      const statusRes = await fetchWithTimeout(
+        `${GRAPH_API}/${containerId}?fields=status&access_token=${accessToken}&appsecret_proof=${proof}`
+      );
+      if (!statusRes.ok) {
+        console.error(`  Threads poll ${i + 1}/${maxAttempts} returned ${statusRes.status}, retrying...`);
+        continue;
+      }
+      statusData = (await statusRes.json()) as { status?: string };
+    } catch (err) {
+      console.error(`  Threads poll ${i + 1}/${maxAttempts} failed:`, err instanceof Error ? err.message : err);
+      continue;
+    }
 
-    if (statusData.status === "FINISHED") break;
-    if (statusData.status === "ERROR") {
+    if (statusData?.status === "FINISHED") break;
+    if (statusData?.status === "ERROR") {
       throw new Error("Threads media processing failed");
     }
     if (i === maxAttempts - 1) {
@@ -73,7 +106,7 @@ export async function uploadToThreads(
   }
 
   // Step 3: Publish
-  const publishRes = await fetch(
+  const publishRes = await fetchWithRetry(
     `${GRAPH_API}/${userId}/threads_publish`,
     {
       method: "POST",
@@ -88,21 +121,26 @@ export async function uploadToThreads(
 
   if (!publishRes.ok) {
     const err = await publishRes.text();
-    throw new Error(`Threads publish failed: ${err}`);
+    throw new Error(`Threads publish failed (${publishRes.status}): ${err}`);
   }
 
   const { id: mediaId } = (await publishRes.json()) as { id: string };
 
   // Get permalink
-  const mediaRes = await fetch(
-    `${GRAPH_API}/${mediaId}?fields=permalink&access_token=${accessToken}&appsecret_proof=${proof}`
-  );
-  const mediaData = (await mediaRes.json()) as { permalink?: string };
+  let permalink = `https://www.threads.net/@glowwitdaflow`;
+  try {
+    const mediaRes = await fetchWithTimeout(
+      `${GRAPH_API}/${mediaId}?fields=permalink&access_token=${accessToken}&appsecret_proof=${proof}`
+    );
+    if (mediaRes.ok) {
+      const mediaData = (await mediaRes.json()) as { permalink?: string };
+      if (mediaData.permalink) permalink = mediaData.permalink;
+    }
+  } catch {
+    // Non-critical — use fallback permalink
+  }
 
-  return {
-    mediaId,
-    permalink: mediaData.permalink ?? `https://www.threads.net/@glowwitdaflow`,
-  };
+  return { mediaId, permalink };
 }
 
 function sleep(ms: number): Promise<void> {

@@ -10,6 +10,37 @@ import { sweepStaleProcessing } from "./services/sweep";
 import { discoverMusic } from "./services/music-discovery";
 import { startScheduler, publishScheduledBatch } from "./services/scheduler";
 
+// Validate critical env vars at startup (fail fast instead of at first upload)
+function validateEnv(): void {
+  const required = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "WEBHOOK_SECRET"];
+  const missing = required.filter(k => !process.env[k]);
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
+  }
+
+  // Warn about optional platform vars
+  const platforms: Record<string, string[]> = {
+    YouTube: ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
+    Instagram: ["INSTAGRAM_ACCESS_TOKEN", "INSTAGRAM_ACCOUNT_ID"],
+    Facebook: ["FACEBOOK_ACCESS_TOKEN", "FACEBOOK_PAGE_ID"],
+    TikTok: ["TIKTOK_ACCESS_TOKEN"],
+    Threads: ["THREADS_USER_ID"],
+  };
+
+  for (const [platform, vars] of Object.entries(platforms)) {
+    const platformMissing = vars.filter(k => !process.env[k]);
+    if (platformMissing.length > 0 && platformMissing.length < vars.length) {
+      console.warn(`Partial ${platform} config: missing ${platformMissing.join(", ")} — ${platform} uploads will fail`);
+    } else if (platformMissing.length === vars.length) {
+      console.log(`${platform}: disabled (no credentials configured)`);
+    } else {
+      console.log(`${platform}: enabled`);
+    }
+  }
+}
+
+validateEnv();
+
 const app = express();
 app.use(express.json({ limit: "1mb" }));
 

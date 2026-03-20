@@ -50,28 +50,31 @@ export async function transcodeForPlatforms(
   const instagramOut = path.join(config.tmpDir, `${reelId}-instagram.mp4`);
   const facebookOut = path.join(config.tmpDir, `${reelId}-facebook.mp4`);
 
-  // YouTube Shorts: 60s max
-  await execFileAsync("ffmpeg", [
-    ...baseArgs,
-    "-t", "60",
-    youtubeOut,
-  ], { timeout: 300_000 });
+  // Transcode all platforms in parallel
+  await Promise.all([
+    // YouTube Shorts: 60s max
+    execFileAsync("ffmpeg", [
+      ...baseArgs,
+      "-t", "60",
+      youtubeOut,
+    ], { timeout: 300_000 }),
 
-  // Instagram Reels: 90s max, slightly lower bitrate to stay under 250MB
-  await execFileAsync("ffmpeg", [
-    ...baseArgs,
-    "-t", "90",
-    "-maxrate", "20M",
-    "-bufsize", "25M",
-    instagramOut,
-  ], { timeout: 300_000 });
+    // Instagram Reels: 90s max, slightly lower bitrate to stay under 250MB
+    execFileAsync("ffmpeg", [
+      ...baseArgs,
+      "-t", "90",
+      "-maxrate", "20M",
+      "-bufsize", "25M",
+      instagramOut,
+    ], { timeout: 300_000 }),
 
-  // Facebook Reels: 90s max
-  await execFileAsync("ffmpeg", [
-    ...baseArgs,
-    "-t", "90",
-    facebookOut,
-  ], { timeout: 300_000 });
+    // Facebook Reels: 90s max
+    execFileAsync("ffmpeg", [
+      ...baseArgs,
+      "-t", "90",
+      facebookOut,
+    ], { timeout: 300_000 }),
+  ]);
 
   // Clean up input
   await fs.unlink(inputPath).catch(() => {});
