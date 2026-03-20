@@ -29,23 +29,36 @@ export async function sweepStaleProcessing(): Promise<void> {
 // Retry queued and partial submissions — called on a longer interval
 // "queued" = all platforms failed (e.g. quota), "partial" = some succeeded, some still need posting
 export async function retryQueuedSubmissions(): Promise<void> {
-  const { data, error } = await supabase
+  // First select the IDs to retry (can't order/limit on an update query)
+  const { data: toRetry, error: selectError } = await supabase
     .from("reel_submissions")
-    .update({ status: "pending" })
-    .in("status", ["queued", "partial"])
     .select("id")
+    .in("status", ["queued", "partial"])
     .order("created_at", { ascending: true })
     .limit(3);
 
-  if (error) {
-    console.error("Retry queued error:", error.message);
+  if (selectError) {
+    console.error("Retry queued select error:", selectError.message);
     return;
   }
 
-  if (data && data.length > 0) {
-    console.log(`Retrying ${data.length} queued/partial submissions`);
-    for (const row of data) {
-      enqueue(row.id);
-    }
+  if (!toRetry || toRetry.length === 0) return;
+
+  const ids = toRetry.map((r) => r.id);
+
+  // Then update their status
+  const { error: updateError } = await supabase
+    .from("reel_submissions")
+    .update({ status: "pending" })
+    .in("id", ids);
+
+  if (updateError) {
+    console.error("Retry queued update error:", updateError.message);
+    return;
+  }
+
+  console.log(`Retrying ${ids.length} queued/partial submissions`);
+  for (const id of ids) {
+    enqueue(id);
   }
 }

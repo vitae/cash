@@ -4,6 +4,50 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 
+// --- Pixabay Music API (primary — no attribution, free commercial use) ---
+
+const PIXABAY_API_KEY = process.env.PIXABAY_API_KEY || "";
+
+interface PixabayTrack {
+  id: number;
+  title: string;
+  user: string;
+  duration: number;
+  audio_url: string;
+  tags: string;
+  downloads: number;
+  likes: number;
+}
+
+const EDM_SEARCHES = [
+  "edm", "electronic dance", "house music", "dubstep", "techno",
+  "trance", "bass drop", "synth wave", "future bass", "drum and bass",
+  "electro", "dance beat", "rave", "club music", "festival",
+];
+
+async function fetchPixabayMusic(limit: number = 20): Promise<PixabayTrack[]> {
+  if (!PIXABAY_API_KEY) {
+    console.log("⚠️ No PIXABAY_API_KEY set, skipping Pixabay source");
+    return [];
+  }
+
+  const query = EDM_SEARCHES[Math.floor(Math.random() * EDM_SEARCHES.length)];
+  const url = `https://pixabay.com/api/music/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(query)}&per_page=${limit}&min_duration=30&max_duration=120`;
+
+  console.log(`🔍 Searching Pixabay Music for "${query}"...`);
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    console.error(`Pixabay API error: ${response.status} ${response.statusText}`);
+    return [];
+  }
+
+  const data = (await response.json()) as { hits?: PixabayTrack[] };
+  return data.hits || [];
+}
+
+// --- Jamendo API (fallback — CC licensed, good EDM catalog) ---
+
 const JAMENDO_CLIENT_ID = process.env.JAMENDO_CLIENT_ID || "b1a113e5";
 
 interface JamendoTrack {
@@ -16,29 +60,31 @@ interface JamendoTrack {
   stats: { rate: { downloads: { total: number } }; listens: { total: number } };
 }
 
-// Fetch trending EDM tracks from Jamendo API sorted by popularity
-async function fetchTrendingEDM(limit: number = 20): Promise<JamendoTrack[]> {
-  const tags = ["edm", "electronic", "dance", "house", "dubstep", "trance", "techno", "bass"];
-  const tag = tags[Math.floor(Math.random() * tags.length)];
+const JAMENDO_TAGS = ["edm", "electronic", "dance", "house", "dubstep", "trance", "techno", "bass"];
 
+async function fetchJamendoMusic(limit: number = 20): Promise<JamendoTrack[]> {
+  const tag = JAMENDO_TAGS[Math.floor(Math.random() * JAMENDO_TAGS.length)];
   const url = `https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_CLIENT_ID}&format=json&limit=${limit}&tags=${tag}&order=popularity_total&audiodlformat=mp31&include=stats&durationbetween=30_120`;
 
-  console.log(`🔍 Searching Jamendo for trending "${tag}" tracks...`);
+  console.log(`🔍 Searching Jamendo for "${tag}" tracks...`);
 
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`Jamendo API error: ${response.status} ${response.statusText}`);
+    console.error(`Jamendo API error: ${response.status} ${response.statusText}`);
+    return [];
   }
 
   const data = (await response.json()) as { results?: JamendoTrack[] };
   return data.results || [];
 }
 
-// Download a file from URL to local path
+// --- Shared helpers ---
+
 function downloadFile(url: string, dest: string): Promise<void> {
   return new Promise((resolve, reject) => {
+    const proto = url.startsWith("https") ? https : require("http");
     const file = fs.createWriteStream(dest);
-    https.get(url, (response) => {
+    proto.get(url, (response: { statusCode?: number; headers: { location?: string }; pipe: (dest: fs.WriteStream) => void }) => {
       if (response.statusCode === 301 || response.statusCode === 302) {
         const redirect = response.headers.location;
         if (redirect) {
@@ -59,12 +105,48 @@ function downloadFile(url: string, dest: string): Promise<void> {
   });
 }
 
-// Discover new trending EDM tracks and add them to the music library
+interface NormalizedTrack {
+  source: string;
+  sourceId: string;
+  name: string;
+  artistName: string;
+  downloadUrl: string;
+  duration: number;
+  popularityScore: number;
+}
+
+function normalizePixabayTrack(t: PixabayTrack): NormalizedTrack {
+  return {
+    source: "pixabay",
+    sourceId: String(t.id),
+    name: t.title,
+    artistName: t.user,
+    downloadUrl: t.audio_url,
+    duration: t.duration,
+    popularityScore: t.downloads + (t.likes * 10),
+  };
+}
+
+function normalizeJamendoTrack(t: JamendoTrack): NormalizedTrack {
+  const listens = t.stats?.listens?.total || 0;
+  const downloads = t.stats?.rate?.downloads?.total || 0;
+  return {
+    source: "jamendo",
+    sourceId: String(t.id),
+    name: t.name,
+    artistName: t.artist_name,
+    downloadUrl: t.audiodownload || t.audio,
+    duration: t.duration,
+    popularityScore: listens + (downloads * 10),
+  };
+}
+
+// --- Main discovery function ---
+
 export async function discoverMusic(targetCount: number = 10): Promise<{ added: number; skipped: number; errors: number }> {
   console.log(`\n🎵 === MUSIC DISCOVERY ===`);
   console.log(`Target: ${targetCount} new tracks`);
 
-  // Check how many unused tracks we already have
   const { count: existingCount } = await supabase
     .from("music_tracks")
     .select("*", { count: "exact", head: true })
@@ -81,23 +163,47 @@ export async function discoverMusic(targetCount: number = 10): Promise<{ added: 
   const neededTracks = Math.min(targetCount, 50 - currentUnused);
   console.log(`📥 Need to fetch ${neededTracks} new tracks`);
 
+  // Fetch from all sources in parallel
+  const [pixabayTracks, jamendoTracks] = await Promise.all([
+    fetchPixabayMusic(neededTracks * 2).catch((err) => {
+      console.error("Pixabay fetch failed:", err);
+      return [] as PixabayTrack[];
+    }),
+    fetchJamendoMusic(neededTracks * 2).catch((err) => {
+      console.error("Jamendo fetch failed:", err);
+      return [] as JamendoTrack[];
+    }),
+  ]);
+
+  // Normalize and merge, prioritizing Pixabay (better license)
+  const allTracks: NormalizedTrack[] = [
+    ...pixabayTracks.map(normalizePixabayTrack),
+    ...jamendoTracks.map(normalizeJamendoTrack),
+  ];
+
+  // Sort by popularity
+  allTracks.sort((a, b) => b.popularityScore - a.popularityScore);
+
+  console.log(`🔍 Found ${pixabayTracks.length} Pixabay + ${jamendoTracks.length} Jamendo = ${allTracks.length} candidates`);
+
   let added = 0;
   let skipped = 0;
   let errors = 0;
 
-  // Fetch more than needed to account for duplicates
-  const tracks = await fetchTrendingEDM(neededTracks * 2);
-  console.log(`🔍 Found ${tracks.length} candidates from Jamendo`);
-
-  for (const track of tracks) {
+  for (const track of allTracks) {
     if (added >= neededTracks) break;
 
-    // Check if we already have this track (by source_id)
+    if (!track.downloadUrl) {
+      skipped++;
+      continue;
+    }
+
+    // Check for duplicates
     const { data: existing } = await supabase
       .from("music_tracks")
       .select("id")
-      .eq("source", "jamendo")
-      .eq("source_id", track.id)
+      .eq("source", track.source)
+      .eq("source_id", track.sourceId)
       .maybeSingle();
 
     if (existing) {
@@ -106,26 +212,13 @@ export async function discoverMusic(targetCount: number = 10): Promise<{ added: 
     }
 
     try {
-      // Calculate popularity score from Jamendo stats
-      const listens = track.stats?.listens?.total || 0;
-      const downloads = track.stats?.rate?.downloads?.total || 0;
-      const popularityScore = listens + (downloads * 10);
-
-      // Download to temp
-      const downloadUrl = track.audiodownload || track.audio;
-      if (!downloadUrl) {
-        console.log(`⚠️ No download URL for "${track.name}", skipping`);
-        skipped++;
-        continue;
-      }
-
-      const safeName = `jamendo-${track.id}-${track.name.replace(/[^a-zA-Z0-9]/g, "-").substring(0, 40)}.mp3`;
+      const safeName = `${track.source}-${track.sourceId}-${track.name.replace(/[^a-zA-Z0-9]/g, "-").substring(0, 40)}.mp3`;
       const tmpPath = path.join(os.tmpdir(), safeName);
 
-      console.log(`📥 Downloading: "${track.name}" by ${track.artist_name} (popularity: ${popularityScore})`);
-      await downloadFile(downloadUrl, tmpPath);
+      console.log(`📥 [${track.source}] "${track.name}" by ${track.artistName} (score: ${track.popularityScore})`);
+      await downloadFile(track.downloadUrl, tmpPath);
 
-      // Verify file size (skip if too small = error page)
+      // Verify file size
       const stats = fs.statSync(tmpPath);
       if (stats.size < 50000) {
         console.log(`⚠️ File too small (${stats.size} bytes), skipping`);
@@ -136,11 +229,9 @@ export async function discoverMusic(targetCount: number = 10): Promise<{ added: 
 
       // Upload to Supabase Storage
       const fileBuffer = fs.readFileSync(tmpPath);
-      const storagePath = safeName;
-
       const { error: uploadError } = await supabase.storage
         .from("music")
-        .upload(storagePath, fileBuffer, {
+        .upload(safeName, fileBuffer, {
           contentType: "audio/mpeg",
           upsert: false,
         });
@@ -152,17 +243,17 @@ export async function discoverMusic(targetCount: number = 10): Promise<{ added: 
         continue;
       }
 
-      // Add to music_tracks table
+      // Add to database
       const { error: insertError } = await supabase
         .from("music_tracks")
         .insert({
           name: track.name,
-          source: "jamendo",
-          source_id: String(track.id),
-          artist_name: track.artist_name,
-          popularity_score: popularityScore,
+          source: track.source,
+          source_id: track.sourceId,
+          artist_name: track.artistName,
+          popularity_score: track.popularityScore,
           duration_seconds: track.duration,
-          storage_path: storagePath,
+          storage_path: safeName,
         });
 
       if (insertError) {
@@ -170,12 +261,10 @@ export async function discoverMusic(targetCount: number = 10): Promise<{ added: 
         errors++;
       } else {
         added++;
-        console.log(`✅ Added: "${track.name}" by ${track.artist_name} (score: ${popularityScore})`);
+        console.log(`✅ Added: "${track.name}" by ${track.artistName} [${track.source}]`);
       }
 
-      // Cleanup temp
       fs.unlinkSync(tmpPath);
-
     } catch (err) {
       console.error(`Error processing "${track.name}":`, err);
       errors++;
