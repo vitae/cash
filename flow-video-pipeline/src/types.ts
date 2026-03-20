@@ -21,6 +21,8 @@ export interface PublishDetails {
   instagram_error?: string;
   facebook?: string;
   facebook_error?: string;
+  tiktok?: string;
+  tiktok_error?: string;
   music_track?: string;
   [key: string]: string | undefined;
 }

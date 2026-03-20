@@ -5,6 +5,7 @@ import { downloadVideo, probeVideo, transcodeForShorts, cleanup } from "./video-
 import { uploadToYouTube } from "./youtube-uploader";
 import { uploadToInstagram } from "./instagram-uploader";
 import { uploadToFacebook } from "./facebook-uploader";
+import { uploadToTikTok } from "./tiktok-uploader";
 import { uploadToPublicUrl, cleanupPublicUrl } from "./public-url-uploader";
 import { extractUsernameFromVideo } from "./username-extractor";
 import type { ReelSubmission, PublishDetails } from "../types";
@@ -17,6 +18,10 @@ function isInstagramEnabled(): boolean {
 
 function isFacebookEnabled(): boolean {
   return !!(process.env.FACEBOOK_ACCESS_TOKEN && process.env.FACEBOOK_PAGE_ID);
+}
+
+function isTikTokEnabled(): boolean {
+  return !!process.env.TIKTOK_ACCESS_TOKEN;
 }
 
 export async function processSubmission(submissionId: string): Promise<void> {
@@ -162,6 +167,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
     const needsYouTube = !prior.youtube;
     const needsInstagram = isInstagramEnabled() && !prior.instagram;
     const needsFacebook = isFacebookEnabled() && !prior.facebook;
+    const needsTikTok = isTikTokEnabled() && !prior.tiktok;
 
     // Carry forward prior successes, clear old errors for platforms we're retrying
     const publishDetails: PublishDetails = { ...prior };
@@ -171,8 +177,9 @@ export async function processSubmission(submissionId: string): Promise<void> {
     if (needsYouTube) delete publishDetails.youtube_error;
     if (needsInstagram) delete publishDetails.instagram_error;
     if (needsFacebook) delete publishDetails.facebook_error;
+    if (needsTikTok) delete publishDetails.tiktok_error;
 
-    if (!needsYouTube && !needsInstagram && !needsFacebook) {
+    if (!needsYouTube && !needsInstagram && !needsFacebook && !needsTikTok) {
       console.log(`Submission ${submissionId} already posted to all enabled platforms, skipping`);
       await supabase
         .from("reel_submissions")
@@ -185,17 +192,18 @@ export async function processSubmission(submissionId: string): Promise<void> {
       needsYouTube ? "YouTube" : null,
       needsInstagram ? "Instagram" : null,
       needsFacebook ? "Facebook" : null,
+      needsTikTok ? "TikTok" : null,
     ].filter(Boolean).join(", ");
     console.log(`  Posting to: ${platformsToPost}`);
 
-    // Upload processed video to public URL for IG/FB (they need a URL to fetch)
+    // Upload processed video to public URL for IG/FB/TikTok (they need a URL to fetch)
     let publicVideoUrl: string | null = null;
-    if (needsInstagram || needsFacebook) {
+    if (needsInstagram || needsFacebook || needsTikTok) {
       try {
         publicVideoUrl = await uploadToPublicUrl(processedPath, submissionId, "social");
-        console.log(`  Public URL ready for IG/FB: ${publicVideoUrl}`);
+        console.log(`  Public URL ready: ${publicVideoUrl}`);
       } catch (err) {
-        console.error("  Failed to create public URL for IG/FB:", err);
+        console.error("  Failed to create public URL:", err);
       }
     }
 
@@ -247,6 +255,21 @@ export async function processSubmission(submissionId: string): Promise<void> {
       );
     }
 
+    // TikTok
+    if (needsTikTok && publicVideoUrl) {
+      uploadPromises.push(
+        uploadToTikTok(publicVideoUrl, socialCaption)
+          .then((result) => {
+            publishDetails.tiktok = result.url;
+            console.log(`  TikTok: ${result.url}`);
+          })
+          .catch((err) => {
+            console.error("  TikTok upload failed:", err);
+            publishDetails.tiktok_error = err instanceof Error ? err.message : String(err);
+          })
+      );
+    }
+
     await Promise.all(uploadPromises);
 
     // Clean up public URL from storage
@@ -260,17 +283,20 @@ export async function processSubmission(submissionId: string): Promise<void> {
     const postedYouTube = !!publishDetails.youtube;
     const postedInstagram = !!publishDetails.instagram;
     const postedFacebook = !!publishDetails.facebook;
+    const postedTikTok = !!publishDetails.tiktok;
 
     // Which enabled platforms are still missing?
     const stillMissingYouTube = !postedYouTube;
     const stillMissingInstagram = isInstagramEnabled() && !postedInstagram;
     const stillMissingFacebook = isFacebookEnabled() && !postedFacebook;
-    const allDone = !stillMissingYouTube && !stillMissingInstagram && !stillMissingFacebook;
+    const stillMissingTikTok = isTikTokEnabled() && !postedTikTok;
+    const allDone = !stillMissingYouTube && !stillMissingInstagram && !stillMissingFacebook && !stillMissingTikTok;
 
     const postedPlatforms = [
       postedYouTube ? "YouTube" : null,
       postedInstagram ? "Instagram" : null,
       postedFacebook ? "Facebook" : null,
+      postedTikTok ? "TikTok" : null,
     ].filter(Boolean).join(", ");
 
     if (allDone) {
@@ -285,12 +311,13 @@ export async function processSubmission(submissionId: string): Promise<void> {
         })
         .eq("id", submissionId);
       console.log(`Submission ${submissionId} fully posted to: ${postedPlatforms}`);
-    } else if (postedYouTube || postedInstagram || postedFacebook) {
+    } else if (postedYouTube || postedInstagram || postedFacebook || postedTikTok) {
       // Some platforms succeeded, some still need retry — mark as partial
       const missing = [
         stillMissingYouTube ? "YouTube" : null,
         stillMissingInstagram ? "Instagram" : null,
         stillMissingFacebook ? "Facebook" : null,
+        stillMissingTikTok ? "TikTok" : null,
       ].filter(Boolean).join(", ");
       await supabase
         .from("reel_submissions")
