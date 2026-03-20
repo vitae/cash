@@ -340,11 +340,11 @@ export default function Home() {
 
         {/* ── YOUR MOMENT ── */}
         <RevealSection delay={0.05}>
-          <Section variant="magenta" style={{ marginBottom: 20 }}>
+          <Section variant="green" style={{ marginBottom: 20 }}>
             <div style={{ textAlign: "center", marginBottom: 6 }}>
               <div style={{
-                fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 800, color: "#FF00FF",
-                textShadow: "0 0 10px #FF00FF, 0 0 40px #FF00FF, 0 0 80px rgba(255,0,255,0.5)",
+                fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 800, color: "#00FF88",
+                textShadow: "0 0 10px #00FF88, 0 0 40px #00FF88, 0 0 80px rgba(0,255,136,0.5)",
               }}>
                 This Is YOUR MOMENT.
               </div>
@@ -377,8 +377,8 @@ export default function Home() {
           <Section style={{ marginBottom: 20 }}>
             <div style={{ textAlign: "center", marginBottom: 6 }}>
               <div style={{
-                fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 800, color: "#fff",
-                textShadow: "0 0 20px rgba(255,255,255,0.3)",
+                fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 800, color: "#FF3333",
+                textShadow: "0 0 10px #FF3333, 0 0 40px #FF3333, 0 0 80px rgba(255,51,51,0.5)",
               }}>
                 The Core Problem
               </div>

@@ -29,6 +29,64 @@ function isThreadsEnabled(): boolean {
   return !!((process.env.THREADS_ACCESS_TOKEN || process.env.INSTAGRAM_ACCESS_TOKEN) && process.env.THREADS_USER_ID);
 }
 
+const captions = [
+  "Look at them GLOW!",
+  "Glow Wit Da Flow!",
+  "She's on FIRE!",
+  "Amazing Flow!",
+  "This is INSANE!",
+  "The vibes are UNREAL!",
+  "Flow state activated!",
+  "Can't stop watching this!",
+  "Pure magic right here!",
+  "They ATE this up!",
+  "The flow is IMMACULATE!",
+  "Mesmerizing!",
+  "How is this even real?!",
+  "Living for this energy!",
+  "That flow hits DIFFERENT!",
+  "Absolutely hypnotizing!",
+  "YOOO this is fire!",
+  "Main character energy!",
+  "The glow up is REAL!",
+  "Sending all the flow vibes!",
+  "This one RIGHT HERE!",
+  "Drop what you're doing and WATCH!",
+  "Literal chills!",
+  "Flow game on another level!",
+  "When the music hits just right!",
+  "You go girl!",
+  "This is how we do it!",
+  "Rave to the GRAVE!",
+  "Love what you do!",
+  "Get paid honey!",
+  "Okay we SEE you!",
+  "Somebody call 911!",
+  "No words. Just WOW!",
+  "The talent is INSANE!",
+  "Keep spinning keep winning!",
+  "Born to glow!",
+  "Catch these vibes!",
+  "The flow never stops!",
+  "Light it UP!",
+  "SHEESH!",
+  "We don't gatekeep flow!",
+  "Spin it like you mean it!",
+  "That's what we call ART!",
+  "Festival ready!",
+  "The energy is ELECTRIC!",
+  "Flowing into the weekend like...",
+  "Can't. Look. Away!",
+  "Give this person a stage!",
+  "Rave fam approved!",
+  "This right here is EVERYTHING!",
+];
+
+/**
+ * Phase 1: Process submission — download, extract username, transcode with music.
+ * Saves the processed video to public storage and sets status to "processed".
+ * Does NOT post to any platform.
+ */
 export async function processSubmission(submissionId: string): Promise<void> {
   const tmpDir = os.tmpdir();
   const inputPath = path.join(tmpDir, `${submissionId}-input.mp4`);
@@ -40,7 +98,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
       .from("reel_submissions")
       .update({ status: "processing" })
       .eq("id", submissionId)
-      .in("status", ["pending", "queued", "partial"])
+      .in("status", ["pending"])
       .select("*")
       .single();
 
@@ -51,9 +109,6 @@ export async function processSubmission(submissionId: string): Promise<void> {
 
     const submission = lockData as ReelSubmission;
     const submittedHandle = submission.artist_name?.replace(/^@+/, "") || "";
-
-    // Carry forward prior successful posts (don't re-post to platforms that already worked)
-    const prior: PublishDetails = submission.publish_details || {};
 
     // Download
     console.log(`Downloading video from ${submission.video_url}`);
@@ -86,61 +141,86 @@ export async function processSubmission(submissionId: string): Promise<void> {
     const transcodeResult = await transcodeForShorts(inputPath, outputPath, probe);
     const processedPath = transcodeResult.outputPath;
 
-    // Build metadata
-    const captions = [
-      "Look at them GLOW!",
-      "Glow Wit Da Flow!",
-      "She's on FIRE!",
-      "Amazing Flow!",
-      "This is INSANE!",
-      "The vibes are UNREAL!",
-      "Flow state activated!",
-      "Can't stop watching this!",
-      "Pure magic right here!",
-      "They ATE this up!",
-      "The flow is IMMACULATE!",
-      "Mesmerizing!",
-      "How is this even real?!",
-      "Living for this energy!",
-      "That flow hits DIFFERENT!",
-      "Absolutely hypnotizing!",
-      "YOOO this is fire!",
-      "Main character energy!",
-      "The glow up is REAL!",
-      "Sending all the flow vibes!",
-      "This one RIGHT HERE!",
-      "Drop what you're doing and WATCH!",
-      "Literal chills!",
-      "Flow game on another level!",
-      "When the music hits just right!",
-      "You go girl!",
-      "This is how we do it!",
-      "Rave to the GRAVE!",
-      "Love what you do!",
-      "Get paid honey!",
-      "Okay we SEE you!",
-      "Somebody call 911!",
-      "No words. Just WOW!",
-      "The talent is INSANE!",
-      "Keep spinning keep winning!",
-      "Born to glow!",
-      "Catch these vibes!",
-      "The flow never stops!",
-      "Light it UP!",
-      "SHEESH!",
-      "We don't gatekeep flow!",
-      "Spin it like you mean it!",
-      "That's what we call ART!",
-      "Festival ready!",
-      "The energy is ELECTRIC!",
-      "Flowing into the weekend like...",
-      "Can't. Look. Away!",
-      "Give this person a stage!",
-      "Rave fam approved!",
-      "This right here is EVERYTHING!",
-    ];
-    const caption = captions[Math.floor(Math.random() * captions.length)];
+    // Upload processed video to public storage for later publishing
+    const publicVideoUrl = await uploadToPublicUrl(processedPath, submissionId, "social");
+    console.log(`  Processed video stored: ${publicVideoUrl}`);
 
+    // Build publish_details with metadata for later publishing
+    const publishDetails: PublishDetails = {
+      music_track: transcodeResult.musicTrackName || undefined,
+      processed_url: publicVideoUrl,
+      artist_handle: handle,
+    };
+
+    // Mark as processed — ready for scheduled publishing
+    await supabase
+      .from("reel_submissions")
+      .update({
+        status: "processed",
+        publish_details: publishDetails,
+        error_message: null,
+      })
+      .eq("id", submissionId);
+
+    console.log(`Submission ${submissionId} processed — queued for scheduled publishing`);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error(`Pipeline failed for ${submissionId}:`, errorMessage);
+
+    await supabase
+      .from("reel_submissions")
+      .update({
+        status: "failed",
+        error_message: errorMessage,
+      })
+      .eq("id", submissionId);
+  } finally {
+    await cleanup(inputPath, outputPath);
+  }
+}
+
+/**
+ * Phase 2: Publish a processed submission to all enabled platforms.
+ * Called by the scheduler at posting times (every 3 hours, 7am-11pm EST).
+ */
+export async function publishSubmission(submissionId: string): Promise<void> {
+  const tmpDir = os.tmpdir();
+  const processedPath = path.join(tmpDir, `${submissionId}-publish.mp4`);
+
+  try {
+    // Lock: accept processed, queued, or partial
+    const { data: lockData, error: lockError } = await supabase
+      .from("reel_submissions")
+      .update({ status: "processing" })
+      .eq("id", submissionId)
+      .in("status", ["processed", "queued", "partial"])
+      .select("*")
+      .single();
+
+    if (lockError || !lockData) {
+      console.log(`Submission ${submissionId} not available for publishing, skipping`);
+      return;
+    }
+
+    const submission = lockData as ReelSubmission;
+    const prior: PublishDetails = submission.publish_details || {};
+    const handle = prior.artist_handle || submission.artist_name?.replace(/^@+/, "") || "glowwitdaflow";
+    const publicVideoUrl = prior.processed_url || null;
+
+    if (!publicVideoUrl) {
+      console.error(`Submission ${submissionId} has no processed video URL — re-queuing as pending`);
+      await supabase.from("reel_submissions").update({ status: "pending" }).eq("id", submissionId);
+      return;
+    }
+
+    // Download processed video for YouTube upload (needs local file)
+    const needsYouTube = !prior.youtube;
+    if (needsYouTube) {
+      await downloadVideo(publicVideoUrl, processedPath);
+    }
+
+    // Build captions
+    const caption = captions[Math.floor(Math.random() * captions.length)];
     const title = submission.description
       ? submission.description.slice(0, 100)
       : `${caption} @${handle}`;
@@ -158,7 +238,6 @@ export async function processSubmission(submissionId: string): Promise<void> {
 
     const tags = ["dance", "edm", "rave", "hulahoop", "flow arts", "Shorts", handle];
 
-    // Social media caption (IG/FB use a shorter format)
     const socialCaption = [
       submission.description || caption,
       "",
@@ -169,17 +248,13 @@ export async function processSubmission(submissionId: string): Promise<void> {
     ].join("\n").trim();
 
     // Determine which platforms still need posting
-    const needsYouTube = !prior.youtube;
     const needsInstagram = isInstagramEnabled() && !prior.instagram;
     const needsFacebook = isFacebookEnabled() && !prior.facebook;
     const needsTikTok = isTikTokEnabled() && !prior.tiktok;
     const needsThreads = isThreadsEnabled() && !prior.threads;
 
-    // Carry forward prior successes, clear old errors for platforms we're retrying
+    // Carry forward prior successes, clear old errors for retries
     const publishDetails: PublishDetails = { ...prior };
-    if (transcodeResult.musicTrackName) {
-      publishDetails.music_track = transcodeResult.musicTrackName;
-    }
     if (needsYouTube) delete publishDetails.youtube_error;
     if (needsInstagram) delete publishDetails.instagram_error;
     if (needsFacebook) delete publishDetails.facebook_error;
@@ -187,7 +262,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
     if (needsThreads) delete publishDetails.threads_error;
 
     if (!needsYouTube && !needsInstagram && !needsFacebook && !needsTikTok && !needsThreads) {
-      console.log(`Submission ${submissionId} already posted to all enabled platforms, skipping`);
+      console.log(`Submission ${submissionId} already posted to all enabled platforms`);
       await supabase
         .from("reel_submissions")
         .update({ status: "posted", error_message: null })
@@ -202,20 +277,9 @@ export async function processSubmission(submissionId: string): Promise<void> {
       needsTikTok ? "TikTok" : null,
       needsThreads ? "Threads" : null,
     ].filter(Boolean).join(", ");
-    console.log(`  Posting to: ${platformsToPost}`);
+    console.log(`  Publishing to: ${platformsToPost}`);
 
-    // Upload processed video to public URL for social platforms (they need a URL to fetch)
-    let publicVideoUrl: string | null = null;
-    if (needsInstagram || needsFacebook || needsTikTok || needsThreads) {
-      try {
-        publicVideoUrl = await uploadToPublicUrl(processedPath, submissionId, "social");
-        console.log(`  Public URL ready: ${publicVideoUrl}`);
-      } catch (err) {
-        console.error("  Failed to create public URL:", err);
-      }
-    }
-
-    // Upload to platforms in parallel (only ones that still need posting)
+    // Upload to platforms in parallel
     const uploadPromises: Promise<void>[] = [];
 
     // YouTube Shorts
@@ -295,21 +359,13 @@ export async function processSubmission(submissionId: string): Promise<void> {
 
     await Promise.all(uploadPromises);
 
-    // Clean up public URL from storage
-    if (publicVideoUrl) {
-      cleanupPublicUrl(submissionId, "social").catch((err) =>
-        console.error("  Failed to cleanup public URL:", err)
-      );
-    }
-
-    // Determine which platforms succeeded (including prior successes)
+    // Determine results
     const postedYouTube = !!publishDetails.youtube;
     const postedInstagram = !!publishDetails.instagram;
     const postedFacebook = !!publishDetails.facebook;
     const postedTikTok = !!publishDetails.tiktok;
     const postedThreads = !!publishDetails.threads;
 
-    // Which enabled platforms are still missing?
     const stillMissingYouTube = !postedYouTube;
     const stillMissingInstagram = isInstagramEnabled() && !postedInstagram;
     const stillMissingFacebook = isFacebookEnabled() && !postedFacebook;
@@ -326,7 +382,6 @@ export async function processSubmission(submissionId: string): Promise<void> {
     ].filter(Boolean).join(", ");
 
     if (allDone) {
-      // All enabled platforms succeeded
       await supabase
         .from("reel_submissions")
         .update({
@@ -338,7 +393,6 @@ export async function processSubmission(submissionId: string): Promise<void> {
         .eq("id", submissionId);
       console.log(`Submission ${submissionId} fully posted to: ${postedPlatforms}`);
     } else if (postedYouTube || postedInstagram || postedFacebook || postedTikTok || postedThreads) {
-      // Some platforms succeeded, some still need retry — mark as partial
       const missing = [
         stillMissingYouTube ? "YouTube" : null,
         stillMissingInstagram ? "Instagram" : null,
@@ -357,7 +411,6 @@ export async function processSubmission(submissionId: string): Promise<void> {
         .eq("id", submissionId);
       console.log(`Submission ${submissionId} partial — posted: ${postedPlatforms}, pending: ${missing}`);
     } else {
-      // Nothing succeeded at all
       const ytError = publishDetails.youtube_error || "";
       const isQuotaError = ytError.includes("exceeded the number of videos")
         || ytError.includes("quotaExceeded")
@@ -369,7 +422,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
           .update({
             status: "queued",
             publish_details: publishDetails,
-            error_message: "YouTube quota reached — will retry all platforms",
+            error_message: "YouTube quota reached — will retry at next scheduled time",
           })
           .eq("id", submissionId);
         console.log(`Submission ${submissionId} queued for retry (quota exceeded)`);
@@ -390,7 +443,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
     }
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
-    console.error(`Pipeline failed for ${submissionId}:`, errorMessage);
+    console.error(`Publishing failed for ${submissionId}:`, errorMessage);
 
     await supabase
       .from("reel_submissions")
@@ -400,6 +453,6 @@ export async function processSubmission(submissionId: string): Promise<void> {
       })
       .eq("id", submissionId);
   } finally {
-    await cleanup(inputPath, outputPath);
+    await cleanup(processedPath);
   }
 }

@@ -6,8 +6,9 @@ import authRouter from "./routes/auth";
 import quickUploadRouter from "./routes/quick-upload";
 import instagramWebhookRouter from "./routes/instagram-webhook";
 import { processQueue } from "./services/queue";
-import { sweepStaleProcessing, retryQueuedSubmissions } from "./services/sweep";
+import { sweepStaleProcessing } from "./services/sweep";
 import { discoverMusic } from "./services/music-discovery";
+import { startScheduler, publishScheduledBatch } from "./services/scheduler";
 
 const app = express();
 app.use(express.json({ limit: "1mb" }));
@@ -43,52 +44,58 @@ app.post("/discover-music", async (req, res) => {
   }
 });
 
+// Manual publish trigger (for testing or forcing a publish cycle)
+app.post("/publish-now", async (req, res) => {
+  const secret = req.headers["x-webhook-secret"] as string | undefined;
+  if (!safeCompare(secret, process.env.WEBHOOK_SECRET)) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  try {
+    await publishScheduledBatch();
+    res.json({ success: true, message: "Publish cycle triggered" });
+  } catch (err) {
+    console.error("Manual publish error:", err);
+    res.status(500).json({ error: "Publish failed" });
+  }
+});
+
 // Global unhandled rejection handler
 process.on("unhandledRejection", (err) => {
-  console.error("⚠️ Unhandled rejection:", err);
+  console.error("\u26a0\ufe0f Unhandled rejection:", err);
 });
 
 // Safe async wrapper for interval callbacks
 function safeInterval(fn: () => Promise<void>, ms: number, label: string) {
   setInterval(() => {
-    fn().catch(err => console.error(`⚠️ ${label} failed:`, err));
+    fn().catch(err => console.error(`\u26a0\ufe0f ${label} failed:`, err));
   }, ms);
 }
 
 app.listen(PORT, () => {
   console.log(`Video pipeline listening on port ${PORT}`);
 
-  // Sweep stale + retry queued on startup
+  // Sweep stale on startup + process any pending
   sweepStaleProcessing()
-    .then(() => retryQueuedSubmissions())
     .then(() => processQueue())
-    .catch(err => console.error("⚠️ Startup sweep failed:", err));
+    .catch(err => console.error("\u26a0\ufe0f Startup sweep failed:", err));
 
   // Discover music on startup (stock the library with 30 tracks)
-  discoverMusic(30).catch(err => console.error("⚠️ Startup music discovery failed:", err));
+  discoverMusic(30).catch(err => console.error("\u26a0\ufe0f Startup music discovery failed:", err));
 
-  // Sweep stale every 5 minutes
+  // Start the scheduled publisher (7am, 10am, 1pm, 4pm, 7pm, 10pm EST)
+  startScheduler();
+
+  // Sweep stale every 5 minutes — reset stuck processing jobs, run process queue
   safeInterval(
     () => sweepStaleProcessing().then(() => processQueue()),
     5 * 60 * 1000,
     "Sweep/process"
   );
 
-  // Retry queued submissions every 4 hours (YouTube quota resets daily at midnight PT)
+  // Discover 10 new music tracks every hour to keep library stocked
   safeInterval(
     async () => {
-      console.log("Checking for queued submissions to retry...");
-      await retryQueuedSubmissions();
-      await processQueue();
-    },
-    4 * 60 * 60 * 1000,
-    "Retry queued"
-  );
-
-  // Discover 10 new music tracks every hour to keep library stocked at 100+
-  safeInterval(
-    async () => {
-      console.log("🎵 Running scheduled music discovery...");
+      console.log("\ud83c\udfb5 Running scheduled music discovery...");
       await discoverMusic(10);
     },
     60 * 60 * 1000,

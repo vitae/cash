@@ -6,7 +6,7 @@ export interface ReelSubmission {
   email: string;
   video_url: string;
   description: string | null;
-  status: "pending" | "processing" | "posted" | "failed" | "queued" | "partial";
+  status: "pending" | "processing" | "processed" | "posted" | "failed" | "queued" | "partial";
   youtube_url: string | null;
   error_message: string | null;
   retry_count: number;
@@ -26,6 +26,8 @@ export interface PublishDetails {
   threads?: string;
   threads_error?: string;
   music_track?: string;
+  processed_url?: string;
+  artist_handle?: string;
   [key: string]: string | undefined;
 }
 
