@@ -27,18 +27,23 @@ async function exchangeCode(code: string) {
     }),
   });
 
-  const data = (await res.json()) as {
+  // Parse as text first to preserve large user_id (JS number precision issue)
+  const rawText = await res.text();
+  const userIdMatch = rawText.match(/"user_id"\s*:\s*(\d+)/);
+  const data = JSON.parse(rawText) as {
     access_token?: string;
     user_id?: number;
     error_message?: string;
   };
 
   if (!data.access_token) {
-    console.error("Failed:", data.error_message || JSON.stringify(data));
+    console.error("Failed:", data.error_message || rawText);
     process.exit(1);
   }
 
-  console.log(`  Short-lived token obtained for user ${data.user_id}\n`);
+  // Use regex-extracted user_id to avoid JS number precision loss
+  const userId = userIdMatch ? userIdMatch[1] : String(data.user_id);
+  console.log(`  Short-lived token obtained for user ${userId}\n`);
 
   // Step 2: Exchange for long-lived token (60 days)
   console.log("Step 2: Exchanging for long-lived token...\n");
@@ -60,12 +65,12 @@ async function exchangeCode(code: string) {
     console.error("Long-lived exchange failed:", llData.error?.message || JSON.stringify(llData));
     // Fall back to short-lived token
     console.log("\nUsing short-lived token instead.\n");
-    printResults(data.access_token, String(data.user_id));
+    printResults(data.access_token, userId);
     return;
   }
 
   console.log(`  Long-lived token obtained (expires in ${Math.round((llData.expires_in || 0) / 86400)} days)\n`);
-  printResults(llData.access_token, String(data.user_id));
+  printResults(llData.access_token, userId);
 }
 
 function printResults(token: string, userId: string) {
