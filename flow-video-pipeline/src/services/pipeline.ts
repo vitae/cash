@@ -155,7 +155,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
       `Artist: @${handle}`,
       "Submit your reel at https://flowarts.pro",
       "",
-      "#flowarts #edm #dance #hulahoop #poi #rave #flow #spinning #performance",
+      "#flowarts #edm #dance #hulahoop #poi #rave #flow",
     ].join("\n").trim();
 
     // Determine which platforms still need posting
