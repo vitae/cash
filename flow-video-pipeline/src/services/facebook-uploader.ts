@@ -11,8 +11,8 @@ export interface FacebookUploadResult {
  * Upload a Reel to a Facebook Page via the Graph API.
  *
  * Flow:
- * 1. Initialize an upload session
- * 2. Transfer the video file via URL
+ * 1. Initialize an upload session → get video_id
+ * 2. Upload binary video data to rupload.facebook.com
  * 3. Finish and publish as a Reel
  */
 export async function uploadToFacebook(
@@ -49,24 +49,30 @@ export async function uploadToFacebook(
 
   const { video_id: videoId } = (await uploadRes.json()) as { video_id: string };
 
-  // Step 2: Transfer video file via URL
+  // Step 2: Download the video and upload binary data to Facebook's rupload endpoint
+  const videoResponse = await fetch(publicVideoUrl);
+  if (!videoResponse.ok) {
+    throw new Error(`Failed to download video for Facebook upload: ${videoResponse.status}`);
+  }
+  const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
+
   const transferRes = await fetch(
-    `${GRAPH_API}/${videoId}`,
+    `https://rupload.facebook.com/video-upload/v21.0/${videoId}`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        upload_phase: "transfer",
-        file_url: publicVideoUrl,
-        access_token: accessToken,
-        appsecret_proof: proof,
-      }),
+      headers: {
+        "Authorization": `OAuth ${accessToken}`,
+        "offset": "0",
+        "file_size": String(videoBuffer.length),
+        "Content-Type": "application/octet-stream",
+      },
+      body: videoBuffer,
     }
   );
 
   if (!transferRes.ok) {
     const err = await transferRes.text();
-    throw new Error(`Facebook Reel transfer failed: ${err}`);
+    throw new Error(`Facebook Reel binary upload failed: ${err}`);
   }
 
   // Step 3: Finish and publish
