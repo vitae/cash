@@ -69,7 +69,7 @@ async function fetchPixabayMusic(limit: number = 20): Promise<PixabayTrack[]> {
 
 // --- Jamendo API (fallback — CC licensed, good EDM catalog) ---
 
-const JAMENDO_CLIENT_ID = process.env.JAMENDO_CLIENT_ID || "b1a113e5";
+const JAMENDO_CLIENT_ID = process.env.JAMENDO_CLIENT_ID || "0f73708d";
 
 interface JamendoTrack {
   id: string;
