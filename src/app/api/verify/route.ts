@@ -5,10 +5,9 @@ import { supabaseAdmin } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 async function sendWelcomeEmail(email: string) {
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
       from: "Flow Arts Professional <onboarding@resend.dev>",
       to: email,
