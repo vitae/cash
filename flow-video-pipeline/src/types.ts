@@ -23,6 +23,8 @@ export interface PublishDetails {
   facebook_error?: string;
   tiktok?: string;
   tiktok_error?: string;
+  threads?: string;
+  threads_error?: string;
   music_track?: string;
   [key: string]: string | undefined;
 }
