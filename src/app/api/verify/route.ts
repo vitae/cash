@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
 
       // Send welcome email on first verification
       if (customerEmail) {
-        sendWelcomeEmail(customerEmail);
+        await sendWelcomeEmail(customerEmail);
       }
     }
 

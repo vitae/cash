@@ -6,6 +6,7 @@ const STALE_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
 export async function sweepStaleProcessing(): Promise<void> {
   const threshold = new Date(Date.now() - STALE_THRESHOLD_MS).toISOString();
 
+  // Reset submissions stuck in "processing" for over 15 minutes
   const { data, error } = await supabase
     .from("reel_submissions")
     .update({ status: "pending" })
@@ -24,12 +25,33 @@ export async function sweepStaleProcessing(): Promise<void> {
       enqueue(row.id);
     }
   }
+
+  // Pick up any pending submissions that were never enqueued
+  // (e.g. inserted while service was down, or webhook missed)
+  const { data: pending, error: pendingError } = await supabase
+    .from("reel_submissions")
+    .select("id")
+    .eq("status", "pending")
+    .order("created_at", { ascending: true })
+    .limit(10);
+
+  if (pendingError) {
+    console.error("Pending pickup error:", pendingError.message);
+    return;
+  }
+
+  if (pending && pending.length > 0) {
+    console.log(`Found ${pending.length} pending submission(s) to enqueue`);
+    for (const row of pending) {
+      enqueue(row.id);
+    }
+  }
 }
 
 // Retry queued and partial submissions — called on a longer interval
 // "queued" = all platforms failed (e.g. quota), "partial" = some succeeded, some still need posting
+// These need Phase 2 (publishing), so set them back to "processed" for the scheduler to pick up
 export async function retryQueuedSubmissions(): Promise<void> {
-  // First select the IDs to retry (can't order/limit on an update query)
   const { data: toRetry, error: selectError } = await supabase
     .from("reel_submissions")
     .select("id")
@@ -46,10 +68,11 @@ export async function retryQueuedSubmissions(): Promise<void> {
 
   const ids = toRetry.map((r) => r.id);
 
-  // Then update their status
+  // Set to "processed" so the scheduler picks them up for Phase 2 (publishing)
+  // NOT "pending" — that would re-run Phase 1 and lose publish_details
   const { error: updateError } = await supabase
     .from("reel_submissions")
-    .update({ status: "pending" })
+    .update({ status: "processed" })
     .in("id", ids);
 
   if (updateError) {
@@ -57,8 +80,5 @@ export async function retryQueuedSubmissions(): Promise<void> {
     return;
   }
 
-  console.log(`Retrying ${ids.length} queued/partial submissions`);
-  for (const id of ids) {
-    enqueue(id);
-  }
+  console.log(`Reset ${ids.length} queued/partial submissions to processed for re-publishing`);
 }
