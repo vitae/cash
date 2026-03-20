@@ -243,7 +243,7 @@ export default function Home() {
               For Flow Artists, By Flow Artists
             </div>
             <h1 style={{
-              fontSize: "clamp(48px, 12vw, 80px)", fontWeight: 900, letterSpacing: "clamp(8px, 3vw, 20px)",
+              fontSize: "clamp(36px, 10vw, 80px)", fontWeight: 900, letterSpacing: "clamp(4px, 2vw, 20px)",
               textTransform: "uppercase", margin: 0, lineHeight: 1.0, whiteSpace: "nowrap",
               background: "linear-gradient(135deg, #00FF00 0%, #00FF99 25%, #FF00FF 50%, #FF00FF 75%, #00FF00 100%)",
               backgroundSize: "300% 300%",
