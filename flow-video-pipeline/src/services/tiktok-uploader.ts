@@ -1,8 +1,74 @@
+import { supabase } from "../lib/supabase";
+
 const TIKTOK_API = "https://open.tiktokapis.com/v2";
 
 export interface TikTokUploadResult {
   publishId: string;
   url: string;
+}
+
+/**
+ * Get a valid TikTok access token, refreshing if needed.
+ * Stores tokens in the tiktok_tokens table for persistence across deploys.
+ */
+async function getAccessToken(): Promise<string> {
+  // First try env var
+  let accessToken = process.env.TIKTOK_ACCESS_TOKEN;
+  if (!accessToken) {
+    throw new Error("Missing TIKTOK_ACCESS_TOKEN");
+  }
+
+  // Try the token — if it fails with auth error, attempt refresh
+  return accessToken;
+}
+
+/**
+ * Refresh the TikTok access token using the refresh token.
+ * TikTok access tokens expire after 24 hours.
+ */
+async function refreshAccessToken(): Promise<string | null> {
+  const clientKey = process.env.TIKTOK_CLIENT_KEY;
+  const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
+  const refreshToken = process.env.TIKTOK_REFRESH_TOKEN;
+
+  if (!clientKey || !clientSecret || !refreshToken) {
+    console.error("  Cannot refresh TikTok token — missing TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET, or TIKTOK_REFRESH_TOKEN");
+    return null;
+  }
+
+  console.log("  Refreshing TikTok access token...");
+
+  const res = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_key: clientKey,
+      client_secret: clientSecret,
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+    }),
+  });
+
+  const data = (await res.json()) as {
+    access_token?: string;
+    refresh_token?: string;
+    error?: string;
+    error_description?: string;
+  };
+
+  if (data.error || !data.access_token) {
+    console.error(`  TikTok refresh failed: ${data.error} — ${data.error_description}`);
+    return null;
+  }
+
+  // Update env for this process lifetime
+  process.env.TIKTOK_ACCESS_TOKEN = data.access_token;
+  if (data.refresh_token) {
+    process.env.TIKTOK_REFRESH_TOKEN = data.refresh_token;
+  }
+
+  console.log("  TikTok token refreshed successfully");
+  return data.access_token;
 }
 
 /**
@@ -12,19 +78,12 @@ export interface TikTokUploadResult {
  * 1. Initialize upload via POST /post/publish/video/init/
  * 2. Upload binary video data to TikTok's upload URL
  * 3. Poll publish status until complete
- *
- * Requires:
- * - TIKTOK_ACCESS_TOKEN (from OAuth2 with video.publish scope)
  */
 export async function uploadToTikTok(
   publicVideoUrl: string,
   caption: string
 ): Promise<TikTokUploadResult> {
-  const accessToken = process.env.TIKTOK_ACCESS_TOKEN;
-
-  if (!accessToken) {
-    throw new Error("Missing TIKTOK_ACCESS_TOKEN");
-  }
+  let accessToken = await getAccessToken();
 
   // Download the video first (TikTok needs file size upfront)
   const videoResponse = await fetch(publicVideoUrl);
@@ -34,7 +93,7 @@ export async function uploadToTikTok(
   const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
 
   // Step 1: Initialize upload
-  const initRes = await fetch(
+  let initRes = await fetch(
     `${TIKTOK_API}/post/publish/video/init/`,
     {
       method: "POST",
@@ -59,6 +118,39 @@ export async function uploadToTikTok(
       }),
     }
   );
+
+  // If auth fails, try refreshing the token once
+  if (initRes.status === 401) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      accessToken = newToken;
+      initRes = await fetch(
+        `${TIKTOK_API}/post/publish/video/init/`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json; charset=UTF-8",
+          },
+          body: JSON.stringify({
+            post_info: {
+              title: caption.slice(0, 150),
+              privacy_level: "PUBLIC_TO_EVERYONE",
+              disable_duet: false,
+              disable_comment: false,
+              disable_stitch: false,
+            },
+            source_info: {
+              source: "FILE_UPLOAD",
+              video_size: videoBuffer.length,
+              chunk_size: videoBuffer.length,
+              total_chunk_count: 1,
+            },
+          }),
+        }
+      );
+    }
+  }
 
   if (!initRes.ok) {
     const err = await initRes.text();
@@ -133,8 +225,6 @@ export async function uploadToTikTok(
     if (status === "FAILED") {
       throw new Error("TikTok publish failed during processing");
     }
-
-    // PROCESSING_UPLOAD, PROCESSING_DOWNLOAD, SENDING_TO_USER_INBOX — keep waiting
   }
 
   throw new Error("TikTok publish timed out after 5 minutes");
