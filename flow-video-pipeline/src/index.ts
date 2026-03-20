@@ -6,7 +6,7 @@ import authRouter from "./routes/auth";
 import quickUploadRouter from "./routes/quick-upload";
 import instagramWebhookRouter from "./routes/instagram-webhook";
 import { processQueue } from "./services/queue";
-import { sweepStaleProcessing } from "./services/sweep";
+import { sweepStaleProcessing, retryQueuedSubmissions } from "./services/sweep";
 import { discoverMusic } from "./services/music-discovery";
 import { startScheduler, publishScheduledBatch } from "./services/scheduler";
 
@@ -85,11 +85,18 @@ app.listen(PORT, () => {
   // Start the scheduled publisher (7am, 10am, 1pm, 4pm, 7pm, 10pm EST)
   startScheduler();
 
-  // Sweep stale every 5 minutes — reset stuck processing jobs, run process queue
+  // Sweep stale every 5 minutes — reset stuck processing jobs, pick up pending, run process queue
   safeInterval(
     () => sweepStaleProcessing().then(() => processQueue()),
     5 * 60 * 1000,
     "Sweep/process"
+  );
+
+  // Retry queued/partial submissions every 30 minutes
+  safeInterval(
+    () => retryQueuedSubmissions(),
+    30 * 60 * 1000,
+    "Retry queued/partial"
   );
 
   // Discover 10 new music tracks every hour to keep library stocked

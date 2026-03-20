@@ -113,6 +113,10 @@ export async function POST(request: NextRequest) {
 
     if (dbError) {
       console.error("DB insert error:", dbError);
+      return NextResponse.json(
+        { error: "Failed to save submission. Please try again." },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(
