@@ -31,19 +31,40 @@ async function fetchPixabayMusic(limit: number = 20): Promise<PixabayTrack[]> {
     return [];
   }
 
-  const query = EDM_SEARCHES[Math.floor(Math.random() * EDM_SEARCHES.length)];
-  const url = `https://pixabay.com/api/music/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(query)}&per_page=${limit}&min_duration=30&max_duration=120`;
+  // Search multiple EDM queries and merge results for variety
+  const shuffled = [...EDM_SEARCHES].sort(() => Math.random() - 0.5);
+  const queries = shuffled.slice(0, 3);
+  const allTracks: PixabayTrack[] = [];
 
-  console.log(`🔍 Searching Pixabay Music for "${query}"...`);
+  for (const query of queries) {
+    const url = `https://pixabay.com/api/music/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(query)}&genre=electronic&per_page=${limit}&min_duration=30&max_duration=120&order=popular`;
 
-  const response = await fetch(url);
-  if (!response.ok) {
-    console.error(`Pixabay API error: ${response.status} ${response.statusText}`);
-    return [];
+    console.log(`🔍 Searching Pixabay Music for "${query}" (genre: electronic, sorted by popular)...`);
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error(`Pixabay API error for "${query}": ${response.status}`);
+      continue;
+    }
+
+    const data = (await response.json()) as { hits?: PixabayTrack[] };
+    if (data.hits) {
+      allTracks.push(...data.hits);
+    }
   }
 
-  const data = (await response.json()) as { hits?: PixabayTrack[] };
-  return data.hits || [];
+  // Deduplicate by ID and sort by likes (most popular first)
+  const seen = new Set<number>();
+  const unique = allTracks.filter((t) => {
+    if (seen.has(t.id)) return false;
+    seen.add(t.id);
+    return true;
+  });
+
+  unique.sort((a, b) => b.likes - a.likes);
+
+  console.log(`🎵 Pixabay: ${unique.length} unique EDM tracks found, sorted by likes`);
+  return unique;
 }
 
 // --- Jamendo API (fallback — CC licensed, good EDM catalog) ---
