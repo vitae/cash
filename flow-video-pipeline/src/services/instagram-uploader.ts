@@ -1,3 +1,5 @@
+import { appsecretProof } from "./meta-auth";
+
 const GRAPH_API = "https://graph.facebook.com/v21.0";
 
 export interface InstagramUploadResult {
@@ -24,6 +26,8 @@ export async function uploadToInstagram(
     throw new Error("Missing INSTAGRAM_ACCESS_TOKEN or INSTAGRAM_ACCOUNT_ID");
   }
 
+  const proof = appsecretProof(accessToken);
+
   // Step 1: Create media container
   const createRes = await fetch(
     `${GRAPH_API}/${accountId}/media`,
@@ -35,6 +39,7 @@ export async function uploadToInstagram(
         video_url: publicVideoUrl,
         caption,
         access_token: accessToken,
+        appsecret_proof: proof,
       }),
     }
   );
@@ -52,7 +57,7 @@ export async function uploadToInstagram(
     await sleep(10_000);
 
     const statusRes = await fetch(
-      `${GRAPH_API}/${containerId}?fields=status_code&access_token=${accessToken}`
+      `${GRAPH_API}/${containerId}?fields=status_code&access_token=${accessToken}&appsecret_proof=${proof}`
     );
     const statusData = (await statusRes.json()) as { status_code: string };
 
@@ -74,6 +79,7 @@ export async function uploadToInstagram(
       body: JSON.stringify({
         creation_id: containerId,
         access_token: accessToken,
+        appsecret_proof: proof,
       }),
     }
   );
@@ -87,7 +93,7 @@ export async function uploadToInstagram(
 
   // Get permalink
   const mediaRes = await fetch(
-    `${GRAPH_API}/${mediaId}?fields=permalink&access_token=${accessToken}`
+    `${GRAPH_API}/${mediaId}?fields=permalink&access_token=${accessToken}&appsecret_proof=${proof}`
   );
   const mediaData = (await mediaRes.json()) as { permalink?: string };
 

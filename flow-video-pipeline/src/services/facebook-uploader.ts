@@ -1,3 +1,5 @@
+import { appsecretProof } from "./meta-auth";
+
 const GRAPH_API = "https://graph.facebook.com/v21.0";
 
 export interface FacebookUploadResult {
@@ -24,6 +26,8 @@ export async function uploadToFacebook(
     throw new Error("Missing FACEBOOK_ACCESS_TOKEN or FACEBOOK_PAGE_ID");
   }
 
+  const proof = appsecretProof(accessToken);
+
   // Step 1: Start upload session
   const uploadRes = await fetch(
     `${GRAPH_API}/${pageId}/video_reels`,
@@ -33,6 +37,7 @@ export async function uploadToFacebook(
       body: JSON.stringify({
         upload_phase: "start",
         access_token: accessToken,
+        appsecret_proof: proof,
       }),
     }
   );
@@ -54,6 +59,7 @@ export async function uploadToFacebook(
         upload_phase: "transfer",
         file_url: publicVideoUrl,
         access_token: accessToken,
+        appsecret_proof: proof,
       }),
     }
   );
@@ -75,6 +81,7 @@ export async function uploadToFacebook(
         video_state: "PUBLISHED",
         description,
         access_token: accessToken,
+        appsecret_proof: proof,
       }),
     }
   );
