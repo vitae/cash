@@ -1,5 +1,9 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { loadStripe } from "@stripe/stripe-js";
+import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 // ── Keyframes injected once ──
 const KEYFRAMES = `
@@ -107,19 +111,25 @@ export default function Home() {
       .finally(() => setCheckingAccess(false));
   }, []);
 
-  const handleBuyNow = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/pay", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ flowType: "all" }),
-      });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-      else setLoading(false);
-    } catch { setLoading(false); }
+  const [showCheckout, setShowCheckout] = useState(false);
+  const checkoutRef = useRef<HTMLDivElement>(null);
+
+  const handleBuyNow = () => {
+    setShowCheckout(true);
+    setTimeout(() => {
+      checkoutRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
   };
+
+  const fetchClientSecret = useCallback(async () => {
+    const res = await fetch("/api/pay", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ flowType: "all" }),
+    });
+    const data = await res.json();
+    return data.clientSecret;
+  }, []);
 
   const goToGenerators = () => {
     if (sessionId) {
@@ -526,37 +536,73 @@ export default function Home() {
             }}>
               {hasAccess ? "You have lifetime access. Open your generators anytime." : "One-Time Payment. Unlimited Lifetime Access."}
             </div>
-            <button
-              onClick={hasAccess ? goToGenerators : handleBuyNow}
-              disabled={loading}
-              style={{
-                width: "100%", maxWidth: 360,
-                padding: "clamp(18px, 4.5vw, 24px) 32px",
-                background: "linear-gradient(135deg, #00FF00 0%, #00DD00 30%, #FF00FF 70%, #00FF00 100%)",
-                backgroundSize: "300% 300%",
-                animation: loading ? "none" : "gradientShift 3s ease infinite, buyPulse 2.5s ease-in-out infinite",
-                color: "#000",
-                fontFamily: "Inter, sans-serif",
-                fontSize: "clamp(20px, 5vw, 28px)",
-                fontWeight: 900,
-                letterSpacing: "clamp(4px, 1.2vw, 8px)",
-                textTransform: "uppercase",
-                border: "none",
-                borderRadius: 16,
-                cursor: loading ? "wait" : "pointer",
-                transition: "transform 0.15s cubic-bezier(.4,0,.2,1)",
-                WebkitAppearance: "none" as const,
-                opacity: loading ? 0.7 : 1,
-                boxShadow: "0 0 30px rgba(0,255,0,0.5), 0 0 80px rgba(0,255,0,0.2), 0 0 120px rgba(255,0,255,0.1)",
-                position: "relative" as const,
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.06)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
-              onMouseDown={e => { e.currentTarget.style.transform = "scale(0.96)"; }}
-              onMouseUp={e => { e.currentTarget.style.transform = "scale(1.06)"; }}
-            >
-              {loading ? "Redirecting..." : hasAccess ? "OPEN GENERATORS" : "BUY NOW!"}
-            </button>
+            {hasAccess ? (
+              <button
+                onClick={goToGenerators}
+                style={{
+                  width: "100%", maxWidth: 360,
+                  padding: "clamp(18px, 4.5vw, 24px) 32px",
+                  background: "linear-gradient(135deg, #00FF00 0%, #00DD00 30%, #FF00FF 70%, #00FF00 100%)",
+                  backgroundSize: "300% 300%",
+                  animation: "gradientShift 3s ease infinite, buyPulse 2.5s ease-in-out infinite",
+                  color: "#000",
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: "clamp(20px, 5vw, 28px)",
+                  fontWeight: 900,
+                  letterSpacing: "clamp(4px, 1.2vw, 8px)",
+                  textTransform: "uppercase",
+                  border: "none",
+                  borderRadius: 16,
+                  cursor: "pointer",
+                  transition: "transform 0.15s cubic-bezier(.4,0,.2,1)",
+                  WebkitAppearance: "none" as const,
+                  boxShadow: "0 0 30px rgba(0,255,0,0.5), 0 0 80px rgba(0,255,0,0.2), 0 0 120px rgba(255,0,255,0.1)",
+                  position: "relative" as const,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.06)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
+                onMouseDown={e => { e.currentTarget.style.transform = "scale(0.96)"; }}
+                onMouseUp={e => { e.currentTarget.style.transform = "scale(1.06)"; }}
+              >
+                OPEN GENERATORS
+              </button>
+            ) : !showCheckout ? (
+              <button
+                onClick={handleBuyNow}
+                style={{
+                  width: "100%", maxWidth: 360,
+                  padding: "clamp(18px, 4.5vw, 24px) 32px",
+                  background: "linear-gradient(135deg, #00FF00 0%, #00DD00 30%, #FF00FF 70%, #00FF00 100%)",
+                  backgroundSize: "300% 300%",
+                  animation: "gradientShift 3s ease infinite, buyPulse 2.5s ease-in-out infinite",
+                  color: "#000",
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: "clamp(20px, 5vw, 28px)",
+                  fontWeight: 900,
+                  letterSpacing: "clamp(4px, 1.2vw, 8px)",
+                  textTransform: "uppercase",
+                  border: "none",
+                  borderRadius: 16,
+                  cursor: "pointer",
+                  transition: "transform 0.15s cubic-bezier(.4,0,.2,1)",
+                  WebkitAppearance: "none" as const,
+                  boxShadow: "0 0 30px rgba(0,255,0,0.5), 0 0 80px rgba(0,255,0,0.2), 0 0 120px rgba(255,0,255,0.1)",
+                  position: "relative" as const,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.06)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
+                onMouseDown={e => { e.currentTarget.style.transform = "scale(0.96)"; }}
+                onMouseUp={e => { e.currentTarget.style.transform = "scale(1.06)"; }}
+              >
+                BUY NOW!
+              </button>
+            ) : (
+              <div ref={checkoutRef} style={{ width: "100%", maxWidth: 480, margin: "0 auto" }}>
+                <EmbeddedCheckoutProvider stripe={stripePromise} options={{ fetchClientSecret }}>
+                  <EmbeddedCheckout />
+                </EmbeddedCheckoutProvider>
+              </div>
+            )}
           </div>
         </RevealSection>
 
@@ -652,14 +698,15 @@ function Section({ children, variant, style }: { children: React.ReactNode; vari
 }
 
 // ── Gradient line divider ──
-function GradientLine({ color }: { color: "green" | "magenta" }) {
-  const c = color === "green" ? "#00FF00" : "#FF00FF";
+function GradientLine({ color }: { color: "green" | "magenta" | "red" }) {
+  const c = color === "green" ? "#00FF00" : color === "red" ? "#FF0000" : "#FF00FF";
+  const glow = color === "green" ? "rgba(0,255,0,0.5)" : color === "red" ? "rgba(255,0,0,0.5)" : "rgba(255,0,255,0.5)";
   return (
     <div style={{
       width: "100%", maxWidth: 280, height: 2,
       background: `linear-gradient(90deg, transparent, ${c}, transparent)`,
       margin: "0 auto 14px", borderRadius: 1,
-      boxShadow: `0 0 10px ${c === "#00FF00" ? "rgba(0,255,0,0.5)" : "rgba(255,0,255,0.5)"}`,
+      boxShadow: `0 0 10px ${glow}`,
     }} />
   );
 }
