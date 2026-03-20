@@ -83,13 +83,13 @@ app.listen(PORT, () => {
     "Retry queued"
   );
 
-  // Discover new music every 3 hours to keep library stocked at 100+
+  // Discover 10 new music tracks every hour to keep library stocked at 100+
   safeInterval(
     async () => {
       console.log("🎵 Running scheduled music discovery...");
-      await discoverMusic(20);
+      await discoverMusic(10);
     },
-    3 * 60 * 60 * 1000,
+    60 * 60 * 1000,
     "Music discovery"
   );
 });
