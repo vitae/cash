@@ -509,15 +509,13 @@ export default function AdminPage() {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [secret, setSecret] = useState("");
-  const [authed, setAuthed] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [sweeping, setSweeping] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch(`/api/admin/submissions?secret=${encodeURIComponent(secret)}`);
+      const res = await fetch("/api/admin/submissions");
       if (!res.ok) throw new Error("Failed to fetch");
       const json: ApiResponse = await res.json();
       setData(json);
@@ -527,20 +525,13 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  }, [secret]);
+  }, []);
 
   useEffect(() => {
-    if (!authed) return;
     fetchData();
     const interval = setInterval(fetchData, 15000); // auto-refresh every 15s
     return () => clearInterval(interval);
-  }, [authed, fetchData]);
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthed(true);
-    setLoading(true);
-  };
+  }, [fetchData]);
 
   const [sweepResult, setSweepResult] = useState<{ ok: boolean; message: string } | null>(null);
 
@@ -548,7 +539,7 @@ export default function AdminPage() {
     setSweeping(true);
     setSweepResult(null);
     try {
-      const res = await fetch(`/api/admin/sweep?secret=${encodeURIComponent(secret)}`, {
+      const res = await fetch("/api/admin/sweep", {
         method: "POST",
       });
       const body = await res.json().catch(() => ({}));
@@ -565,82 +556,6 @@ export default function AdminPage() {
       setTimeout(() => setSweepResult(null), 5000);
     }
   };
-
-  // Auth screen
-  if (!authed) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#000",
-        }}
-      >
-        <form
-          onSubmit={handleLogin}
-          style={{
-            background: "rgba(10,10,10,0.8)",
-            border: "1px solid rgba(0,255,0,0.2)",
-            borderRadius: 20,
-            padding: 40,
-            maxWidth: 380,
-            width: "100%",
-            backdropFilter: "blur(20px)",
-          }}
-        >
-          <h1
-            style={{
-              fontSize: 24,
-              fontWeight: 800,
-              marginBottom: 8,
-              color: "#00FF00",
-              textShadow: "0 0 20px rgba(0,255,0,0.4)",
-            }}
-          >
-            🔐 Admin Access
-          </h1>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 24 }}>
-            Enter your admin secret to view the pipeline.
-          </p>
-          <input
-            type="password"
-            value={secret}
-            onChange={(e) => setSecret(e.target.value)}
-            placeholder="Admin secret..."
-            style={{
-              width: "100%",
-              padding: "12px 16px",
-              borderRadius: 10,
-              border: "1px solid rgba(0,255,0,0.3)",
-              background: "rgba(0,0,0,0.5)",
-              color: "#fff",
-              fontSize: 14,
-              outline: "none",
-              marginBottom: 16,
-            }}
-          />
-          <button
-            type="submit"
-            style={{
-              width: "100%",
-              padding: "12px 0",
-              borderRadius: 10,
-              border: "none",
-              background: "linear-gradient(135deg, #00FF00, #00cc00)",
-              color: "#000",
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: "pointer",
-            }}
-          >
-            Enter Pipeline →
-          </button>
-        </form>
-      </div>
-    );
-  }
 
   if (loading && !data) {
     return (
@@ -677,8 +592,8 @@ export default function AdminPage() {
           <div>{error}</div>
           <button
             onClick={() => {
-              setAuthed(false);
               setError(null);
+              fetchData();
             }}
             style={{
               marginTop: 16,
@@ -729,34 +644,35 @@ export default function AdminPage() {
               {total} total submissions · {unposted} awaiting publish · auto-refreshing
             </p>
           </div>
-          <button
-            onClick={triggerSweep}
-            disabled={sweeping}
-            style={{
-              padding: "10px 20px",
-              borderRadius: 10,
-              border: "1px solid rgba(0,255,0,0.4)",
-              background: sweeping ? "rgba(0,255,0,0.1)" : "rgba(0,255,0,0.15)",
-              color: "#00FF00",
-              fontWeight: 700,
-              fontSize: 13,
-              cursor: sweeping ? "not-allowed" : "pointer",
-              transition: "all 0.2s",
-            }}
-          >
-            {sweeping ? "⏳ Sweeping..." : "🚀 Trigger Sweep"}
-          </button>
-          {sweepResult && (
-            <span style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: sweepResult.ok ? "#00FF00" : "#FF4444",
-              marginLeft: 12,
-              opacity: 0.9,
-            }}>
-              {sweepResult.ok ? "✓" : "✗"} {sweepResult.message}
-            </span>
-          )}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button
+              onClick={triggerSweep}
+              disabled={sweeping}
+              style={{
+                padding: "10px 20px",
+                borderRadius: 10,
+                border: "1px solid rgba(0,255,0,0.4)",
+                background: sweeping ? "rgba(0,255,0,0.1)" : "rgba(0,255,0,0.15)",
+                color: "#00FF00",
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: sweeping ? "not-allowed" : "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              {sweeping ? "⏳ Sweeping..." : "🚀 Trigger Sweep"}
+            </button>
+            {sweepResult && (
+              <span style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: sweepResult.ok ? "#00FF00" : "#FF4444",
+                opacity: 0.9,
+              }}>
+                {sweepResult.ok ? "✓" : "✗"} {sweepResult.message}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* ─── Pipeline Visualization ─── */}
