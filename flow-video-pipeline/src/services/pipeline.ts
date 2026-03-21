@@ -113,6 +113,18 @@ const captions = [
   "Not me rewatching this for the 47th time!",
   "The algorithm brought you here for a reason!",
 
+  // Flow Arts Olympics
+  "Gold medal flow right here!",
+  "Olympic-level spinning!",
+  "If flow arts were in the Olympics, this would be the opening ceremony!",
+  "10 out of 10 from every judge!",
+  "Going for GOLD!",
+  "World record flow!",
+  "This routine deserves a podium!",
+  "Training for the Flow Arts Olympics!",
+  "Champion-level performance!",
+  "Representing the flow arts nation!",
+
   // Rhymes
   "Spin and grin, let the magic begin!",
   "Glow with the flow, steal the whole show!",
