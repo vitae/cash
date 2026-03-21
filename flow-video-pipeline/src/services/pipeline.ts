@@ -125,6 +125,18 @@ const captions = [
   "Champion-level performance!",
   "Representing the flow arts nation!",
 
+  // ESPN of Flow Arts
+  "BREAKING: jaw officially on the floor!",
+  "And the crowd goes WILD!",
+  "Ladies and gentlemen, you are witnessing GREATNESS!",
+  "Top 10 plays of the week, EASY!",
+  "This just in — flow arts have a new MVP!",
+  "Instant replay NEEDED!",
+  "Did you see that?! REWIND!",
+  "Welcome to the highlight reel!",
+  "SportsCenter top play material!",
+  "That's one for the record books!",
+
   // Rhymes
   "Spin and grin, let the magic begin!",
   "Glow with the flow, steal the whole show!",
