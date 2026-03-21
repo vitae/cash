@@ -545,15 +545,16 @@ export default function AdminPage() {
   const triggerSweep = async () => {
     setSweeping(true);
     try {
-      const webhookSecret = prompt("Webhook secret:");
-      if (!webhookSecret) return;
-      await fetch("https://cash-production-680c.up.railway.app/publish-now", {
+      const res = await fetch(`/api/admin/sweep?secret=${encodeURIComponent(secret)}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-webhook-secret": webhookSecret },
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: "Sweep failed" }));
+        alert(body.error || "Sweep failed");
+      }
       setTimeout(fetchData, 3000);
-    } catch {
-      /* ignore */
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Sweep request failed");
     } finally {
       setSweeping(false);
     }
