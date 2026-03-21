@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "of079dkzzdwq5snjgeyv4zdzbflaqwt9";
 const RAILWAY_URL = process.env.RAILWAY_URL || "https://cash-production-680c.up.railway.app";
 
