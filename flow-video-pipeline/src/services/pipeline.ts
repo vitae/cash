@@ -112,6 +112,28 @@ const captions = [
   "They said flow arts aren't a sport — show them THIS!",
   "Not me rewatching this for the 47th time!",
   "The algorithm brought you here for a reason!",
+
+  // Rhymes
+  "Spin and grin, let the magic begin!",
+  "Glow with the flow, steal the whole show!",
+  "Light up the night, what a beautiful sight!",
+  "Feel the beat, move your feet, watch the fire and the heat!",
+  "Round and round, the best flow we've found!",
+  "Twist and shout, that's what flow's about!",
+  "Hoop don't lie, watch this artist FLY!",
+  "Catch the wave, from the cradle to the rave!",
+  "Props in the air, nothing else can compare!",
+  "Dance and sway, glow the night away!",
+  "Drop the bass, watch the light trails trace!",
+  "Born to spin, feel the fire within!",
+  "Flow so clean, best you've ever seen!",
+  "Shine so bright, owning every night!",
+  "Step by step, every move is kept!",
+  "Feel the groove, watch this artist MOVE!",
+  "Spark and spin, let the show begin!",
+  "Lost in the sound, best flow around!",
+  "Glow and go, putting on a show!",
+  "Rise and shine, every move's divine!",
 ];
 
 /**
