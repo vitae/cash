@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       data = { success: res.ok, message: text || "Sweep triggered" };
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(data, { status: res.status });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Sweep request failed";
     return NextResponse.json({ error: message }, { status: 502 });
