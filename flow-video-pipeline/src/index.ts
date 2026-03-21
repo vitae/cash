@@ -7,7 +7,7 @@ import quickUploadRouter from "./routes/quick-upload";
 import instagramWebhookRouter from "./routes/instagram-webhook";
 import { processQueue } from "./services/queue";
 import { sweepStaleProcessing, retryQueuedSubmissions } from "./services/sweep";
-import { discoverMusic } from "./services/music-discovery";
+import { discoverMusic, purgeAllMusic } from "./services/music-discovery";
 import { startScheduler, publishScheduledBatch } from "./services/scheduler";
 
 const app = express();
@@ -41,6 +41,27 @@ app.post("/discover-music", async (req, res) => {
   } catch (err) {
     console.error("Music discovery error:", err);
     res.status(500).json({ error: "Discovery failed" });
+  }
+});
+
+// Purge all music and repopulate with fresh dubstep/bass EDM
+app.post("/purge-music", async (req, res) => {
+  const secret = req.headers["x-webhook-secret"] as string | undefined;
+  if (!safeCompare(secret, process.env.WEBHOOK_SECRET)) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  try {
+    const purgeResult = await purgeAllMusic();
+    const discoverResult = await discoverMusic(50);
+    res.json({
+      success: true,
+      message: `Purged ${purgeResult.deleted} old tracks, added ${discoverResult.added} fresh dubstep/bass tracks`,
+      purged: purgeResult.deleted,
+      added: discoverResult.added,
+    });
+  } catch (err) {
+    console.error("Purge-music error:", err);
+    res.status(500).json({ error: "Purge failed" });
   }
 });
 

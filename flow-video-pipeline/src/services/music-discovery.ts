@@ -96,6 +96,53 @@ function normalizeJamendoTrack(t: JamendoTrack): NormalizedTrack {
   };
 }
 
+// --- Purge all music tracks (DB + storage) ---
+
+export async function purgeAllMusic(): Promise<{ deleted: number }> {
+  console.log("\n🗑️ === PURGING ALL MUSIC TRACKS ===");
+
+  // Fetch all tracks from DB
+  const { data: allTracks, error } = await supabase
+    .from("music_tracks")
+    .select("id, storage_path");
+
+  if (error) {
+    console.error("Failed to fetch tracks for purge:", error);
+    throw error;
+  }
+
+  if (!allTracks || allTracks.length === 0) {
+    console.log("🗑️ No tracks to purge.");
+    return { deleted: 0 };
+  }
+
+  console.log(`🗑️ Removing ${allTracks.length} tracks from storage and DB...`);
+
+  // Delete files from storage in batches of 50
+  const storagePaths = allTracks
+    .map((t) => t.storage_path)
+    .filter(Boolean) as string[];
+
+  for (let i = 0; i < storagePaths.length; i += 50) {
+    const batch = storagePaths.slice(i, i + 50);
+    await supabase.storage.from("music").remove(batch);
+  }
+
+  // Delete all rows from music_tracks
+  const { error: deleteError } = await supabase
+    .from("music_tracks")
+    .delete()
+    .gte("id", 0); // match all rows
+
+  if (deleteError) {
+    console.error("Failed to delete tracks from DB:", deleteError);
+    throw deleteError;
+  }
+
+  console.log(`🗑️ Purged ${allTracks.length} tracks.`);
+  return { deleted: allTracks.length };
+}
+
 // --- Main discovery function ---
 
 export async function discoverMusic(targetCount: number = 10): Promise<{ added: number; skipped: number; errors: number }> {

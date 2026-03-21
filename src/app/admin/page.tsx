@@ -544,16 +544,41 @@ export default function AdminPage() {
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setSweepResult({ ok: false, message: body.error || "Sweep failed" });
+        setSweepResult({ ok: false, message: body.error || "Publish failed" });
       } else {
-        setSweepResult({ ok: true, message: body.message || "Sweep completed" });
+        setSweepResult({ ok: true, message: body.message || "Publish triggered" });
         await fetchData();
       }
     } catch (err) {
-      setSweepResult({ ok: false, message: err instanceof Error ? err.message : "Sweep request failed" });
+      setSweepResult({ ok: false, message: err instanceof Error ? err.message : "Publish request failed" });
     } finally {
       setSweeping(false);
       setTimeout(() => setSweepResult(null), 5000);
+    }
+  };
+
+  const [purging, setPurging] = useState(false);
+  const [purgeResult, setPurgeResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  const triggerPurgeMusic = async () => {
+    if (!confirm("This will delete ALL music tracks and repopulate with fresh dubstep/bass EDM. Continue?")) return;
+    setPurging(true);
+    setPurgeResult(null);
+    try {
+      const res = await fetch("/api/admin/purge-music", {
+        method: "POST",
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setPurgeResult({ ok: false, message: body.error || "Purge failed" });
+      } else {
+        setPurgeResult({ ok: true, message: body.message || "Music refreshed" });
+      }
+    } catch (err) {
+      setPurgeResult({ ok: false, message: err instanceof Error ? err.message : "Purge request failed" });
+    } finally {
+      setPurging(false);
+      setTimeout(() => setPurgeResult(null), 8000);
     }
   };
 
@@ -644,7 +669,7 @@ export default function AdminPage() {
               {total} total submissions · {unposted} awaiting publish · auto-refreshing
             </p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <button
               onClick={triggerSweep}
               disabled={sweeping}
@@ -660,7 +685,7 @@ export default function AdminPage() {
                 transition: "all 0.2s",
               }}
             >
-              {sweeping ? "⏳ Sweeping..." : "🚀 Trigger Sweep"}
+              {sweeping ? "⏳ Publishing..." : "🚀 Publish Now"}
             </button>
             {sweepResult && (
               <span style={{
@@ -670,6 +695,33 @@ export default function AdminPage() {
                 opacity: 0.9,
               }}>
                 {sweepResult.ok ? "✓" : "✗"} {sweepResult.message}
+              </span>
+            )}
+            <button
+              onClick={triggerPurgeMusic}
+              disabled={purging}
+              style={{
+                padding: "10px 20px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,100,0,0.4)",
+                background: purging ? "rgba(255,100,0,0.1)" : "rgba(255,100,0,0.15)",
+                color: "#FF6400",
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: purging ? "not-allowed" : "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              {purging ? "⏳ Refreshing Music..." : "🎵 Refresh Music"}
+            </button>
+            {purgeResult && (
+              <span style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: purgeResult.ok ? "#FF6400" : "#FF4444",
+                opacity: 0.9,
+              }}>
+                {purgeResult.ok ? "✓" : "✗"} {purgeResult.message}
               </span>
             )}
           </div>
