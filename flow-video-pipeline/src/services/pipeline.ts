@@ -137,6 +137,18 @@ const captions = [
   "SportsCenter top play material!",
   "That's one for the record books!",
 
+  // Life is a party
+  "Life is a party and flow is the dance floor!",
+  "Every day is a celebration when you flow!",
+  "The party doesn't start until the props come out!",
+  "Life's too short to NOT spin!",
+  "Confetti energy in every spin!",
+  "This is the after-party and everyone's invited!",
+  "Who needs a DJ when you ARE the vibe?",
+  "Birthday energy every single day!",
+  "Pop the glow sticks, it's a celebration!",
+  "Living life like one big festival!",
+
   // Rhymes
   "Spin and grin, let the magic begin!",
   "Glow with the flow, steal the whole show!",
