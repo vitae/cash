@@ -18,13 +18,22 @@ interface JamendoTrack {
   stats: { rate: { downloads: { total: number } }; listens: { total: number } };
 }
 
-const JAMENDO_TAGS = ["edm", "electronic", "dance", "house", "dubstep", "trance", "techno", "bass"];
+// Dubstep-focused tag combos — each entry is used as a Jamendo tag query.
+// Jamendo supports "+" for AND (both tags required).
+const JAMENDO_TAG_QUERIES = [
+  "dubstep",
+  "dubstep+edm",
+  "dubstep+bass",
+  "dubstep+electronic",
+  "bass+edm",
+  "bass+electronic",
+];
 
 async function fetchJamendoMusic(limit: number = 20): Promise<JamendoTrack[]> {
-  const tag = JAMENDO_TAGS[Math.floor(Math.random() * JAMENDO_TAGS.length)];
-  const url = `https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_CLIENT_ID}&format=json&limit=${limit}&tags=${tag}&order=popularity_total&audiodlformat=mp31&include=stats&durationbetween=30_120`;
+  const tagQuery = JAMENDO_TAG_QUERIES[Math.floor(Math.random() * JAMENDO_TAG_QUERIES.length)];
+  const url = `https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_CLIENT_ID}&format=json&limit=${limit}&tags=${tagQuery}&order=popularity_total&audiodlformat=mp31&include=stats&durationbetween=30_120`;
 
-  console.log(`🔍 Searching Jamendo for "${tag}" tracks...`);
+  console.log(`🔍 Searching Jamendo for "${tagQuery}" tracks...`);
 
   const response = await fetch(url);
   if (!response.ok) {
@@ -117,8 +126,14 @@ export async function discoverMusic(targetCount: number = 10): Promise<{ added: 
 
   const allTracks: NormalizedTrack[] = jamendoTracks.map(normalizeJamendoTrack);
 
-  // Sort by popularity
+  // Sort by popularity and filter out low-quality tracks
   allTracks.sort((a, b) => b.popularityScore - a.popularityScore);
+  const MIN_POPULARITY = 500;
+  const qualityTracks = allTracks.filter((t) => t.popularityScore >= MIN_POPULARITY);
+  if (qualityTracks.length > 0) {
+    allTracks.length = 0;
+    allTracks.push(...qualityTracks);
+  }
 
   console.log(`🔍 Found ${jamendoTracks.length} Jamendo candidates`);
 
