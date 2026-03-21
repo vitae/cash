@@ -132,7 +132,7 @@ export async function purgeAllMusic(): Promise<{ deleted: number }> {
   const { error: deleteError } = await supabase
     .from("music_tracks")
     .delete()
-    .gte("id", 0); // match all rows
+    .in("id", allTracks.map((t) => t.id));
 
   if (deleteError) {
     console.error("Failed to delete tracks from DB:", deleteError);
