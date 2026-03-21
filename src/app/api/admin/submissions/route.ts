@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
 
-const ADMIN_SECRET = process.env.ADMIN_SECRET || "glowwitdaflow2026";
-
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get("x-admin-secret") || req.nextUrl.searchParams.get("secret");
-  if (secret !== ADMIN_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
