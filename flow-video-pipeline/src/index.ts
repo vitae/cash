@@ -44,6 +44,23 @@ app.post("/discover-music", async (req, res) => {
   }
 });
 
+// Manual sweep trigger — resets stale jobs, enqueues pending, runs process queue
+app.post("/sweep", async (req, res) => {
+  const secret = req.headers["x-webhook-secret"] as string | undefined;
+  if (!safeCompare(secret, process.env.WEBHOOK_SECRET)) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  try {
+    await sweepStaleProcessing();
+    await processQueue();
+    await retryQueuedSubmissions();
+    res.json({ success: true, message: "Sweep completed: stale reset, pending enqueued, queue processed, retries scheduled" });
+  } catch (err) {
+    console.error("Manual sweep error:", err);
+    res.status(500).json({ error: "Sweep failed" });
+  }
+});
+
 // Manual publish trigger (for testing or forcing a publish cycle)
 app.post("/publish-now", async (req, res) => {
   const secret = req.headers["x-webhook-secret"] as string | undefined;
