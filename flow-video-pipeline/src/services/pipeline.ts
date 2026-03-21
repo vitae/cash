@@ -22,7 +22,8 @@ function isFacebookEnabled(): boolean {
 }
 
 function isTikTokEnabled(): boolean {
-  return !!process.env.TIKTOK_ACCESS_TOKEN;
+  // TikTok disabled until token auth is resolved
+  return false;
 }
 
 function isThreadsEnabled(): boolean {
