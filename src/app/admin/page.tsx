@@ -644,34 +644,35 @@ export default function AdminPage() {
               {total} total submissions · {unposted} awaiting publish · auto-refreshing
             </p>
           </div>
-          <button
-            onClick={triggerSweep}
-            disabled={sweeping}
-            style={{
-              padding: "10px 20px",
-              borderRadius: 10,
-              border: "1px solid rgba(0,255,0,0.4)",
-              background: sweeping ? "rgba(0,255,0,0.1)" : "rgba(0,255,0,0.15)",
-              color: "#00FF00",
-              fontWeight: 700,
-              fontSize: 13,
-              cursor: sweeping ? "not-allowed" : "pointer",
-              transition: "all 0.2s",
-            }}
-          >
-            {sweeping ? "⏳ Sweeping..." : "🚀 Trigger Sweep"}
-          </button>
-          {sweepResult && (
-            <span style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: sweepResult.ok ? "#00FF00" : "#FF4444",
-              marginLeft: 12,
-              opacity: 0.9,
-            }}>
-              {sweepResult.ok ? "✓" : "✗"} {sweepResult.message}
-            </span>
-          )}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button
+              onClick={triggerSweep}
+              disabled={sweeping}
+              style={{
+                padding: "10px 20px",
+                borderRadius: 10,
+                border: "1px solid rgba(0,255,0,0.4)",
+                background: sweeping ? "rgba(0,255,0,0.1)" : "rgba(0,255,0,0.15)",
+                color: "#00FF00",
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: sweeping ? "not-allowed" : "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              {sweeping ? "⏳ Sweeping..." : "🚀 Trigger Sweep"}
+            </button>
+            {sweepResult && (
+              <span style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: sweepResult.ok ? "#00FF00" : "#FF4444",
+                opacity: 0.9,
+              }}>
+                {sweepResult.ok ? "✓" : "✗"} {sweepResult.message}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* ─── Pipeline Visualization ─── */}
