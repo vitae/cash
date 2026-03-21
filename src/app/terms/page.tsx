@@ -34,7 +34,7 @@ export default function TermsOfService() {
         </Section>
 
         <Section title="5. Music and Audio">
-          <p>We may add royalty-free background music to your videos for distribution. This music is sourced from licensed libraries (Pixabay, Jamendo) and is cleared for commercial use on all platforms.</p>
+          <p>We may add royalty-free background music to your videos for distribution. This music is sourced from licensed libraries (Jamendo) and is cleared for commercial use on all platforms.</p>
         </Section>
 
         <Section title="6. Social Media Distribution">

@@ -14,15 +14,28 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
     const res = await fetch(`${RAILWAY_URL}/publish-now`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-webhook-secret": WEBHOOK_SECRET,
       },
+      signal: controller.signal,
     });
 
-    const data = await res.json();
+    clearTimeout(timeout);
+
+    const text = await res.text();
+    let data: unknown;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { success: res.ok, message: text || "Sweep triggered" };
+    }
+
     return NextResponse.json(data);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Sweep request failed";

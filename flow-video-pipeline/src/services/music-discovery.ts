@@ -4,70 +4,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 
-// --- Pixabay Music API (primary — no attribution, free commercial use) ---
-
-const PIXABAY_API_KEY = process.env.PIXABAY_API_KEY || "";
-
-interface PixabayTrack {
-  id: number;
-  title: string;
-  user: string;
-  duration: number;
-  audio_url: string;
-  tags: string;
-  downloads: number;
-  likes: number;
-}
-
-const EDM_SEARCHES = [
-  "edm", "electronic dance", "house music", "dubstep", "techno",
-  "trance", "bass drop", "synth wave", "future bass", "drum and bass",
-  "electro", "dance beat", "rave", "club music", "festival",
-];
-
-async function fetchPixabayMusic(limit: number = 20): Promise<PixabayTrack[]> {
-  if (!PIXABAY_API_KEY) {
-    console.log("⚠️ No PIXABAY_API_KEY set, skipping Pixabay source");
-    return [];
-  }
-
-  // Search multiple EDM queries and merge results for variety
-  const shuffled = [...EDM_SEARCHES].sort(() => Math.random() - 0.5);
-  const queries = shuffled.slice(0, 3);
-  const allTracks: PixabayTrack[] = [];
-
-  for (const query of queries) {
-    const url = `https://pixabay.com/api/music/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(query)}&genre=electronic&per_page=${limit}&min_duration=30&max_duration=120&order=popular`;
-
-    console.log(`🔍 Searching Pixabay Music for "${query}" (genre: electronic, sorted by popular)...`);
-
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error(`Pixabay API error for "${query}": ${response.status}`);
-      continue;
-    }
-
-    const data = (await response.json()) as { hits?: PixabayTrack[] };
-    if (data.hits) {
-      allTracks.push(...data.hits);
-    }
-  }
-
-  // Deduplicate by ID and sort by likes (most popular first)
-  const seen = new Set<number>();
-  const unique = allTracks.filter((t) => {
-    if (seen.has(t.id)) return false;
-    seen.add(t.id);
-    return true;
-  });
-
-  unique.sort((a, b) => b.likes - a.likes);
-
-  console.log(`🎵 Pixabay: ${unique.length} unique EDM tracks found, sorted by likes`);
-  return unique;
-}
-
-// --- Jamendo API (fallback — CC licensed, good EDM catalog) ---
+// --- Jamendo API (CC licensed, good EDM catalog) ---
 
 const JAMENDO_CLIENT_ID = process.env.JAMENDO_CLIENT_ID || "0f73708d";
 
@@ -136,18 +73,6 @@ interface NormalizedTrack {
   popularityScore: number;
 }
 
-function normalizePixabayTrack(t: PixabayTrack): NormalizedTrack {
-  return {
-    source: "pixabay",
-    sourceId: String(t.id),
-    name: t.title,
-    artistName: t.user,
-    downloadUrl: t.audio_url,
-    duration: t.duration,
-    popularityScore: t.downloads + (t.likes * 10),
-  };
-}
-
 function normalizeJamendoTrack(t: JamendoTrack): NormalizedTrack {
   const listens = t.stats?.listens?.total || 0;
   const downloads = t.stats?.rate?.downloads?.total || 0;
@@ -184,28 +109,18 @@ export async function discoverMusic(targetCount: number = 10): Promise<{ added: 
   const neededTracks = Math.min(targetCount, 100 - currentUnused);
   console.log(`📥 Need to fetch ${neededTracks} new tracks`);
 
-  // Fetch from all sources in parallel
-  const [pixabayTracks, jamendoTracks] = await Promise.all([
-    fetchPixabayMusic(neededTracks * 2).catch((err) => {
-      console.error("Pixabay fetch failed:", err);
-      return [] as PixabayTrack[];
-    }),
-    fetchJamendoMusic(neededTracks * 2).catch((err) => {
-      console.error("Jamendo fetch failed:", err);
-      return [] as JamendoTrack[];
-    }),
-  ]);
+  // Fetch from Jamendo
+  const jamendoTracks = await fetchJamendoMusic(neededTracks * 2).catch((err) => {
+    console.error("Jamendo fetch failed:", err);
+    return [] as JamendoTrack[];
+  });
 
-  // Normalize and merge, prioritizing Pixabay (better license)
-  const allTracks: NormalizedTrack[] = [
-    ...pixabayTracks.map(normalizePixabayTrack),
-    ...jamendoTracks.map(normalizeJamendoTrack),
-  ];
+  const allTracks: NormalizedTrack[] = jamendoTracks.map(normalizeJamendoTrack);
 
   // Sort by popularity
   allTracks.sort((a, b) => b.popularityScore - a.popularityScore);
 
-  console.log(`🔍 Found ${pixabayTracks.length} Pixabay + ${jamendoTracks.length} Jamendo = ${allTracks.length} candidates`);
+  console.log(`🔍 Found ${jamendoTracks.length} Jamendo candidates`);
 
   let added = 0;
   let skipped = 0;
