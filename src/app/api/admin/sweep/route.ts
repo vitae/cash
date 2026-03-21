@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const timeout = setTimeout(() => controller.abort(), 60000);
 
     const res = await fetch(`${RAILWAY_URL}/sweep`, {
       method: "POST",

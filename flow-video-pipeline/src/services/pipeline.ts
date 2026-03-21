@@ -22,7 +22,8 @@ function isFacebookEnabled(): boolean {
 }
 
 function isTikTokEnabled(): boolean {
-  return !!process.env.TIKTOK_ACCESS_TOKEN;
+  // TikTok disabled until token auth is resolved
+  return false;
 }
 
 function isThreadsEnabled(): boolean {
@@ -182,8 +183,9 @@ export async function processSubmission(submissionId: string): Promise<void> {
 /**
  * Phase 2: Publish a processed submission to all enabled platforms.
  * Called by the scheduler at posting times (every 3 hours, 7am-11pm EST).
+ * Returns true if it actually published to at least one platform, false if skipped.
  */
-export async function publishSubmission(submissionId: string): Promise<void> {
+export async function publishSubmission(submissionId: string): Promise<boolean> {
   const tmpDir = os.tmpdir();
   const processedPath = path.join(tmpDir, `${submissionId}-publish.mp4`);
 
@@ -199,7 +201,7 @@ export async function publishSubmission(submissionId: string): Promise<void> {
 
     if (lockError || !lockData) {
       console.log(`Submission ${submissionId} not available for publishing, skipping`);
-      return;
+      return false;
     }
 
     const submission = lockData as ReelSubmission;
@@ -210,7 +212,7 @@ export async function publishSubmission(submissionId: string): Promise<void> {
     if (!publicVideoUrl) {
       console.error(`Submission ${submissionId} has no processed video URL — re-queuing as pending`);
       await supabase.from("reel_submissions").update({ status: "pending" }).eq("id", submissionId);
-      return;
+      return false;
     }
 
     // Download processed video for YouTube upload (needs local file)
@@ -262,12 +264,12 @@ export async function publishSubmission(submissionId: string): Promise<void> {
     if (needsThreads) delete publishDetails.threads_error;
 
     if (!needsYouTube && !needsInstagram && !needsFacebook && !needsTikTok && !needsThreads) {
-      console.log(`Submission ${submissionId} already posted to all enabled platforms`);
+      console.log(`Submission ${submissionId} already posted to all enabled platforms, skipping`);
       await supabase
         .from("reel_submissions")
         .update({ status: "posted", error_message: null })
         .eq("id", submissionId);
-      return;
+      return false;
     }
 
     const platformsToPost = [
@@ -392,6 +394,7 @@ export async function publishSubmission(submissionId: string): Promise<void> {
         })
         .eq("id", submissionId);
       console.log(`Submission ${submissionId} fully posted to: ${postedPlatforms}`);
+      return true;
     } else if (postedYouTube || postedInstagram || postedFacebook || postedTikTok || postedThreads) {
       const missing = [
         stillMissingYouTube ? "YouTube" : null,
@@ -410,6 +413,7 @@ export async function publishSubmission(submissionId: string): Promise<void> {
         })
         .eq("id", submissionId);
       console.log(`Submission ${submissionId} partial — posted: ${postedPlatforms}, pending: ${missing}`);
+      return true;
     } else {
       const ytError = publishDetails.youtube_error || "";
       const isQuotaError = ytError.includes("exceeded the number of videos")
@@ -426,6 +430,7 @@ export async function publishSubmission(submissionId: string): Promise<void> {
           })
           .eq("id", submissionId);
         console.log(`Submission ${submissionId} queued for retry (quota exceeded)`);
+        return true;
       } else {
         const errors = Object.entries(publishDetails)
           .filter(([k]) => k.endsWith("_error"))
@@ -440,6 +445,7 @@ export async function publishSubmission(submissionId: string): Promise<void> {
           })
           .eq("id", submissionId);
       }
+      return true;
     }
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
@@ -452,6 +458,7 @@ export async function publishSubmission(submissionId: string): Promise<void> {
         error_message: errorMessage,
       })
       .eq("id", submissionId);
+    return false;
   } finally {
     await cleanup(processedPath);
   }

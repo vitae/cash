@@ -41,32 +41,50 @@ function getNextPostingTime(): string {
  * Called by the scheduler at posting windows.
  */
 export async function publishScheduledBatch(): Promise<void> {
-  // Get up to 2 processed submissions (post 2 per window to avoid rate limits)
-  const { data: readySubmissions, error } = await supabase
-    .from("reel_submissions")
-    .select("id")
-    .in("status", ["processed", "partial", "queued"])
-    .order("created_at", { ascending: true })
-    .limit(2);
+  const TARGET_PUBLISHES = 2;
+  let published = 0;
+  let offset = 0;
 
-  if (error) {
-    console.error("Failed to fetch scheduled submissions:", error.message);
-    return;
-  }
+  while (published < TARGET_PUBLISHES) {
+    const { data: readySubmissions, error } = await supabase
+      .from("reel_submissions")
+      .select("id")
+      .in("status", ["processed", "partial", "queued"])
+      .order("created_at", { ascending: true })
+      .range(offset, offset + TARGET_PUBLISHES - published - 1);
 
-  if (!readySubmissions || readySubmissions.length === 0) {
-    console.log("📅 No submissions ready for scheduled publishing");
-    return;
-  }
-
-  console.log(`📅 Scheduled publishing: ${readySubmissions.length} submission(s) to post`);
-
-  for (const sub of readySubmissions) {
-    try {
-      await publishSubmission(sub.id);
-    } catch (err) {
-      console.error(`Failed to publish ${sub.id}:`, err);
+    if (error) {
+      console.error("Failed to fetch scheduled submissions:", error.message);
+      return;
     }
+
+    if (!readySubmissions || readySubmissions.length === 0) {
+      if (published === 0) {
+        console.log("📅 No submissions ready for scheduled publishing");
+      }
+      return;
+    }
+
+    for (const sub of readySubmissions) {
+      try {
+        const didPublish = await publishSubmission(sub.id);
+        if (didPublish) {
+          published++;
+          if (published >= TARGET_PUBLISHES) break;
+        }
+      } catch (err) {
+        console.error(`Failed to publish ${sub.id}:`, err);
+      }
+    }
+
+    offset += readySubmissions.length;
+
+    // Safety: don't loop forever if there are many skipped submissions
+    if (offset > 20) break;
+  }
+
+  if (published > 0) {
+    console.log(`📅 Published ${published} submission(s)`);
   }
 }
 

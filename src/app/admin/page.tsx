@@ -542,21 +542,27 @@ export default function AdminPage() {
     setLoading(true);
   };
 
+  const [sweepResult, setSweepResult] = useState<{ ok: boolean; message: string } | null>(null);
+
   const triggerSweep = async () => {
     setSweeping(true);
+    setSweepResult(null);
     try {
       const res = await fetch(`/api/admin/sweep?secret=${encodeURIComponent(secret)}`, {
         method: "POST",
       });
+      const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const body = await res.json().catch(() => ({ error: "Sweep failed" }));
-        alert(body.error || "Sweep failed");
+        setSweepResult({ ok: false, message: body.error || "Sweep failed" });
+      } else {
+        setSweepResult({ ok: true, message: body.message || "Sweep completed" });
+        await fetchData();
       }
-      setTimeout(fetchData, 3000);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Sweep request failed");
+      setSweepResult({ ok: false, message: err instanceof Error ? err.message : "Sweep request failed" });
     } finally {
       setSweeping(false);
+      setTimeout(() => setSweepResult(null), 5000);
     }
   };
 
@@ -740,6 +746,17 @@ export default function AdminPage() {
           >
             {sweeping ? "⏳ Sweeping..." : "🚀 Trigger Sweep"}
           </button>
+          {sweepResult && (
+            <span style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: sweepResult.ok ? "#00FF00" : "#FF4444",
+              marginLeft: 12,
+              opacity: 0.9,
+            }}>
+              {sweepResult.ok ? "✓" : "✗"} {sweepResult.message}
+            </span>
+          )}
         </div>
 
         {/* ─── Pipeline Visualization ─── */}
