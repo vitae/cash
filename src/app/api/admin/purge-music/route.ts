@@ -6,12 +6,11 @@ const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "of079dkzzdwq5snjgeyv4zdzbf
 const RAILWAY_URL = process.env.RAILWAY_URL || "https://cash-production-680c.up.railway.app";
 
 export async function POST(req: NextRequest) {
-
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000);
+    const timeout = setTimeout(() => controller.abort(), 120000);
 
-    const res = await fetch(`${RAILWAY_URL}/publish-now`, {
+    const res = await fetch(`${RAILWAY_URL}/purge-music`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -27,12 +26,12 @@ export async function POST(req: NextRequest) {
     try {
       data = JSON.parse(text);
     } catch {
-      data = { success: res.ok, message: text || "Sweep triggered" };
+      data = { success: res.ok, message: text || "Purge triggered" };
     }
 
     return NextResponse.json(data, { status: res.status });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Sweep request failed";
+    const message = err instanceof Error ? err.message : "Purge request failed";
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }
