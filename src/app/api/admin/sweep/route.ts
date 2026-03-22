@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 60000);
 
-    const res = await fetch(`${RAILWAY_URL}/publish-now`, {
+    const res = await fetch(`${RAILWAY_URL}/sweep`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
