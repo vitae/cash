@@ -182,7 +182,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
 
 /**
  * Phase 2: Publish a processed submission to all enabled platforms.
- * Called by the scheduler at posting times (every 3 hours, 7am-11pm EST).
+ * Called by the scheduler every 2 hours.
  * Returns true if it actually published to at least one platform, false if skipped.
  */
 export async function publishSubmission(submissionId: string): Promise<boolean> {
@@ -368,10 +368,16 @@ export async function publishSubmission(submissionId: string): Promise<boolean> 
     const postedTikTok = !!publishDetails.tiktok;
     const postedThreads = !!publishDetails.threads;
 
+    // Treat auth-level failures (invalid/expired token) as "not enabled" so they
+    // don't block the queue. These will auto-resolve once the token is fixed.
+    const isTikTokAuthFailure = !!publishDetails.tiktok_error
+      && (String(publishDetails.tiktok_error).includes("access_token_invalid")
+        || String(publishDetails.tiktok_error).includes("token_expired"));
+
     const stillMissingYouTube = !postedYouTube;
     const stillMissingInstagram = isInstagramEnabled() && !postedInstagram;
     const stillMissingFacebook = isFacebookEnabled() && !postedFacebook;
-    const stillMissingTikTok = isTikTokEnabled() && !postedTikTok;
+    const stillMissingTikTok = isTikTokEnabled() && !postedTikTok && !isTikTokAuthFailure;
     const stillMissingThreads = isThreadsEnabled() && !postedThreads;
     const allDone = !stillMissingYouTube && !stillMissingInstagram && !stillMissingFacebook && !stillMissingTikTok && !stillMissingThreads;
 

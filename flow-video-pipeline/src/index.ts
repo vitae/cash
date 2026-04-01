@@ -120,7 +120,7 @@ app.listen(PORT, () => {
   // Discover music on startup (stock the library with 30 tracks)
   discoverMusic(30).catch(err => console.error("\u26a0\ufe0f Startup music discovery failed:", err));
 
-  // Start the scheduled publisher (7am, 10am, 1pm, 4pm, 7pm, 10pm EST)
+  // Start the scheduled publisher (every 2 hours)
   startScheduler();
 
   // Sweep stale every 5 minutes — reset stuck processing jobs, pick up pending, run process queue

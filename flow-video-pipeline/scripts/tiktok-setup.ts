@@ -12,9 +12,17 @@
  *   npx tsx scripts/tiktok-setup.ts refresh <TOKEN>    # Refresh an expired token
  */
 
-const CLIENT_KEY = "awzhf5uwsfx4xio6";
-const CLIENT_SECRET = "ZmlAd5jzG3p0AXEKTE16iwBaDWpmy9mc";
+const CLIENT_KEY = process.env.TIKTOK_CLIENT_KEY;
+const CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET;
 const REDIRECT_URI = "https://flowarts.pro/api/tiktok-callback";
+
+if (!CLIENT_KEY || !CLIENT_SECRET) {
+  console.error("Missing TIKTOK_CLIENT_KEY or TIKTOK_CLIENT_SECRET env vars.");
+  console.error("Set them before running this script:");
+  console.error("  export TIKTOK_CLIENT_KEY=your_client_key");
+  console.error("  export TIKTOK_CLIENT_SECRET=your_client_secret");
+  process.exit(1);
+}
 
 const arg = process.argv[2];
 const arg2 = process.argv[3];
