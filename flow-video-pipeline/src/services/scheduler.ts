@@ -1,18 +1,20 @@
 import { supabase } from "../lib/supabase";
 import { publishSubmission } from "./pipeline";
 
-// Publish every 2 hours (interval in milliseconds)
-const PUBLISH_INTERVAL_MS = 2 * 60 * 60 * 1000;
+// Publish 2 videos every 3 hours
+const PUBLISH_INTERVAL_MS = 3 * 60 * 60 * 1000;
+const BATCH_SIZE = 2;
 
 /**
- * Publish all ready submissions. Called every 2 hours by the scheduler.
+ * Publish up to 2 ready submissions. Called every 3 hours by the scheduler.
  */
 export async function publishScheduledBatch(): Promise<void> {
   const { data: readySubmissions, error } = await supabase
     .from("reel_submissions")
     .select("id")
     .in("status", ["processed", "partial", "queued"])
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .limit(BATCH_SIZE);
 
   if (error) {
     console.error("Failed to fetch scheduled submissions:", error.message);
@@ -44,7 +46,7 @@ export async function publishScheduledBatch(): Promise<void> {
  */
 export function startScheduler(): void {
   const hours = PUBLISH_INTERVAL_MS / (60 * 60 * 1000);
-  console.log(`📅 Scheduler started — publishing every ${hours} hours`);
+  console.log(`📅 Scheduler started — publishing ${BATCH_SIZE} videos every ${hours} hours`);
 
   // Fire immediately on startup so the first batch doesn't wait 2 hours
   publishScheduledBatch().catch(err =>

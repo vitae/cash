@@ -182,7 +182,7 @@ export async function processSubmission(submissionId: string): Promise<void> {
 
 /**
  * Phase 2: Publish a processed submission to all enabled platforms.
- * Called by the scheduler every 2 hours.
+ * Called by the scheduler every 3 hours (2 per batch).
  * Returns true if it actually published to at least one platform, false if skipped.
  */
 export async function publishSubmission(submissionId: string): Promise<boolean> {
@@ -389,6 +389,27 @@ export async function publishSubmission(submissionId: string): Promise<boolean> 
       postedThreads ? "Threads" : null,
     ].filter(Boolean).join(", ");
 
+    // Detect YouTube quota errors — always requeue instead of failing
+    const ytError = publishDetails.youtube_error || "";
+    const isQuotaError = ytError.includes("exceeded the number of videos")
+      || ytError.includes("quotaExceeded")
+      || ytError.includes("uploadLimitExceeded");
+
+    if (isQuotaError) {
+      // Queue for retry regardless of other platform results — YouTube is required
+      await supabase
+        .from("reel_submissions")
+        .update({
+          status: "queued",
+          youtube_url: publishDetails.youtube || null,
+          publish_details: publishDetails,
+          error_message: `YouTube quota reached — will retry next cycle. ${postedPlatforms ? `Already posted to: ${postedPlatforms}` : ""}`.trim(),
+        })
+        .eq("id", submissionId);
+      console.log(`Submission ${submissionId} queued for retry (YouTube quota exceeded)`);
+      return true;
+    }
+
     if (allDone) {
       await supabase
         .from("reel_submissions")
@@ -421,36 +442,18 @@ export async function publishSubmission(submissionId: string): Promise<boolean> 
       console.log(`Submission ${submissionId} partial — posted: ${postedPlatforms}, pending: ${missing}`);
       return true;
     } else {
-      const ytError = publishDetails.youtube_error || "";
-      const isQuotaError = ytError.includes("exceeded the number of videos")
-        || ytError.includes("quotaExceeded")
-        || ytError.includes("uploadLimitExceeded");
-
-      if (isQuotaError) {
-        await supabase
-          .from("reel_submissions")
-          .update({
-            status: "queued",
-            publish_details: publishDetails,
-            error_message: "YouTube quota reached — will retry at next scheduled time",
-          })
-          .eq("id", submissionId);
-        console.log(`Submission ${submissionId} queued for retry (quota exceeded)`);
-        return true;
-      } else {
-        const errors = Object.entries(publishDetails)
-          .filter(([k]) => k.endsWith("_error"))
-          .map(([k, v]) => `${k}: ${v}`)
-          .join("; ");
-        await supabase
-          .from("reel_submissions")
-          .update({
-            status: "failed",
-            publish_details: publishDetails,
-            error_message: errors || "All platform uploads failed",
-          })
-          .eq("id", submissionId);
-      }
+      const errors = Object.entries(publishDetails)
+        .filter(([k]) => k.endsWith("_error"))
+        .map(([k, v]) => `${k}: ${v}`)
+        .join("; ");
+      await supabase
+        .from("reel_submissions")
+        .update({
+          status: "failed",
+          publish_details: publishDetails,
+          error_message: errors || "All platform uploads failed",
+        })
+        .eq("id", submissionId);
       return true;
     }
   } catch (err) {
