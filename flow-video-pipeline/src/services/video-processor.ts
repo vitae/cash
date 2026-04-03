@@ -114,13 +114,20 @@ async function getTopMusicTrack(): Promise<MusicTrackInfo | null> {
   if (topTrack && !dbError) {
     console.log(`🎵 Top track: "${topTrack.name}" by ${topTrack.artist_name} (popularity: ${topTrack.popularity_score})`);
 
-    // Download from storage
+    // Download from storage (if file is missing, mark orphan and fall through)
     const { data: urlData } = supabase.storage
       .from("music")
       .getPublicUrl(topTrack.storage_path);
 
     const musicPath = path.join(os.tmpdir(), `music-${Date.now()}.mp3`);
-    await downloadVideo(urlData.publicUrl, musicPath);
+    try {
+      await downloadVideo(urlData.publicUrl, musicPath);
+    } catch (dlErr) {
+      console.warn(`🎵 Music file missing from storage: ${topTrack.storage_path} — removing orphan`);
+      await supabase.from("music_tracks").delete().eq("id", topTrack.id);
+      // Fall through to bucket fallback below
+      return getTopMusicTrack();
+    }
 
     // Mark as used in database
     await supabase
