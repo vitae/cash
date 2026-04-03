@@ -19,10 +19,11 @@ function isWithinPublishWindow(): boolean {
 }
 
 /**
- * Publish 1 ready submission if within the 7am–10pm EST window.
+ * Publish 1 ready submission.
+ * @param force - Skip the time window check (used by manual /publish-now trigger)
  */
-export async function publishScheduledBatch(): Promise<void> {
-  if (!isWithinPublishWindow()) {
+export async function publishScheduledBatch(force = false): Promise<void> {
+  if (!force && !isWithinPublishWindow()) {
     const hour = getCurrentEST().getHours();
     console.log(`📅 Outside publish window (${hour}:00 EST, window is ${START_HOUR_EST}:00–${END_HOUR_EST}:00) — skipping`);
     return;

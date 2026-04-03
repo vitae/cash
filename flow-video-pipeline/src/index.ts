@@ -91,7 +91,7 @@ app.post("/publish-now", async (req, res) => {
     return res.status(401).json({ error: "Unauthorized" });
   }
   res.json({ success: true, message: "Publish cycle started — uploading in background" });
-  publishScheduledBatch().catch((err) => {
+  publishScheduledBatch(true).catch((err) => {
     console.error("Background publish error:", err);
   });
 });
