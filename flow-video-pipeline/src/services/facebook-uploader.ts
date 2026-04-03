@@ -86,6 +86,7 @@ export async function uploadToFacebook(
         video_id: videoId,
         video_state: "PUBLISHED",
         description,
+        place: "110843418940484", // Honolulu, Hawaii
         access_token: accessToken,
         appsecret_proof: proof,
       }),

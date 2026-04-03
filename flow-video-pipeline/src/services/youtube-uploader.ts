@@ -16,7 +16,7 @@ export async function uploadToYouTube(options: UploadOptions): Promise<string> {
   console.log(`Uploading to YouTube: "${options.title}"`);
 
   const res = await yt.videos.insert({
-    part: ["snippet", "status"],
+    part: ["snippet", "status", "recordingDetails"],
     requestBody: {
       snippet: {
         title: options.title.slice(0, 100),
@@ -27,6 +27,13 @@ export async function uploadToYouTube(options: UploadOptions): Promise<string> {
       status: {
         privacyStatus: "public",
         selfDeclaredMadeForKids: false,
+      },
+      recordingDetails: {
+        location: {
+          latitude: 21.3069,
+          longitude: -157.8583,
+        },
+        locationDescription: "Honolulu, Hawaii",
       },
     },
     media: {

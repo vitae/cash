@@ -111,13 +111,15 @@ export default function Home() {
       .finally(() => setCheckingAccess(false));
   }, []);
 
-  const [showCheckout, setShowCheckout] = useState(false);
-  const checkoutRef = useRef<HTMLDivElement>(null);
+  const [showCheckout, setShowCheckout] = useState<"early" | "bottom" | false>(false);
+  const checkoutRefEarly = useRef<HTMLDivElement>(null);
+  const checkoutRefBottom = useRef<HTMLDivElement>(null);
 
-  const handleBuyNow = () => {
-    setShowCheckout(true);
+  const handleBuyNow = (location: "early" | "bottom") => {
+    setShowCheckout(location);
+    const ref = location === "early" ? checkoutRefEarly : checkoutRefBottom;
     setTimeout(() => {
-      checkoutRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 100);
   };
 
@@ -199,7 +201,7 @@ export default function Home() {
           </span>
         </div>
         <button
-          onClick={hasAccess ? goToGenerators : handleBuyNow}
+          onClick={hasAccess ? goToGenerators : () => handleBuyNow("early")}
           disabled={loading}
           style={{
             padding: "8px 20px",
@@ -329,7 +331,7 @@ export default function Home() {
 
         {/* ── Early BUY NOW (after Money Hook) ── */}
         <RevealSection delay={0.05}>
-          <div style={{
+          <div data-checkout="early" style={{
             marginBottom: 32,
             padding: "clamp(28px, 7vw, 48px) clamp(20px, 5vw, 36px)",
             textAlign: "center",
@@ -402,9 +404,15 @@ export default function Home() {
               >
                 OPEN GENERATORS
               </button>
-            ) : !showCheckout ? (
+            ) : showCheckout === "early" ? (
+              <div ref={checkoutRefEarly} style={{ width: "100%", maxWidth: 480, margin: "0 auto" }}>
+                <EmbeddedCheckoutProvider stripe={stripePromise} options={{ fetchClientSecret }}>
+                  <EmbeddedCheckout />
+                </EmbeddedCheckoutProvider>
+              </div>
+            ) : (
               <button
-                onClick={handleBuyNow}
+                onClick={() => handleBuyNow("early")}
                 style={{
                   width: "100%", maxWidth: 360,
                   padding: "clamp(18px, 4.5vw, 24px) 32px",
@@ -432,12 +440,6 @@ export default function Home() {
               >
                 BUY NOW!
               </button>
-            ) : (
-              <div ref={checkoutRef} style={{ width: "100%", maxWidth: 480, margin: "0 auto" }}>
-                <EmbeddedCheckoutProvider stripe={stripePromise} options={{ fetchClientSecret }}>
-                  <EmbeddedCheckout />
-                </EmbeddedCheckoutProvider>
-              </div>
             )}
           </div>
         </RevealSection>
@@ -609,7 +611,7 @@ export default function Home() {
 
         {/* ── UNLOCK + BUY NOW ── */}
         <RevealSection delay={0.05}>
-          <div style={{
+          <div data-checkout="bottom" style={{
             marginBottom: 32,
             padding: "clamp(28px, 7vw, 48px) clamp(20px, 5vw, 36px)",
             textAlign: "center",
@@ -682,9 +684,15 @@ export default function Home() {
               >
                 OPEN GENERATORS
               </button>
-            ) : !showCheckout ? (
+            ) : showCheckout === "bottom" ? (
+              <div ref={checkoutRefBottom} style={{ width: "100%", maxWidth: 480, margin: "0 auto" }}>
+                <EmbeddedCheckoutProvider stripe={stripePromise} options={{ fetchClientSecret }}>
+                  <EmbeddedCheckout />
+                </EmbeddedCheckoutProvider>
+              </div>
+            ) : (
               <button
-                onClick={handleBuyNow}
+                onClick={() => handleBuyNow("bottom")}
                 style={{
                   width: "100%", maxWidth: 360,
                   padding: "clamp(18px, 4.5vw, 24px) 32px",
@@ -712,12 +720,6 @@ export default function Home() {
               >
                 BUY NOW!
               </button>
-            ) : (
-              <div ref={checkoutRef} style={{ width: "100%", maxWidth: 480, margin: "0 auto" }}>
-                <EmbeddedCheckoutProvider stripe={stripePromise} options={{ fetchClientSecret }}>
-                  <EmbeddedCheckout />
-                </EmbeddedCheckoutProvider>
-              </div>
             )}
           </div>
         </RevealSection>
