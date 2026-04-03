@@ -1,14 +1,33 @@
 import { supabase } from "../lib/supabase";
 import { publishSubmission } from "./pipeline";
 
-// Publish 2 videos every 3 hours
+// Publish 1 video every 3 hours, 7am–10pm EST
 const PUBLISH_INTERVAL_MS = 3 * 60 * 60 * 1000;
-const BATCH_SIZE = 2;
+const BATCH_SIZE = 1;
+const START_HOUR_EST = 7;
+const END_HOUR_EST = 22; // 10pm
+
+function getCurrentEST(): Date {
+  return new Date(
+    new Date().toLocaleString("en-US", { timeZone: "America/New_York" })
+  );
+}
+
+function isWithinPublishWindow(): boolean {
+  const hour = getCurrentEST().getHours();
+  return hour >= START_HOUR_EST && hour < END_HOUR_EST;
+}
 
 /**
- * Publish up to 2 ready submissions. Called every 3 hours by the scheduler.
+ * Publish 1 ready submission if within the 7am–10pm EST window.
  */
 export async function publishScheduledBatch(): Promise<void> {
+  if (!isWithinPublishWindow()) {
+    const hour = getCurrentEST().getHours();
+    console.log(`📅 Outside publish window (${hour}:00 EST, window is ${START_HOUR_EST}:00–${END_HOUR_EST}:00) — skipping`);
+    return;
+  }
+
   const { data: readySubmissions, error } = await supabase
     .from("reel_submissions")
     .select("id")
@@ -42,13 +61,12 @@ export async function publishScheduledBatch(): Promise<void> {
 }
 
 /**
- * Publish a batch every 2 hours. Fires once on startup, then repeats.
+ * Publish 1 video every 3 hours between 7am–10pm EST.
+ * Fires once on startup, then repeats.
  */
 export function startScheduler(): void {
-  const hours = PUBLISH_INTERVAL_MS / (60 * 60 * 1000);
-  console.log(`📅 Scheduler started — publishing ${BATCH_SIZE} videos every ${hours} hours`);
+  console.log(`📅 Scheduler started — publishing ${BATCH_SIZE} video every 3 hours (${START_HOUR_EST}:00–${END_HOUR_EST}:00 EST)`);
 
-  // Fire immediately on startup so the first batch doesn't wait 2 hours
   publishScheduledBatch().catch(err =>
     console.error("📅 Initial publish batch failed:", err)
   );
