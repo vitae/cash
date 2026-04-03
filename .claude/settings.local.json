@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(gh repo:*)",
-      "Bash(git clone:*)"
+      "Bash(git clone:*)",
+      "Bash(gh api:*)",
+      "Bash(npx get-shit-done-cc@latest --claude --local)",
+      "Bash(npx get-shit-done-cc@latest --claude --global)"
     ]
   }
 }
