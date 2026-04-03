@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flow Arts Pipeline — System Diagram</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    color: #e0e0e0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .container { max-width: 1400px; margin: 0 auto; padding: 40px 24px; }
+  h1 {
+    text-align: center;
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #00FF00, #00FFAA, #FF00FF, #00FF00);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradientShift 4s ease infinite;
+    margin-bottom: 8px;
+  }
+  .subtitle { text-align: center; color: #666; font-size: 14px; margin-bottom: 48px; letter-spacing: 2px; }
+  @keyframes gradientShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+
+  /* ── Layout ── */
+  .section { margin-bottom: 48px; }
+  .section-title {
+    font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+    color: #00FF00; margin-bottom: 20px; padding-left: 4px;
+  }
+  .section-title.magenta { color: #FF00FF; }
+  .section-title.cyan { color: #00DDFF; }
+  .section-title.yellow { color: #FFD700; }
+
+  /* ── Flow Row ── */
+  .flow-row {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .flow-row.center { justify-content: center; }
+
+  /* ── Nodes ── */
+  .node {
+    padding: 14px 20px; border-radius: 12px;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.5px;
+    position: relative; transition: transform 0.2s;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    backdrop-filter: blur(10px);
+    min-width: 140px; text-align: center;
+  }
+  .node:hover { transform: scale(1.05); }
+  .node .label { font-size: 11px; color: #888; margin-top: 4px; font-weight: 400; }
+  .node.green { border-color: rgba(0,255,0,0.3); box-shadow: 0 0 15px rgba(0,255,0,0.1); }
+  .node.green .icon { color: #00FF00; }
+  .node.magenta { border-color: rgba(255,0,255,0.3); box-shadow: 0 0 15px rgba(255,0,255,0.1); }
+  .node.magenta .icon { color: #FF00FF; }
+  .node.cyan { border-color: rgba(0,200,255,0.3); box-shadow: 0 0 15px rgba(0,200,255,0.1); }
+  .node.cyan .icon { color: #00DDFF; }
+  .node.yellow { border-color: rgba(255,215,0,0.3); box-shadow: 0 0 15px rgba(255,215,0,0.1); }
+  .node.yellow .icon { color: #FFD700; }
+  .node.red { border-color: rgba(255,60,60,0.3); box-shadow: 0 0 15px rgba(255,60,60,0.1); }
+  .node.red .icon { color: #FF3C3C; }
+  .node.dim { border-color: rgba(255,255,255,0.05); opacity: 0.6; }
+
+  /* ── Arrows ── */
+  .arrow {
+    font-size: 20px; color: #333; flex-shrink: 0;
+    user-select: none;
+  }
+  .arrow.green { color: rgba(0,255,0,0.4); }
+  .arrow.magenta { color: rgba(255,0,255,0.4); }
+  .arrow.cyan { color: rgba(0,200,255,0.4); }
+  .arrow.down {
+    display: flex; justify-content: center; width: 100%;
+    font-size: 24px; color: #333; margin: 4px 0;
+  }
+  .arrow.down.green { color: rgba(0,255,0,0.3); }
+  .arrow.down.magenta { color: rgba(255,0,255,0.3); }
+
+  /* ── Platform Grid ── */
+  .platform-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .platform {
+    padding: 16px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.02);
+    text-align: center;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .platform:hover { transform: translateY(-2px); border-color: rgba(0,255,0,0.3); }
+  .platform .emoji { font-size: 28px; margin-bottom: 8px; }
+  .platform .name { font-size: 13px; font-weight: 600; }
+  .platform .detail { font-size: 11px; color: #666; margin-top: 4px; }
+
+  /* ── Status Pipeline ── */
+  .status-pipeline {
+    display: flex; align-items: center; gap: 0; flex-wrap: wrap;
+    justify-content: center; margin: 20px 0;
+  }
+  .status-badge {
+    padding: 10px 18px; font-size: 12px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.08);
+    position: relative;
+  }
+  .status-badge:first-child { border-radius: 8px 0 0 8px; }
+  .status-badge:last-child { border-radius: 0 8px 8px 0; }
+  .status-badge.pending { background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.3); color: #FFD700; }
+  .status-badge.processing { background: rgba(0,200,255,0.1); border-color: rgba(0,200,255,0.3); color: #00DDFF; }
+  .status-badge.processed { background: rgba(0,255,0,0.1); border-color: rgba(0,255,0,0.3); color: #00FF00; }
+  .status-badge.posted { background: rgba(0,255,0,0.15); border-color: rgba(0,255,0,0.4); color: #00FF00; }
+  .status-badge.failed { background: rgba(255,60,60,0.1); border-color: rgba(255,60,60,0.3); color: #FF3C3C; }
+  .status-badge.partial { background: rgba(255,165,0,0.1); border-color: rgba(255,165,0,0.3); color: #FFA500; }
+  .status-badge .arrow-right { position: absolute; right: -8px; top: 50%; transform: translateY(-50%); color: #333; z-index: 1; }
+
+  /* ── Scheduler Box ── */
+  .scheduler-box {
+    border: 1px dashed rgba(0,255,0,0.2); border-radius: 16px;
+    padding: 24px; background: rgba(0,255,0,0.02);
+    margin-top: 16px;
+  }
+  .scheduler-box h3 { color: #00FF00; font-size: 14px; letter-spacing: 2px; margin-bottom: 12px; }
+  .scheduler-detail { color: #888; font-size: 13px; line-height: 1.8; }
+  .scheduler-detail strong { color: #ccc; }
+
+  /* ── Two-col layout ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ── DB Tables ── */
+  .db-table {
+    border: 1px solid rgba(0,200,255,0.15); border-radius: 12px;
+    overflow: hidden; background: rgba(0,200,255,0.02);
+  }
+  .db-table-header {
+    padding: 12px 16px; background: rgba(0,200,255,0.08);
+    font-size: 13px; font-weight: 700; color: #00DDFF; letter-spacing: 1px;
+  }
+  .db-table-body { padding: 12px 16px; }
+  .db-field { font-size: 12px; color: #999; padding: 3px 0; font-family: 'SF Mono', 'Fira Code', monospace; }
+  .db-field .type { color: #555; }
+
+  /* ── Legend ── */
+  .legend { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 40px; justify-content: center; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #666; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-dot.green { background: #00FF00; }
+  .legend-dot.magenta { background: #FF00FF; }
+  .legend-dot.cyan { background: #00DDFF; }
+  .legend-dot.yellow { background: #FFD700; }
+  .legend-dot.red { background: #FF3C3C; }
+
+  .divider {
+    height: 1px; margin: 40px 0;
+    background: linear-gradient(90deg, transparent, rgba(0,255,0,0.2), rgba(255,0,255,0.2), transparent);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Flow Arts Pipeline</h1>
+  <p class="subtitle">Full System Architecture — Ingestion → Processing → Publishing</p>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- ENTRY POINTS -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title yellow">1 — Content Entry Points</div>
+    <div class="flow-row center">
+      <div class="node yellow">
+        <div class="icon">📱</div>
+        iPhone Shortcut
+        <div class="label">POST /quick-upload</div>
+      </div>
+      <div class="node yellow">
+        <div class="icon">🌐</div>
+        Web Upload
+        <div class="label">POST /api/upload-reel</div>
+      </div>
+      <div class="node yellow">
+        <div class="icon">🔔</div>
+        Supabase Webhook
+        <div class="label">POST /webhook</div>
+      </div>
+      <div class="node dim">
+        <div class="icon">🔄</div>
+        Manual Retry
+        <div class="label">POST /retry/:id</div>
+      </div>
+    </div>
+
+    <div class="arrow down green">↓</div>
+    <div class="flow-row center">
+      <div class="node cyan">
+        <div class="icon">📦</div>
+        Supabase Storage
+        <div class="label">reels/ bucket (video upload)</div>
+      </div>
+      <span class="arrow cyan">→</span>
+      <div class="node cyan">
+        <div class="icon">🗄️</div>
+        reel_submissions table
+        <div class="label">status: pending</div>
+      </div>
+      <span class="arrow cyan">→</span>
+      <div class="node green">
+        <div class="icon">📋</div>
+        In-Memory Queue
+        <div class="label">enqueue → processQueue()</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- STATUS PIPELINE -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title">2 — Submission Status Flow</div>
+    <div class="status-pipeline">
+      <div class="status-badge pending">⏳ Pending <span class="arrow-right">→</span></div>
+      <div class="status-badge processing">⚙️ Processing <span class="arrow-right">→</span></div>
+      <div class="status-badge processed">✨ Processed <span class="arrow-right">→</span></div>
+      <div class="status-badge posted">🚀 Posted</div>
+    </div>
+    <div class="status-pipeline" style="margin-top: 8px;">
+      <div class="status-badge failed">❌ Failed</div>
+      <div class="status-badge partial" style="margin-left: 12px;">⚠️ Partial</div>
+      <div class="status-badge pending" style="margin-left: 12px; opacity: 0.6;">🔄 Queued → Retry</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- PHASE 1: PROCESSING -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title green">3 — Phase 1: Video Processing (Railway)</div>
+    <div class="flow-row center">
+      <div class="node green">
+        <div class="icon">⬇️</div>
+        Download Video
+        <div class="label">from Supabase URL</div>
+      </div>
+      <span class="arrow green">→</span>
+      <div class="node green">
+        <div class="icon">👤</div>
+        Extract Handle
+        <div class="label">OCR upper-left</div>
+      </div>
+      <span class="arrow green">→</span>
+      <div class="node green">
+        <div class="icon">🔍</div>
+        Validate Video
+        <div class="label">ffprobe: 1-180s, codecs</div>
+      </div>
+      <span class="arrow green">→</span>
+      <div class="node green">
+        <div class="icon">🎵</div>
+        Mix Music
+        <div class="label">EDM from Jamendo</div>
+      </div>
+      <span class="arrow green">→</span>
+      <div class="node green">
+        <div class="icon">✂️</div>
+        Transcode
+        <div class="label">60s max, fade out</div>
+      </div>
+      <span class="arrow green">→</span>
+      <div class="node green">
+        <div class="icon">☁️</div>
+        Upload
+        <div class="label">processed/{id}-social.mp4</div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-top: 24px;">
+      <div class="scheduler-box" style="border-color: rgba(255,0,255,0.2); background: rgba(255,0,255,0.02);">
+        <h3 style="color: #FF00FF;">🎵 Music Discovery Service</h3>
+        <div class="scheduler-detail">
+          <strong>Source:</strong> Jamendo API (CC-licensed EDM/dubstep)<br>
+          <strong>Startup:</strong> Fetches 30 tracks<br>
+          <strong>Hourly:</strong> Fetches 10 tracks<br>
+          <strong>Library Cap:</strong> 100 unused tracks max<br>
+          <strong>Usage:</strong> One-time per video, deleted after use<br>
+          <strong>Storage:</strong> Supabase music/ bucket
+        </div>
+      </div>
+      <div class="scheduler-box">
+        <h3>🔄 Sweep & Recovery</h3>
+        <div class="scheduler-detail">
+          <strong>Every 5 min:</strong> Reset stuck "processing" &gt;15min → pending<br>
+          <strong>Every 30 min:</strong> Retry queued/partial → processed<br>
+          <strong>Manual:</strong> POST /sweep triggers immediate cycle<br>
+          <strong>Max retries:</strong> 3 per submission
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- PHASE 2: PUBLISHING -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title magenta">4 — Phase 2: Publishing (Scheduled)</div>
+
+    <div class="scheduler-box" style="margin-bottom: 24px;">
+      <h3>📅 Publish Scheduler</h3>
+      <div class="scheduler-detail">
+        <strong>Cadence:</strong> 1 video every 3 hours<br>
+        <strong>Window:</strong> 7:00 AM – 10:00 PM EST only<br>
+        <strong>Selection:</strong> Oldest processed/partial/queued submission<br>
+        <strong>Trigger:</strong> Also available via POST /publish-now
+      </div>
+    </div>
+
+    <div class="section-title" style="color: #FF00FF; font-size: 12px;">Parallel Upload to All Platforms</div>
+    <div class="platform-grid">
+      <div class="platform">
+        <div class="emoji">▶️</div>
+        <div class="name">YouTube Shorts</div>
+        <div class="detail">OAuth2 + refresh token<br>recordingDetails: Honolulu</div>
+      </div>
+      <div class="platform">
+        <div class="emoji">📸</div>
+        <div class="name">Instagram Reels</div>
+        <div class="detail">Graph API v21.0<br>location_id: Honolulu</div>
+      </div>
+      <div class="platform">
+        <div class="emoji">📘</div>
+        <div class="name">Facebook Reels</div>
+        <div class="detail">Page token + rupload<br>place: Honolulu</div>
+      </div>
+      <div class="platform">
+        <div class="emoji">🎵</div>
+        <div class="name">TikTok</div>
+        <div class="detail">Content Posting API v2<br>Auto token refresh</div>
+      </div>
+      <div class="platform">
+        <div class="emoji">🧵</div>
+        <div class="name">Threads</div>
+        <div class="detail">Threads Publishing API<br>Shares IG token</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- FRONTEND -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title cyan">5 — Frontend App (Vercel / Next.js)</div>
+    <div class="flow-row center">
+      <div class="node magenta">
+        <div class="icon">💳</div>
+        Landing Page
+        <div class="label">Stripe $5 checkout</div>
+      </div>
+      <span class="arrow magenta">→</span>
+      <div class="node green">
+        <div class="icon">✅</div>
+        Verify Payment
+        <div class="label">/api/verify</div>
+      </div>
+      <span class="arrow green">→</span>
+      <div class="node green">
+        <div class="icon">⚡</div>
+        Generators
+        <div class="label">/success</div>
+      </div>
+    </div>
+    <div class="platform-grid" style="margin-top: 16px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+      <div class="platform">
+        <div class="emoji">🎯</div>
+        <div class="name">Sponsor Pitch</div>
+        <div class="detail">AI-generated brand outreach</div>
+      </div>
+      <div class="platform">
+        <div class="emoji">📅</div>
+        <div class="name">Booking Sheet</div>
+        <div class="detail">Event booking package</div>
+      </div>
+      <div class="platform">
+        <div class="emoji">🎬</div>
+        <div class="name">Artist EPK</div>
+        <div class="detail">Electronic press kit</div>
+      </div>
+      <div class="platform">
+        <div class="emoji">🎪</div>
+        <div class="name">Festival App</div>
+        <div class="detail">Festival application</div>
+      </div>
+    </div>
+    <div class="flow-row center" style="margin-top: 20px;">
+      <div class="node cyan">
+        <div class="icon">🛡️</div>
+        Admin Dashboard
+        <div class="label">/admin — real-time pipeline monitor</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- DATABASE -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title cyan">6 — Database & Storage (Supabase)</div>
+    <div class="two-col">
+      <div>
+        <div class="db-table" style="margin-bottom: 16px;">
+          <div class="db-table-header">📋 reel_submissions</div>
+          <div class="db-table-body">
+            <div class="db-field">id <span class="type">uuid PK</span></div>
+            <div class="db-field">artist_name, email, video_url, description</div>
+            <div class="db-field">status <span class="type">enum (7 states)</span></div>
+            <div class="db-field">youtube_url, error_message, retry_count</div>
+            <div class="db-field">publish_details <span class="type">jsonb (platform URLs/errors)</span></div>
+          </div>
+        </div>
+        <div class="db-table" style="margin-bottom: 16px;">
+          <div class="db-table-header">🎵 music_tracks</div>
+          <div class="db-table-body">
+            <div class="db-field">id <span class="type">uuid PK</span></div>
+            <div class="db-field">name, artist_name, source, source_id</div>
+            <div class="db-field">popularity_score, duration_seconds</div>
+            <div class="db-field">storage_path, used <span class="type">boolean</span></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="db-table" style="margin-bottom: 16px;">
+          <div class="db-table-header">🔑 youtube_tokens</div>
+          <div class="db-table-body">
+            <div class="db-field">access_token, refresh_token, expires_at</div>
+          </div>
+        </div>
+        <div class="db-table" style="margin-bottom: 16px;">
+          <div class="db-table-header">💳 purchases</div>
+          <div class="db-table-body">
+            <div class="db-field">stripe_session_id, email, amount, status</div>
+          </div>
+        </div>
+        <div class="db-table" style="margin-bottom: 16px;">
+          <div class="db-table-header">📦 Storage Buckets</div>
+          <div class="db-table-body">
+            <div class="db-field">reels/ <span class="type">— raw + processed videos</span></div>
+            <div class="db-field">music/ <span class="type">— CC-licensed tracks (deleted after use)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- INFRA -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title" style="color: #888;">7 — Infrastructure</div>
+    <div class="flow-row center">
+      <div class="node cyan">
+        <div class="icon">▲</div>
+        Vercel
+        <div class="label">Next.js frontend + API</div>
+      </div>
+      <div class="node green">
+        <div class="icon">🚂</div>
+        Railway
+        <div class="label">Video pipeline (Express)</div>
+      </div>
+      <div class="node cyan">
+        <div class="icon">⚡</div>
+        Supabase
+        <div class="label">Postgres + Storage</div>
+      </div>
+      <div class="node magenta">
+        <div class="icon">💳</div>
+        Stripe
+        <div class="label">$5 one-time payment</div>
+      </div>
+      <div class="node dim">
+        <div class="icon">🤖</div>
+        Claude Sonnet
+        <div class="label">AI generators</div>
+      </div>
+      <div class="node dim">
+        <div class="icon">🎵</div>
+        Jamendo
+        <div class="label">CC music library</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot green"></div> Processing / Pipeline</div>
+    <div class="legend-item"><div class="legend-dot magenta"></div> Publishing / Payments</div>
+    <div class="legend-item"><div class="legend-dot cyan"></div> Data / Storage</div>
+    <div class="legend-item"><div class="legend-dot yellow"></div> Entry Points</div>
+    <div class="legend-item"><div class="legend-dot red"></div> Errors / Failures</div>
+  </div>
+
+  <p style="text-align: center; color: #333; font-size: 11px; margin-top: 32px; letter-spacing: 2px;">GLOW WIT DA FLOW — SYSTEM ARCHITECTURE v1.0</p>
+
+</div>
+</body>
+</html>

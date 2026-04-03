@@ -110,9 +110,15 @@ export async function processSubmission(submissionId: string): Promise<void> {
     const submission = lockData as ReelSubmission;
     const submittedHandle = submission.artist_name?.replace(/^@+/, "") || "";
 
-    // Download
+    // Download (retry once after 5s if first attempt fails — storage propagation race)
     console.log(`Downloading video from ${submission.video_url}`);
-    await downloadVideo(submission.video_url, inputPath);
+    try {
+      await downloadVideo(submission.video_url, inputPath);
+    } catch (dlErr) {
+      console.warn(`  First download attempt failed, retrying in 5s...`, dlErr);
+      await new Promise(r => setTimeout(r, 5000));
+      await downloadVideo(submission.video_url, inputPath);
+    }
 
     // Extract username from the upper-left corner of the video
     console.log("  Extracting username from video...");
