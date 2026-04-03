@@ -1,16 +1,16 @@
 export const metadata = {
-  title: "Privacy Policy | FlowArts.pro",
+  title: "Privacy Policy | Flow Arts Professional",
 };
 
 export default function PrivacyPolicy() {
   return (
     <div style={{ background: "#000", color: "#ccc", minHeight: "100vh", fontFamily: "Inter, sans-serif", padding: "40px 20px" }}>
       <div style={{ maxWidth: 720, margin: "0 auto", lineHeight: 1.8 }}>
-        <h1 style={{ color: "#00FF00", fontSize: 28, marginBottom: 8 }}>Privacy Policy</h1>
+        <h1 style={{ color: "#00FF00", fontSize: 28, marginBottom: 8 }}>Flow Arts Professional — Privacy Policy</h1>
         <p style={{ color: "#666", fontSize: 13, marginBottom: 32 }}>Last updated: March 19, 2026</p>
 
         <Section title="1. Information We Collect">
-          <p>When you use FlowArts.pro, we may collect:</p>
+          <p>When you use Flow Arts Professional (&quot;FlowArts.pro&quot;), we may collect:</p>
           <ul>
             <li><strong>Videos you upload</strong> — stored temporarily for processing and distribution to social media platforms.</li>
             <li><strong>Instagram handle</strong> — if provided, used for attribution in video captions.</li>
@@ -30,7 +30,7 @@ export default function PrivacyPolicy() {
         </Section>
 
         <Section title="3. Video Content">
-          <p>By uploading a video to FlowArts.pro, you grant us a non-exclusive, worldwide license to:</p>
+          <p>By uploading a video to Flow Arts Professional, you grant us a non-exclusive, worldwide license to:</p>
           <ul>
             <li>Host, process, and transcode your video.</li>
             <li>Publish your video on our social media channels (YouTube, Instagram, Facebook, TikTok).</li>

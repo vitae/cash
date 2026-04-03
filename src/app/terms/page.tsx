@@ -1,25 +1,25 @@
 export const metadata = {
-  title: "Terms of Service | FlowArts.pro",
+  title: "Terms of Service | Flow Arts Professional",
 };
 
 export default function TermsOfService() {
   return (
     <div style={{ background: "#000", color: "#ccc", minHeight: "100vh", fontFamily: "Inter, sans-serif", padding: "40px 20px" }}>
       <div style={{ maxWidth: 720, margin: "0 auto", lineHeight: 1.8 }}>
-        <h1 style={{ color: "#00FF00", fontSize: 28, marginBottom: 8 }}>Terms of Service</h1>
+        <h1 style={{ color: "#00FF00", fontSize: 28, marginBottom: 8 }}>Flow Arts Professional — Terms of Service</h1>
         <p style={{ color: "#666", fontSize: 13, marginBottom: 32 }}>Last updated: March 19, 2026</p>
 
         <Section title="1. Acceptance of Terms">
-          <p>By accessing or using FlowArts.pro, you agree to be bound by these Terms of Service. If you do not agree, do not use the service.</p>
+          <p>By accessing or using Flow Arts Professional (&quot;FlowArts.pro&quot;), you agree to be bound by these Terms of Service. If you do not agree, do not use the service.</p>
         </Section>
 
         <Section title="2. Description of Service">
-          <p>FlowArts.pro is a platform for flow artists to submit videos for distribution across social media platforms including YouTube, Instagram, Facebook, and TikTok. We also provide AI-powered tools for generating sponsor pitches, booking sheets, and press kits.</p>
+          <p>Flow Arts Professional is a platform for flow artists to submit videos for distribution across social media platforms including YouTube, Instagram, Facebook, and TikTok. We also provide AI-powered tools for generating sponsor pitches, booking sheets, and press kits.</p>
         </Section>
 
         <Section title="3. User Content">
           <p><strong>Ownership:</strong> You retain ownership of all videos and content you upload.</p>
-          <p><strong>License:</strong> By uploading content, you grant FlowArts.pro a non-exclusive, royalty-free, worldwide license to host, process, distribute, and display your content on our platforms and social media channels.</p>
+          <p><strong>License:</strong> By uploading content, you grant Flow Arts Professional a non-exclusive, royalty-free, worldwide license to host, process, distribute, and display your content on our platforms and social media channels.</p>
           <p><strong>Responsibility:</strong> You represent that you own or have the necessary rights to all content you upload. You are solely responsible for your content and any claims arising from it.</p>
         </Section>
 
@@ -38,7 +38,7 @@ export default function TermsOfService() {
         </Section>
 
         <Section title="6. Social Media Distribution">
-          <p>Videos uploaded to FlowArts.pro may be posted to our official accounts on YouTube, Instagram, Facebook, and TikTok. We will credit you as the featured artist in the caption when your identity is provided or detectable.</p>
+          <p>Videos uploaded to Flow Arts Professional may be posted to our official accounts on YouTube, Instagram, Facebook, and TikTok. We will credit you as the featured artist in the caption when your identity is provided or detectable.</p>
         </Section>
 
         <Section title="7. Payments and Refunds">
@@ -46,7 +46,7 @@ export default function TermsOfService() {
         </Section>
 
         <Section title="8. Limitation of Liability">
-          <p>FlowArts.pro is provided &quot;as is&quot; without warranties of any kind. We are not liable for any damages arising from your use of the service, including but not limited to loss of data, revenue, or content.</p>
+          <p>Flow Arts Professional is provided &quot;as is&quot; without warranties of any kind. We are not liable for any damages arising from your use of the service, including but not limited to loss of data, revenue, or content.</p>
         </Section>
 
         <Section title="9. Content Removal">
