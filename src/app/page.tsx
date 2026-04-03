@@ -787,6 +787,13 @@ export default function Home() {
             Privacy Policy
           </a>
         </div>
+        <p style={{
+          marginTop: 16, marginBottom: 0,
+          fontSize: 11, letterSpacing: 0.5,
+          color: "rgba(255,255,255,0.3)",
+        }}>
+          &copy; {new Date().getFullYear()} Flow Arts Pro. All rights reserved.
+        </p>
       </footer>
     </>
   );
