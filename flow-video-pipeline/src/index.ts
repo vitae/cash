@@ -83,18 +83,17 @@ app.post("/sweep", async (req, res) => {
 });
 
 // Manual publish trigger (for testing or forcing a publish cycle)
+// Responds immediately and publishes in the background so the caller
+// isn't blocked by Instagram's 5-minute polling loop.
 app.post("/publish-now", async (req, res) => {
   const secret = req.headers["x-webhook-secret"] as string | undefined;
   if (!safeCompare(secret, process.env.WEBHOOK_SECRET)) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-  try {
-    await publishScheduledBatch();
-    res.json({ success: true, message: "Publish cycle triggered" });
-  } catch (err) {
-    console.error("Manual publish error:", err);
-    res.status(500).json({ error: "Publish failed" });
-  }
+  res.json({ success: true, message: "Publish cycle started — uploading in background" });
+  publishScheduledBatch().catch((err) => {
+    console.error("Background publish error:", err);
+  });
 });
 
 // Global unhandled rejection handler

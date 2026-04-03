@@ -748,6 +748,46 @@ export default function Home() {
           </div>
         </RevealSection>
       </main>
+
+      {/* Footer */}
+      <footer style={{
+        position: "relative", zIndex: 10,
+        borderTop: "1px solid rgba(0,255,0,0.15)",
+        padding: "24px 0",
+        textAlign: "center",
+        background: "rgba(0,0,0,0.6)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+      }}>
+        <div style={{
+          display: "flex", justifyContent: "center", gap: 24,
+          fontSize: 12, letterSpacing: 1,
+        }}>
+          <a
+            href="/terms"
+            style={{
+              color: "rgba(255,255,255,0.5)", textDecoration: "none",
+              transition: "color 0.2s ease",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = "#00FF00"; }}
+            onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.5)"; }}
+          >
+            Terms of Service
+          </a>
+          <span style={{ color: "rgba(255,255,255,0.2)" }}>|</span>
+          <a
+            href="/policy"
+            style={{
+              color: "rgba(255,255,255,0.5)", textDecoration: "none",
+              transition: "color 0.2s ease",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = "#00FF00"; }}
+            onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.5)"; }}
+          >
+            Privacy Policy
+          </a>
+        </div>
+      </footer>
     </>
   );
 }

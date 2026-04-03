@@ -8,19 +8,13 @@ const RAILWAY_URL = process.env.RAILWAY_URL || "https://cash-production-680c.up.
 export async function POST(req: NextRequest) {
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000);
-
     const res = await fetch(`${RAILWAY_URL}/publish-now`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-webhook-secret": WEBHOOK_SECRET,
       },
-      signal: controller.signal,
     });
-
-    clearTimeout(timeout);
 
     const text = await res.text();
     let data: unknown;
