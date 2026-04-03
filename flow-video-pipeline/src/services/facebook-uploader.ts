@@ -98,6 +98,25 @@ export async function uploadToFacebook(
     throw new Error(`Facebook Reel publish failed: ${err}`);
   }
 
+  // Step 4: Set location on the published video (Reels finish phase may ignore place)
+  try {
+    await fetch(
+      `${GRAPH_API}/${videoId}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          place: "110843418940484", // Honolulu, Hawaii
+          access_token: accessToken,
+          appsecret_proof: proof,
+        }),
+      }
+    );
+  } catch {
+    // Non-critical — location is best-effort
+    console.warn("Failed to set location on Facebook Reel (non-critical)");
+  }
+
   return {
     videoId,
     url: `https://www.facebook.com/reel/${videoId}`,
