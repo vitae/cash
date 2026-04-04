@@ -1,11 +1,10 @@
 import { supabase } from "../lib/supabase";
 import { publishSubmission } from "./pipeline";
 
-// Publish 1 video every 3 hours, 7am–10pm EST
-const PUBLISH_INTERVAL_MS = 3 * 60 * 60 * 1000;
+// Fixed posting times in EST (24-hour format)
+const PUBLISH_HOURS_EST = [7, 10, 13, 16, 19, 22]; // 7am, 10am, 1pm, 4pm, 7pm, 10pm
 const BATCH_SIZE = 1;
-const START_HOUR_EST = 7;
-const END_HOUR_EST = 22; // 10pm
+const CHECK_INTERVAL_MS = 60 * 1000; // Check every minute
 
 function getCurrentEST(): Date {
   return new Date(
@@ -13,21 +12,33 @@ function getCurrentEST(): Date {
   );
 }
 
-function isWithinPublishWindow(): boolean {
-  const hour = getCurrentEST().getHours();
-  return hour >= START_HOUR_EST && hour < END_HOUR_EST;
+function isPublishTime(): boolean {
+  const now = getCurrentEST();
+  const hour = now.getHours();
+  const minute = now.getMinutes();
+  // Trigger during the first minute of each scheduled hour (e.g. 7:00)
+  return PUBLISH_HOURS_EST.includes(hour) && minute === 0;
+}
+
+function formatSchedule(): string {
+  return PUBLISH_HOURS_EST.map(h => {
+    const suffix = h >= 12 ? "pm" : "am";
+    const display = h > 12 ? h - 12 : h;
+    return `${display}${suffix}`;
+  }).join(", ");
 }
 
 /**
  * Publish 1 ready submission.
- * @param force - Skip the time window check (used by manual /publish-now trigger)
+ * @param force - Skip the time check (used by manual /publish-now trigger)
  */
 export async function publishScheduledBatch(force = false): Promise<void> {
-  if (!force && !isWithinPublishWindow()) {
-    const hour = getCurrentEST().getHours();
-    console.log(`📅 Outside publish window (${hour}:00 EST, window is ${START_HOUR_EST}:00–${END_HOUR_EST}:00) — skipping`);
+  if (!force && !isPublishTime()) {
     return;
   }
+
+  const now = getCurrentEST();
+  console.log(`📅 Publish slot hit: ${now.getHours()}:${String(now.getMinutes()).padStart(2, "0")} EST`);
 
   const { data: readySubmissions, error } = await supabase
     .from("reel_submissions")
@@ -62,22 +73,17 @@ export async function publishScheduledBatch(force = false): Promise<void> {
 }
 
 /**
- * Publish 1 video every 3 hours between 7am–10pm EST.
- * Fires once on startup, then repeats.
+ * Publish 1 video at fixed EST times: 7am, 10am, 1pm, 4pm, 7pm, 10pm.
+ * Checks every minute and fires when the clock matches a slot.
  */
 export function startScheduler(): void {
-  console.log(`📅 Scheduler started — publishing ${BATCH_SIZE} video every 3 hours (${START_HOUR_EST}:00–${END_HOUR_EST}:00 EST)`);
-
-  publishScheduledBatch().catch(err =>
-    console.error("📅 Initial publish batch failed:", err)
-  );
+  console.log(`📅 Scheduler started — publishing ${BATCH_SIZE} video at fixed EST times: ${formatSchedule()}`);
 
   setInterval(async () => {
-    console.log("📅 Scheduled publish cycle starting...");
     try {
       await publishScheduledBatch();
     } catch (err) {
       console.error("📅 Scheduled publishing failed:", err);
     }
-  }, PUBLISH_INTERVAL_MS);
+  }, CHECK_INTERVAL_MS);
 }
