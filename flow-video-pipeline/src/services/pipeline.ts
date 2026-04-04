@@ -298,8 +298,18 @@ export async function publishSubmission(submissionId: string): Promise<boolean> 
             console.log(`  YouTube: ${youtubeUrl}`);
           })
           .catch((err) => {
-            console.error("  YouTube upload failed:", err);
-            publishDetails.youtube_error = err instanceof Error ? err.message : String(err);
+            const msg = err instanceof Error ? err.message : String(err);
+            const isQuota = msg.includes("exceeded the number of videos")
+              || msg.includes("quotaExceeded")
+              || msg.includes("uploadLimitExceeded");
+            if (isQuota) {
+              console.error("  ⚠️ YouTube daily upload limit reached — video will retry next cycle");
+            } else {
+              console.error("  YouTube upload failed:", err);
+            }
+            publishDetails.youtube_error = isQuota
+              ? "YouTube daily upload limit reached — posting too often. Will retry next cycle."
+              : msg;
           })
       );
     }
@@ -408,7 +418,7 @@ export async function publishSubmission(submissionId: string): Promise<boolean> 
           status: "queued",
           youtube_url: publishDetails.youtube || null,
           publish_details: publishDetails,
-          error_message: `YouTube quota reached — will retry next cycle. ${postedPlatforms ? `Already posted to: ${postedPlatforms}` : ""}`.trim(),
+          error_message: `⚠️ YouTube daily upload limit — posting too often. Will retry next cycle. ${postedPlatforms ? `Already posted to: ${postedPlatforms}` : ""}`.trim(),
         })
         .eq("id", submissionId);
       console.log(`Submission ${submissionId} queued for retry (YouTube quota exceeded)`);
