@@ -774,12 +774,15 @@ function ActionButton({
 
 /* ─── Main Page ─── */
 
+const PER_PAGE = 50;
+
 export default function AdminPage() {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
   const [sweeping, setSweeping] = useState(false);
   const [sweepResult, setSweepResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [purging, setPurging] = useState(false);
@@ -896,6 +899,10 @@ export default function AdminPage() {
       ? data?.submissions ?? []
       : (data?.submissions ?? []).filter((s) => s.status === filter);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const safePage = Math.min(page, totalPages - 1);
+  const paged = filtered.slice(safePage * PER_PAGE, (safePage + 1) * PER_PAGE);
+
   return (
     <div style={term.page}>
       {/* Scanline effect */}
@@ -967,19 +974,62 @@ export default function AdminPage() {
         {/* ─── Filters ─── */}
         <div style={{ margin: "20px 0 16px" }}>
           <div style={{ ...term.sectionLabel }}>FILTER</div>
-          <FilterTabs counts={counts} filter={filter} onFilter={(f) => setFilter(f === filter ? "all" : f)} />
+          <FilterTabs counts={counts} filter={filter} onFilter={(f) => { setFilter(f === filter ? "all" : f); setPage(0); }} />
         </div>
 
         {/* ─── Submissions ─── */}
-        <div style={{ ...term.sectionLabel, marginTop: 24 }}>
-          SUBMISSIONS
-          <span style={{ color: "#333", marginLeft: 8 }}>
-            {filtered.length} record{filtered.length !== 1 ? "s" : ""}
-          </span>
+        <div style={{ ...term.sectionLabel, marginTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            SUBMISSIONS
+            <span style={{ color: "#333", marginLeft: 8 }}>
+              {filtered.length} record{filtered.length !== 1 ? "s" : ""}
+            </span>
+            {totalPages > 1 && (
+              <span style={{ color: "#444", marginLeft: 8 }}>
+                page {safePage + 1}/{totalPages}
+              </span>
+            )}
+          </div>
+          {totalPages > 1 && (
+            <div style={{ display: "flex", gap: 4 }}>
+              <button
+                onClick={() => setPage(Math.max(0, safePage - 1))}
+                disabled={safePage === 0}
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 11,
+                  padding: "3px 10px",
+                  border: "1px solid #222",
+                  borderRadius: 2,
+                  background: "transparent",
+                  color: safePage === 0 ? "#222" : "#00FF00",
+                  cursor: safePage === 0 ? "default" : "pointer",
+                }}
+              >
+                PREV
+              </button>
+              <button
+                onClick={() => setPage(Math.min(totalPages - 1, safePage + 1))}
+                disabled={safePage >= totalPages - 1}
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 11,
+                  padding: "3px 10px",
+                  border: "1px solid #222",
+                  borderRadius: 2,
+                  background: "transparent",
+                  color: safePage >= totalPages - 1 ? "#222" : "#00FF00",
+                  cursor: safePage >= totalPages - 1 ? "default" : "pointer",
+                }}
+              >
+                NEXT
+              </button>
+            </div>
+          )}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {filtered.length === 0 ? (
+          {paged.length === 0 ? (
             <div
               style={{
                 textAlign: "center",
@@ -991,7 +1041,7 @@ export default function AdminPage() {
             >
               <div style={{ marginBottom: 8 }}>NO RECORDS MATCH FILTER</div>
               <button
-                onClick={() => setFilter("all")}
+                onClick={() => { setFilter("all"); setPage(0); }}
                 style={{
                   fontFamily: MONO,
                   fontSize: 11,
@@ -1007,7 +1057,7 @@ export default function AdminPage() {
               </button>
             </div>
           ) : (
-            filtered.map((s) => (
+            paged.map((s) => (
               <SubmissionRow
                 key={s.id}
                 s={s}
